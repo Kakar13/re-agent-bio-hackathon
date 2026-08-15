@@ -19,11 +19,17 @@ Each teammate uses their own `.env` and Paperclip login. Never copy keys between
 
 ## Tools to use
 
-- **Paperclip** — literature, FDA, trials, UniProt/PDB/ChEMBL. Prefer the CLI (`paperclip search|map|grep|sql|cat`). Pi has no built-in MCP — drive Paperclip/Proto via shell. Mention `/paperclip` only when using Claude Code/Cursor with the Paperclip skill.
-- **Proto** — two paths: (1) hosted MCP `proto-bio` at `https://mcp.evodesign.org/mcp` (`PROTO_API_KEY` + `proto_client`) when in Cursor; (2) local `proto-tools` / `proto-language` via `uv sync --extra proto`, run on Modal with `device="modal"` after `uv run modal setup` and deploy. Do not invent Modal tokens.
+- **Paperclip** — literature, FDA, trials, UniProt/PDB/ChEMBL. Prefer MCP (Pi: [pi-mcp-adapter](https://pi.dev/packages/pi-mcp-adapter) + `.mcp.json`; Cursor: `.cursor/mcp.json`) or the CLI (`paperclip search|map|grep|sql|cat`). Mention `/paperclip` when using Claude Code/Cursor with the Paperclip skill. Do not download entire papers by hand.
+- **Proto** — two paths: (1) hosted MCP `proto-bio` at `https://mcp.evodesign.org/mcp` (`PROTO_API_KEY` + `proto_client`); (2) local `proto-tools` / `proto-language` via `uv sync --extra proto`, run on Modal with `device="modal"` after `uv run modal setup` and deploy. Do not invent Modal tokens.
 - **Claude API** — `ANTHROPIC_API_KEY` in `.env` (also works for Pi auth).
 
 If a check fails, tell the user which booth / Discord channel to get the credential from (`SPONSORS.md`).
+
+### Pi + MCP
+
+1. `pi install npm:pi-mcp-adapter` then restart Pi ([package](https://pi.dev/packages/pi-mcp-adapter)).
+2. Shared servers live in **`.mcp.json`** (Paperclip + Proto). Cursor also has `.cursor/mcp.json`. Export `PROTO_API_KEY` before starting Pi.
+3. Inside Pi: `/mcp`, `/mcp-auth <server>` if needed. Lazy proxy keeps context small.
 
 ## Working rules
 

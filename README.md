@@ -56,6 +56,7 @@ paperclip install
 
 # Pi — primary coding agent (https://pi.dev/)
 curl -fsSL https://pi.dev/install.sh | sh
+pi install npm:pi-mcp-adapter   # Paperclip + Proto via .mcp.json
 
 # Keys from Discord / lightning talks — your keys, not a teammate's
 # setup.sh already copied .env.example → .env
@@ -63,9 +64,10 @@ curl -fsSL https://pi.dev/install.sh | sh
 
 uv run python scripts/check_setup.py
 set -a && source .env && set +a && pi
+# /mcp
 ```
 
-In Pi, project rules load from [`AGENTS.md`](AGENTS.md). Paperclip/Proto: use shell (`!paperclip …`, `uv run …`) — Pi has no built-in MCP. Cursor MCP is optional: **Cmd+Shift+P → Tools & MCPs**.
+In Pi, project rules load from [`AGENTS.md`](AGENTS.md). MCP: [pi-mcp-adapter](https://pi.dev/packages/pi-mcp-adapter) + [`.mcp.json`](.mcp.json). Cursor: optional **Cmd+Shift+P → Tools & MCPs**.
 
 Need write access? Ask Vikas ([@Kakar13](https://github.com/Kakar13)) to add you as a collaborator.
 
@@ -94,7 +96,8 @@ data/raw          inputs you collect (gitignored)
 data/processed    cleaned tables (gitignored)
 results/          demo artifacts (gitignored)
 AGENTS.md         Pi project instructions
-.cursor/mcp.json  Paperclip + Proto MCP (optional Cursor path)
+.mcp.json         Shared MCP (Paperclip + Proto) for Pi / tools
+.cursor/mcp.json  Same servers for Cursor
 ```
 
 ## Useful Paperclip commands

@@ -59,14 +59,16 @@ paperclip config
 ```bash
 curl -fsSL https://pi.dev/install.sh | sh
 
+# MCP adapter — Paperclip + Proto from .mcp.json
+pi install npm:pi-mcp-adapter
+
 set -a && source .env && set +a
 pi
+# /mcp
 ```
 
 Pi loads [AGENTS.md](AGENTS.md). Auth: API key in `.env`, or `/login` inside Pi.  
-Docs: [pi.dev](https://pi.dev/) · [quickstart](https://pi.dev/docs/latest/quickstart)
-
-**Note:** Pi has no built-in MCP — use `!paperclip …` and `uv run …` from the shell.
+Docs: [pi.dev](https://pi.dev/) · [quickstart](https://pi.dev/docs/latest/quickstart) · [pi-mcp-adapter](https://pi.dev/packages/pi-mcp-adapter)
 
 ## 6. Verify
 

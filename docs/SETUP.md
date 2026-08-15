@@ -10,7 +10,7 @@ You should be ready in about 10–15 minutes. Each person does this on their own
 | --- | --- |
 | macOS, Linux, or WSL | Proto's local stack is macOS/Linux. Windows: use WSL. |
 | GitHub account | Repo is public — clone is enough. Ask Vikas (`@Kakar13`) for write access. |
-| Cursor, Claude Code, or **Pi** | **Pi is our primary harness** ([pi.dev](https://pi.dev/)). Cursor MCP still useful for Paperclip/Proto. |
+| Cursor, Claude Code, or **Pi** | **Pi is our primary harness** ([pi.dev](https://pi.dev/)). MCP via [pi-mcp-adapter](https://pi.dev/packages/pi-mcp-adapter) + `.mcp.json`. |
 | Event Discord | Paperclip login, Proto key, Claude credits, Modal credits ($100 re:AGENT). |
 
 Install these if you do not already have them:
@@ -109,11 +109,33 @@ npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 pi --version   # or just: which pi
 ```
 
-From the repo root:
+### MCP for Pi (Paperclip + Proto)
+
+Pi core does not bake MCP in; install the adapter:
+
+```bash
+pi install npm:pi-mcp-adapter
+```
+
+Docs: [pi.dev/packages/pi-mcp-adapter](https://pi.dev/packages/pi-mcp-adapter). Restart Pi after install.
+
+This repo ships shared MCP config in **`.mcp.json`** (Paperclip + Proto). The adapter loads it automatically (lazy servers — connect on first use).
 
 ```bash
 cd /path/to/re-agent-bio-hackathon
-# Load API key into this shell (or use /login inside Pi)
+set -a && source .env && set +a   # PROTO_API_KEY for proto-bio
+pi
+# /mcp
+# /mcp-auth paperclip    # if prompted
+# /mcp-auth proto-bio
+```
+
+Already had Cursor-only MCP? Run `/mcp setup` inside Pi to import host configs, or just use `.mcp.json` (preferred shared file).
+
+### Start Pi
+
+```bash
+cd /path/to/re-agent-bio-hackathon
 set -a && source .env && set +a
 pi
 ```
@@ -125,18 +147,16 @@ Authenticate:
 
 Pi loads project instructions from **`AGENTS.md`** (and `CLAUDE.md`) at startup. After editing those files, run `/reload` or restart Pi.
 
-**Important:** Pi has **no built-in MCP**. Drive Paperclip and Proto with shell commands (`paperclip …`, `uv run …`), not Cursor MCP servers. Cursor MCP (§6) remains optional if you also use Cursor.
-
 Useful Pi habits:
 
 ```bash
 pi                              # interactive TUI in this repo
 pi -p "Summarize this repo"     # one-shot / scripts
 pi -c                           # continue last session
-!paperclip search "…" -n 5      # shell from inside Pi (output → model)
+!paperclip search "…" -n 5      # CLI fallback
 ```
 
-Switch models with `/model` or `Ctrl+L`. Docs and packages: [pi.dev](https://pi.dev/).
+Switch models with `/model` or `Ctrl+L`. Docs: [pi.dev](https://pi.dev/).
 
 ### Claude Code (optional)
 
@@ -147,11 +167,11 @@ curl -fsSL https://claude.ai/install.sh | bash
 claude --version
 ```
 
-## 6. Cursor MCP (optional — Paperclip + hosted Proto)
+## 6. Cursor MCP (optional — same servers)
 
-Use this if you work in **Cursor**. Pi users can skip and use CLIs instead.
+Use this if you work in **Cursor**. Pi users get Paperclip + Proto via `.mcp.json` + `pi-mcp-adapter`.
 
-This repo ships `.cursor/mcp.json` with both servers.
+This repo also ships `.cursor/mcp.json` with the same servers.
 
 1. Restart Cursor after cloning, or reopen the project folder.
 2. **Cmd+Shift+P** (macOS) / **Ctrl+Shift+P** (Windows) → **Tools & MCPs**.
