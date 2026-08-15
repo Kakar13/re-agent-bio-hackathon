@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "paperclip": {
+      "url": "https://paperclip.gxl.ai/mcp",
+      "type": "http"
+    },
+    "proto-bio": {
+      "type": "http",
+      "url": "https://mcp.evodesign.org/mcp",
+      "headers": {
+        "Authorization": "Bearer ${env:PROTO_API_KEY}"
+      }
+    }
+  }
+}
