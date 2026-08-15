@@ -40,6 +40,7 @@ Edit `.env`:
 | --- | --- |
 | `ANTHROPIC_API_KEY` | Anthropic booth / Discord / lightning talks |
 | `PROTO_API_KEY` | Proto workspace (Arc Institute) |
+| `LANGSMITH_API_KEY` | [LangSmith](https://docs.langchain.com/langsmith/create-account-api-key) — also set `LANGSMITH_TRACING=true` and `LANGSMITH_PROJECT=reAgent-hackathon` |
 
 Optional later: `HF_TOKEN`, Modal via `uv run modal setup` (not required for first boot).
 
@@ -54,21 +55,24 @@ paperclip install
 paperclip config
 ```
 
-## 5. Pi (primary coding agent)
+## 5. Pi (primary coding agent — harness/)
+
+Use the project-local harness under [`harness/`](harness/) for the de novo task:
 
 ```bash
-curl -fsSL https://pi.dev/install.sh | sh
+cd harness
+npm install
+npx pi install -l --approve npm:pi-mcp-adapter
 
-# MCP adapter — Paperclip + Proto from .mcp.json
-pi install npm:pi-mcp-adapter
-
-set -a && source .env && set +a
-pi
-# /mcp
+set -a && source ../.env && set +a
+./run.sh
+# Inside Pi: trust the project if asked, then /denovo
 ```
 
-Pi loads [AGENTS.md](AGENTS.md). Auth: API key in `.env`, or `/login` inside Pi.  
-Docs: [pi.dev](https://pi.dev/) · [quickstart](https://pi.dev/docs/latest/quickstart) · [pi-mcp-adapter](https://pi.dev/packages/pi-mcp-adapter)
+Fill [`harness/TASK.md`](harness/TASK.md) with the design spec before asking the agent to build.
+
+Pi loads [`harness/AGENTS.md`](harness/AGENTS.md) plus parent [`AGENTS.md`](AGENTS.md). Auth: API key in `.env`, or `/login` inside Pi.  
+Docs: [harness/README.md](harness/README.md) · [pi.dev](https://pi.dev/) · [pi-mcp-adapter](https://pi.dev/packages/pi-mcp-adapter)
 
 ## 6. Verify
 
@@ -105,6 +109,8 @@ git push -u origin HEAD
 
 | Doc | Purpose |
 | --- | --- |
+| [harness/README.md](harness/README.md) | Pi harness launch for the de novo task |
+| [harness/TASK.md](harness/TASK.md) | De novo design brief (fill this in) |
 | [skills/reagent/SKILL.md](skills/reagent/SKILL.md) | Track pick + how to win (read first) |
 | [skills/](skills/) | Tool skills: Paperclip, Census, Proto, Boltz |
 | [docs/SETUP.md](docs/SETUP.md) | Full teammate setup (troubleshooting, Cursor MCP, etc.) |

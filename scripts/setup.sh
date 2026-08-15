@@ -16,19 +16,18 @@ uv sync
 
 echo
 echo "Python env is ready. Finish the rest yourself (opens a browser):"
-echo "  Full guide: docs/SETUP.md"
+echo "  Full guide: docs/SETUP.md · Pi harness: harness/README.md"
 echo
-echo "  1. curl -fsSL https://pi.dev/install.sh | sh"
-echo "  2. pi install npm:pi-mcp-adapter"
-echo "  3. curl -fsSL https://paperclip.gxl.ai/install.sh | bash"
-echo "  4. paperclip login && paperclip install"
-echo "  5. Put YOUR keys in .env (ANTHROPIC_API_KEY, PROTO_API_KEY)"
+echo "  1. Put YOUR keys in .env (ANTHROPIC_API_KEY, PROTO_API_KEY)"
 echo "     Do not copy a teammate's .env"
-echo "  6. set -a && source .env && set +a && pi   # then /mcp"
-echo "  7. uv run python scripts/check_setup.py"
+echo "  2. cd harness && npm install && npx pi install -l --approve npm:pi-mcp-adapter"
+echo "  3. Fill harness/TASK.md, then ./run.sh → /denovo"
+echo "  4. curl -fsSL https://paperclip.gxl.ai/install.sh | bash"
+echo "  5. paperclip login && paperclip install"
+echo "  6. uv run python scripts/check_setup.py"
 echo
-echo "  MCP config: .mcp.json (Pi) · .cursor/mcp.json (Cursor optional)"
-echo "  Adapter: https://pi.dev/packages/pi-mcp-adapter"
+echo "  MCP: harness/.mcp.json · Adapter: https://pi.dev/packages/pi-mcp-adapter"
+echo "  Node ≥ 22.19 recommended for Pi 0.84+"
 echo
 echo "Proto + Modal (when you need fold/design/optimize — opt-in):"
 echo "  uv sync --extra proto"

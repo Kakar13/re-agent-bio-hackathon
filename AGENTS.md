@@ -2,7 +2,7 @@
 
 Hackathon repo for scientific agents. Weekend of Aug 15–16, 2026. Submission Sunday 10:45 AM.
 
-We use the [Pi](https://pi.dev/) coding agent harness (`pi` in this directory). Claude Code / Cursor also load this file or `CLAUDE.md` — keep both aligned.
+We use the [Pi](https://pi.dev/) coding agent harness from **`harness/`** (de novo task). Claude Code / Cursor also load this file or `CLAUDE.md` — keep both aligned.
 
 ## First thing for humans (and for you)
 
@@ -16,6 +16,17 @@ If the user asks how to set up, clone, init, install tools, get keys, run checks
 4. Do **not** invent a parallel setup path. Do **not** invent API keys.
 
 Each teammate uses their own `.env` and Paperclip login. Never copy keys between laptops.
+
+## Pi harness (de novo)
+
+Launch from [`harness/`](harness/README.md) (`./run.sh`). Task brief: [`harness/TASK.md`](harness/TASK.md). Do not invent a design target while that file is still a stub.
+
+### Pi + MCP
+
+1. `cd harness && npm install && npx pi install -l --approve npm:pi-mcp-adapter` ([package](https://pi.dev/packages/pi-mcp-adapter)).
+2. MCP config: [`harness/.mcp.json`](harness/.mcp.json) (Paperclip + Proto). Export `PROTO_API_KEY` from repo-root `.env` before starting.
+3. Inside Pi: `/denovo`, `/mcp`, `/mcp-auth <server>` if needed.
+4. CLI fallback still fine: `!paperclip …`, `uv run …` from repo root.
 
 ## Skills (read before using a tool)
 
@@ -33,19 +44,12 @@ Claude Code also loads them via `.claude/skills` → `skills/`. Follow each skil
 
 ## Tools to use
 
-- **Paperclip** — literature, FDA, trials, UniProt/PDB/ChEMBL. Prefer MCP via [pi-mcp-adapter](https://pi.dev/packages/pi-mcp-adapter) (`pi install npm:pi-mcp-adapter`) + project [`.mcp.json`](.mcp.json), or the CLI (`paperclip search|map|grep|sql|cat`). Do not download entire papers by hand.
-- **Proto** — two paths: (1) hosted MCP `proto-bio` in `.mcp.json` / Cursor (`PROTO_API_KEY` + `proto_client`); (2) local `proto-tools` / `proto-language` via `uv sync --extra proto`, run on Modal with `device="modal"` after `uv run modal setup` and deploy. Do not invent Modal tokens.
+- **Paperclip** — literature, FDA, trials, UniProt/PDB/ChEMBL. Prefer MCP via [pi-mcp-adapter](https://pi.dev/packages/pi-mcp-adapter) + [`harness/.mcp.json`](harness/.mcp.json), or the CLI (`paperclip search|map|grep|sql|cat`). Do not download entire papers by hand.
+- **Proto** — two paths: (1) hosted MCP `proto-bio` (`PROTO_API_KEY` + `proto_client`); (2) local `proto-tools` / `proto-language` via `uv sync --extra proto`, run on Modal with `device="modal"` after `uv run modal setup` and deploy. Do not invent Modal tokens.
 - **CELLxGENE Census / Boltz** — no API key; follow the skills above for install and gotchas.
 - **Claude / Anthropic** — `ANTHROPIC_API_KEY` in `.env` (Pi can also `/login` for subscription providers).
 
 If a check fails, tell the user which booth / Discord channel to get the credential from (`SPONSORS.md`).
-
-### Pi + MCP
-
-1. `pi install npm:pi-mcp-adapter` then restart Pi ([package](https://pi.dev/packages/pi-mcp-adapter)).
-2. This repo ships shared MCP config in **`.mcp.json`** (Paperclip + Proto). Export `PROTO_API_KEY` before starting Pi.
-3. Inside Pi: `/mcp` for status, or proxy search `mcp({ search: "…" })`. Auth: `/mcp-auth paperclip` / `/mcp-auth proto-bio` if prompted.
-4. CLI fallback still fine: `!paperclip …`, `uv run …`.
 
 ## Working rules
 
@@ -61,4 +65,4 @@ If a check fails, tell the user which booth / Discord channel to get the credent
 
 - A: end-to-end scientific agent with tools + inspectable trace
 - B: dataset / meta-analysis with a finding no single paper shows
-- C: biological design to a spec, plus evidence it could hold up
+- C: biological design to a spec, plus evidence it could hold up (this team's de novo path)

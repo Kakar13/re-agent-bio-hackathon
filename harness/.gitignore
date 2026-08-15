@@ -1,0 +1,7 @@
+node_modules/
+.pi/npm/
+.pi/git/
+.pi/sessions/
+sessions/
+*.log
+.DS_Store

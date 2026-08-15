@@ -38,7 +38,17 @@ results/*
 .paperclip/
 .proto/
 .modal/
+
+# Pi: ignore caches; keep committed project settings under harness/
 .pi/
+!harness/.pi/
+harness/.pi/**
+!harness/.pi/settings.json
+!harness/.pi/langsmith.json
+!harness/.pi/prompts/
+!harness/.pi/prompts/**
+!harness/.pi/extensions/
+!harness/.pi/extensions/**
 
 # OS / editor
 .DS_Store

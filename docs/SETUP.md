@@ -97,66 +97,59 @@ paperclip search "CRISPR base editing efficiency" -n 5
 
 ## 5. Pi coding agent (primary harness)
 
-We use [Pi](https://pi.dev/) — a minimal agent harness. Docs: [quickstart](https://pi.dev/docs/latest/quickstart).
+We use [Pi](https://pi.dev/) from the project-local folder **[`harness/`](../harness/)**. Full notes: [`harness/README.md`](../harness/README.md). Docs: [quickstart](https://pi.dev/docs/latest/quickstart).
+
+**Node:** Pi 0.84+ wants **Node ≥ 22.19**. Check with `node -v`; upgrade via nvm/brew if needed.
 
 ```bash
-# macOS / Linux / WSL
-curl -fsSL https://pi.dev/install.sh | sh
-
-# or npm
-npm install -g --ignore-scripts @earendil-works/pi-coding-agent
-
-pi --version   # or just: which pi
+cd harness
+npm install
+npx pi install -l --approve npm:pi-mcp-adapter
+set -a && source ../.env && set +a
+./run.sh
+# trust the project if prompted → /denovo
 ```
+
+Fill [`harness/TASK.md`](../harness/TASK.md) before asking the agent to design.
 
 ### MCP for Pi (Paperclip + Proto)
 
-Pi core does not bake MCP in; install the adapter:
+`pi-mcp-adapter` is listed in `harness/.pi/settings.json` and installs into `harness/.pi/npm/` on trusted launch. MCP servers live in **`harness/.mcp.json`** (same servers as root `.mcp.json`).
 
 ```bash
-pi install npm:pi-mcp-adapter
-```
-
-Docs: [pi.dev/packages/pi-mcp-adapter](https://pi.dev/packages/pi-mcp-adapter). Restart Pi after install.
-
-This repo ships shared MCP config in **`.mcp.json`** (Paperclip + Proto). The adapter loads it automatically (lazy servers — connect on first use).
-
-```bash
-cd /path/to/re-agent-bio-hackathon
-set -a && source .env && set +a   # PROTO_API_KEY for proto-bio
-pi
+cd harness
+set -a && source ../.env && set +a   # PROTO_API_KEY for proto-bio
+./run.sh
 # /mcp
 # /mcp-auth paperclip    # if prompted
 # /mcp-auth proto-bio
+# /denovo
 ```
 
-Already had Cursor-only MCP? Run `/mcp setup` inside Pi to import host configs, or just use `.mcp.json` (preferred shared file).
-
-### Start Pi
+### Start Pi (harness)
 
 ```bash
-cd /path/to/re-agent-bio-hackathon
-set -a && source .env && set +a
-pi
+cd harness
+./run.sh
 ```
 
 Authenticate:
 
-- **API key:** `ANTHROPIC_API_KEY` in `.env` / exported shell (event Claude credits), then start `pi`
-- **Subscription:** inside Pi run `/login` (Claude Pro/Max, ChatGPT, Copilot, etc.)
+- **API key:** `ANTHROPIC_API_KEY` in repo-root `.env`
+- **Subscription:** inside Pi run `/login`
 
-Pi loads project instructions from **`AGENTS.md`** (and `CLAUDE.md`) at startup. After editing those files, run `/reload` or restart Pi.
+Pi loads `harness/AGENTS.md` plus parent `AGENTS.md` / `CLAUDE.md`. After editing those files, run `/reload` or restart Pi.
 
-Useful Pi habits:
+Useful habits:
 
 ```bash
-pi                              # interactive TUI in this repo
-pi -p "Summarize this repo"     # one-shot / scripts
-pi -c                           # continue last session
-!paperclip search "…" -n 5      # CLI fallback
+./run.sh                         # interactive TUI
+./run.sh -p "Summarize TASK.md"  # one-shot
+./run.sh -c                      # continue last session
+!paperclip search "…" -n 5       # CLI fallback inside Pi
 ```
 
-Switch models with `/model` or `Ctrl+L`. Docs: [pi.dev](https://pi.dev/).
+Switch models with `/model` or `Ctrl+L`.
 
 ### Claude Code (optional)
 

@@ -31,7 +31,7 @@ Credits and access come from lightning talks + Discord. Do not commit keys.
 
 | Tool | What it is | Get started |
 | --- | --- | --- |
-| **Pi** ([pi.dev](https://pi.dev/)) | Primary coding-agent harness (TUI, skills, AGENTS.md) | `curl -fsSL https://pi.dev/install.sh \| sh` |
+| **Pi** ([pi.dev](https://pi.dev/)) | Primary coding-agent harness (project-local under `harness/`) | `cd harness && ./run.sh` · [harness/README.md](harness/README.md) |
 | **Paperclip** (GXL) | Agent-native search over 11M+ papers, FDA docs, trials, UniProt / PDB / ChEMBL | `curl -fsSL https://paperclip.gxl.ai/install.sh \| bash` · MCP: `https://paperclip.gxl.ai/mcp` |
 | **Proto** (Arc Institute) | proto-tools + proto-language (AlphaFold, Boltz, Evo2, ESMC, …) | `uv sync --extra proto` · MCP: `https://mcp.evodesign.org/mcp` |
 | **Claude** (Anthropic) | API credits for Pi / Claude Code | `ANTHROPIC_API_KEY` in `.env` or Pi `/login` |

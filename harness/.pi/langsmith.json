@@ -1,0 +1,10 @@
+{
+  "enabled": true,
+  "project": "reAgent-hackathon",
+  "api_url": "https://api.smith.langchain.com",
+  "metadata": {
+    "hackathon": "re:AGENT",
+    "stage": "immuno-risk",
+    "harness": "harness/"
+  }
+}

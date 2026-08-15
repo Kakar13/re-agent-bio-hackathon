@@ -2,7 +2,7 @@
 
 Hackathon repo for scientific agents. Weekend of Aug 15–16, 2026. Submission Sunday 10:45 AM.
 
-Primary agent harness: **[Pi](https://pi.dev/)** (`pi` in this directory). Project instructions also live in `AGENTS.md` (Pi loads both). **Keep `AGENTS.md` and this file aligned.**
+Primary agent harness: **[Pi](https://pi.dev/)** from **[`harness/`](harness/)** (de novo task). Project instructions also live in `AGENTS.md` (Pi loads both). **Keep `AGENTS.md` and this file aligned.**
 
 ## First thing for humans (and for you)
 
@@ -42,9 +42,11 @@ If a check fails, tell the user which booth / Discord channel to get the credent
 
 ### Pi + MCP
 
-1. `pi install npm:pi-mcp-adapter` then restart Pi ([package](https://pi.dev/packages/pi-mcp-adapter)).
-2. Shared servers live in **`.mcp.json`** (Paperclip + Proto). Cursor also has `.cursor/mcp.json`. Export `PROTO_API_KEY` before starting Pi.
-3. Inside Pi: `/mcp`, `/mcp-auth <server>` if needed. Lazy proxy keeps context small.
+1. `cd harness && npm install && npx pi install -l --approve npm:pi-mcp-adapter` ([package](https://pi.dev/packages/pi-mcp-adapter)).
+2. Shared servers live in **[`harness/.mcp.json`](harness/.mcp.json)** (and root `.mcp.json` for other tools). Export `PROTO_API_KEY` before starting Pi.
+3. Inside Pi: `/denovo`, `/mcp`, `/mcp-auth <server>` if needed. Lazy proxy keeps context small.
+
+Task brief for this team: [`harness/TASK.md`](harness/TASK.md).
 
 ## Working rules
 
