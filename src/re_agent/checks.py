@@ -41,22 +41,43 @@ def _paperclip() -> Check:
         return Check("paperclip", False, str(exc))
 
 
-def _proto_sdk() -> Check:
+def _import_pkg(name: str, module: str, hint: str) -> Check:
     try:
-        import proto_client  # noqa: F401
-
-        return Check("proto-client", True, "import ok")
+        __import__(module)
+        return Check(name, True, "import ok")
     except ImportError:
-        return Check("proto-client", False, "run: uv pip install proto-client")
+        return Check(name, False, hint)
+
+
+def _modal() -> Check:
+    path = shutil.which("modal")
+    if path:
+        return Check("modal", True, path)
+    # uv run puts tools on PATH for the venv; try import as fallback
+    try:
+        import modal  # noqa: F401
+
+        return Check("modal", True, "import ok — run: uv run modal setup")
+    except ImportError:
+        return Check("modal", False, "run: uv sync --extra proto && uv run modal setup")
 
 
 def run_checks() -> list[Check]:
+    hint = "run: uv sync --extra proto"
     return [
         _which("python3"),
         _which("uv"),
+        Check(
+            "pi",
+            bool(shutil.which("pi")),
+            shutil.which("pi") or "run: curl -fsSL https://pi.dev/install.sh | sh",
+        ),
         _which("claude"),
         _paperclip(),
-        _proto_sdk(),
+        _import_pkg("proto-client", "proto_client", hint),
+        _import_pkg("proto-tools", "proto_tools", hint),
+        _import_pkg("proto-language", "proto_language", hint),
+        _modal(),
         Check(
             "ANTHROPIC_API_KEY",
             bool(settings.anthropic_api_key),
@@ -65,6 +86,6 @@ def run_checks() -> list[Check]:
         Check(
             "PROTO_API_KEY",
             bool(settings.proto_api_key),
-            "set in .env" if settings.proto_api_key else "missing — Proto workspace key",
+            "set in .env" if settings.proto_api_key else "missing — Proto workspace key (hosted SDK / Cursor MCP)",
         ),
     ]

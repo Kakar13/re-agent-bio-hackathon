@@ -1,8 +1,8 @@
 # Teammate setup
 
-You should be ready in about 10 minutes. Each person does this on their own laptop. **Do not copy someone else's `.env`.** Keys are per-person from Discord / lightning talks.
+You should be ready in about 10–15 minutes. Each person does this on their own laptop. **Do not copy someone else's `.env`.** Keys are per-person from Discord / lightning talks.
 
-Repo: https://github.com/Kakar13/re-agent-bio-hackathon
+**Fast path:** [START_HERE.md](../START_HERE.md) · **Repo:** https://github.com/Kakar13/re-agent-bio-hackathon
 
 ## 0. What you need
 
@@ -10,8 +10,8 @@ Repo: https://github.com/Kakar13/re-agent-bio-hackathon
 | --- | --- |
 | macOS, Linux, or WSL | Proto's local stack is macOS/Linux. Windows: use WSL. |
 | GitHub account | Repo is public — clone is enough. Ask Vikas (`@Kakar13`) for write access. |
-| Cursor or Claude Code | Cursor is enough. Claude Code is optional but useful. |
-| Event Discord | Paperclip login, Proto key, Claude credits, Modal tokens. |
+| Cursor, Claude Code, or **Pi** | **Pi is our primary harness** ([pi.dev](https://pi.dev/)). Cursor MCP still useful for Paperclip/Proto. |
+| Event Discord | Paperclip login, Proto key, Claude credits, Modal credits ($100 re:AGENT). |
 
 Install these if you do not already have them:
 
@@ -22,6 +22,10 @@ brew install gh          # macOS
 
 # uv — Python package manager we use
 curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Pi coding agent (primary harness)
+curl -fsSL https://pi.dev/install.sh | sh
+# or: npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 ```
 
 Python 3.12 is pinned in the repo. `uv` will download it. You do not need conda.
@@ -46,7 +50,7 @@ cd re-agent-bio-hackathon
 ./scripts/setup.sh
 ```
 
-That copies `.env.example` → `.env` (if missing) and runs `uv sync` on Python 3.12.
+That copies `.env.example` → `.env` (if missing) and runs `uv sync` on Python 3.12 (base deps only — Proto is opt-in in §7).
 
 If `setup.sh` is not executable:
 
@@ -62,9 +66,9 @@ Open `.env` and add **your** keys. Leave a line blank if you do not have that to
 | Variable | Where to get it | Required for |
 | --- | --- | --- |
 | `ANTHROPIC_API_KEY` | Anthropic booth / Discord / lightning talks | Claude API calls in code |
-| `PROTO_API_KEY` | Proto workspace (Arc Institute) | Proto SDK + Cursor MCP `proto-bio` |
+| `PROTO_API_KEY` | Proto workspace (Arc Institute) | Hosted Proto MCP + `proto-client` SDK |
 | `HF_TOKEN` | huggingface.co → Settings → Access Tokens | Gated models only (ESM3, AlphaFold3, AlphaGenome) |
-| `MODAL_TOKEN_ID` / `MODAL_TOKEN_SECRET` | Modal booth | Remote GPU for Proto / Boltz |
+| `MODAL_TOKEN_ID` / `MODAL_TOKEN_SECRET` | Optional fallback | Prefer `uv run modal setup` (writes `~/.modal.toml`) |
 
 Rules:
 
@@ -91,25 +95,63 @@ Smoke test:
 paperclip search "CRISPR base editing efficiency" -n 5
 ```
 
-## 5. Claude Code (optional)
+## 5. Pi coding agent (primary harness)
+
+We use [Pi](https://pi.dev/) — a minimal agent harness. Docs: [quickstart](https://pi.dev/docs/latest/quickstart).
 
 ```bash
 # macOS / Linux / WSL
-curl -fsSL https://claude.ai/install.sh | bash
+curl -fsSL https://pi.dev/install.sh | sh
 
-# Windows PowerShell
-irm https://claude.ai/install.ps1 | iex
+# or npm
+npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 
-claude --version
-cd /path/to/re-agent-bio-hackathon
-claude                      # log in when prompted
+pi --version   # or just: which pi
 ```
 
-Docs: https://code.claude.com/docs/en/quickstart
+From the repo root:
 
-## 6. Cursor MCP (Paperclip + Proto)
+```bash
+cd /path/to/re-agent-bio-hackathon
+# Load API key into this shell (or use /login inside Pi)
+set -a && source .env && set +a
+pi
+```
 
-This repo already ships `.cursor/mcp.json` with both servers.
+Authenticate:
+
+- **API key:** `ANTHROPIC_API_KEY` in `.env` / exported shell (event Claude credits), then start `pi`
+- **Subscription:** inside Pi run `/login` (Claude Pro/Max, ChatGPT, Copilot, etc.)
+
+Pi loads project instructions from **`AGENTS.md`** (and `CLAUDE.md`) at startup. After editing those files, run `/reload` or restart Pi.
+
+**Important:** Pi has **no built-in MCP**. Drive Paperclip and Proto with shell commands (`paperclip …`, `uv run …`), not Cursor MCP servers. Cursor MCP (§6) remains optional if you also use Cursor.
+
+Useful Pi habits:
+
+```bash
+pi                              # interactive TUI in this repo
+pi -p "Summarize this repo"     # one-shot / scripts
+pi -c                           # continue last session
+!paperclip search "…" -n 5      # shell from inside Pi (output → model)
+```
+
+Switch models with `/model` or `Ctrl+L`. Docs and packages: [pi.dev](https://pi.dev/).
+
+### Claude Code (optional)
+
+Still fine if you prefer it; not required when using Pi.
+
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+claude --version
+```
+
+## 6. Cursor MCP (optional — Paperclip + hosted Proto)
+
+Use this if you work in **Cursor**. Pi users can skip and use CLIs instead.
+
+This repo ships `.cursor/mcp.json` with both servers.
 
 1. Restart Cursor after cloning, or reopen the project folder.
 2. **Cmd+Shift+P** (macOS) / **Ctrl+Shift+P** (Windows) → **Tools & MCPs**.
@@ -133,14 +175,69 @@ Hosted endpoints (no local install required for MCP):
 - Paperclip: `https://paperclip.gxl.ai/mcp`
 - Proto: `https://mcp.evodesign.org/mcp`
 
-## 7. Proto Python SDK (when you start designing sequences)
+## 7. Proto + Modal (when you design / fold / optimize sequences)
+
+There are **two** Proto paths. You can use either or both.
+
+| Path | What it is | Auth |
+| --- | --- | --- |
+| **Hosted `proto-client` / Cursor MCP** | Agent or SDK calls tools over the network | `PROTO_API_KEY` in `.env` (+ Cursor MCP `proto-bio` if in Cursor) |
+| **Local proto-tools + Modal** | Run AlphaFold, Boltz, Evo2, ESMC, … on Modal GPUs ($100 re:AGENT credits) | `uv run modal setup` → `~/.modal.toml` |
+
+### Install the official stack (opt-in)
+
+Same as the event handout (`pip install git+https://github.com/evo-design/proto-tools.git` and proto-language), via our uv extra:
 
 ```bash
 uv sync --extra proto
+```
+
+That installs:
+
+- **proto-tools** — ready-to-run models (AlphaFold, Boltz, Evo2, ESMC, Protenix, OpenDDE, AlphaGenome, and more)
+- **proto-language** — design loops with segments, constructs, generators, constraints, optimizers ([docs](https://proto.evodesign.org))
+- **modal** — remote GPU compute
+- **proto-client** — hosted SDK (uses `PROTO_API_KEY`)
+
+Git install is enough to *run* design loops. Only clone proto-language and `pip install -e .` if you need to write custom generators/constraints later.
+
+### Modal compute ($100 re:AGENT credits)
+
+Credits are provided day-of. Authenticate in **your** terminal (opens a browser):
+
+```bash
+uv sync --extra proto
+uv run modal setup
+uv run modal environment create proto-env
+uv run proto-tools deploy --list
+```
+
+Deploy a tool when you need it, then call it with `device="modal"`:
+
+```bash
+uv run proto-tools deploy --apps esmc --env proto-env
+```
+
+```python
+from proto_tools import run_esmc_embeddings, ESMCEmbeddingsInput, ESMCEmbeddingsConfig
+
+output = run_esmc_embeddings(
+    ESMCEmbeddingsInput(sequences=["MKTAYLLIGLLAIAAFSPQVLA"]),
+    ESMCEmbeddingsConfig(device="modal"),
+)
+print(len(output.results[0].mean_embedding))
+```
+
+Full walkthrough: [proto.evodesign.org/docs/tools/modal-integration](https://proto.evodesign.org/docs/tools/modal-integration)
+
+### Hosted SDK smoke (optional)
+
+```bash
+# PROTO_API_KEY must be set in .env
 uv run python -c "from proto_client import ProtoClient; print(ProtoClient())"
 ```
 
-You need `PROTO_API_KEY` set first. Confirm credits with the MCP: *“Check my Proto workspace and remaining credits.”*
+Confirm credits via MCP: *“Check my Proto workspace and remaining credits.”*
 
 ## 8. Confirm you are done
 
@@ -153,12 +250,16 @@ Expected:
 | Check | OK means |
 | --- | --- |
 | `python3` / `uv` | local env works |
+| `pi` | Pi coding agent on PATH (primary harness) |
 | `claude` | Claude Code on PATH (optional) |
 | `paperclip` | CLI installed and logged in |
-| `proto-client` | only after `uv sync --extra proto` |
-| `ANTHROPIC_API_KEY` / `PROTO_API_KEY` | present in `.env` |
+| `proto-client` | after `uv sync --extra proto` (hosted SDK) |
+| `proto-tools` / `proto-language` | after `uv sync --extra proto` |
+| `modal` | after `uv sync --extra proto` (CLI on PATH via uv) |
+| `ANTHROPIC_API_KEY` | present in `.env` (Pi API auth + Claude) |
+| `PROTO_API_KEY` | present in `.env` (hosted Proto SDK / Cursor MCP) |
 
-`!!` on Claude or proto-client is fine until you need those tools. **Paperclip should be `ok` before you start literature work.**
+`!!` on Claude or Proto packages is fine until you need those tools. **`pi` and Paperclip should be `ok` before you start building.** Modal auth (`modal setup`) is separate from the import check — run it before deploying tools.
 
 ## 9. How we work in this repo
 
@@ -180,6 +281,9 @@ git push -u origin HEAD
 
 ## 10. Common failures
 
+**`pi: command not found`**  
+Install with `curl -fsSL https://pi.dev/install.sh | sh`, then restart the terminal. Confirm with `which pi`. Auth via `set -a && source .env && set +a && pi` or `/login` inside Pi.
+
 **`uv: command not found`**  
 Restart the terminal after installing uv, or run `source $HOME/.local/bin/env`.
 
@@ -196,6 +300,12 @@ source ~/.zshrc
 
 **Cursor cannot see Proto tools**  
 Key missing from the GUI process. Export `PROTO_API_KEY` in `~/.zshrc`, or start Cursor from the repo: `cursor .`
+
+**`proto_tools` / `proto_language` import fails**  
+Run `uv sync --extra proto`. Default `./scripts/setup.sh` only installs base deps.
+
+**Modal auth / deploy fails**  
+Run `uv run modal setup` again. Claim $100 re:AGENT credits day-of. See [Modal integration docs](https://proto.evodesign.org/docs/tools/modal-integration).
 
 **Python 3.14 on PATH**  
 Ignore it. The repo pins 3.12 via `.python-version`. Always use `uv run ...`, not system `python3`.

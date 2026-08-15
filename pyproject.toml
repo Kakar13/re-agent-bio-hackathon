@@ -12,11 +12,20 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-proto = ["proto-client>=0.1.0"]
+proto = [
+    "proto-client>=0.1.0",
+    "proto-tools",
+    "proto-language",
+    "modal",
+]
 dev = ["ruff>=0.12.0"]
 
 [tool.uv]
 package = false
+
+[tool.uv.sources]
+proto-tools = { git = "https://github.com/evo-design/proto-tools.git" }
+proto-language = { git = "https://github.com/evo-design/proto-language.git" }
 
 [tool.ruff]
 line-length = 100

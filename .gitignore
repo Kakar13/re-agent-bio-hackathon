@@ -38,6 +38,7 @@ results/*
 .paperclip/
 .proto/
 .modal/
+.pi/
 
 # OS / editor
 .DS_Store

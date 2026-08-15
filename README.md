@@ -9,7 +9,9 @@ Two-day build weekend for scientific agents: better datasets, sharper tools, and
 
 You keep what you build. Open-source it, keep going, or spin it out.
 
-**Teammates:** start at [docs/SETUP.md](docs/SETUP.md). Clone, run `./scripts/setup.sh`, log into Paperclip, put your own keys in `.env`. Do not reuse someone else's `.env`.
+**Teammates:** open **[START_HERE.md](START_HERE.md)** first. Then [docs/SETUP.md](docs/SETUP.md) for the full walkthrough. Do not reuse someone else's `.env`.
+
+**Sponsors & co-hosts (use them):** [SPONSORS.md](SPONSORS.md)
 
 ## Tracks
 
@@ -27,10 +29,11 @@ Credits and access come from lightning talks + Discord. Do not commit keys.
 
 | Tool | What it is | Get started |
 | --- | --- | --- |
+| **Pi** ([pi.dev](https://pi.dev/)) | Primary coding-agent harness (TUI, skills, AGENTS.md) | `curl -fsSL https://pi.dev/install.sh \| sh` |
 | **Paperclip** (GXL) | Agent-native search over 11M+ papers, FDA docs, trials, UniProt / PDB / ChEMBL | `curl -fsSL https://paperclip.gxl.ai/install.sh \| bash` · MCP: `https://paperclip.gxl.ai/mcp` |
-| **Proto** (Arc Institute) | Generative biology language + 80+ tools (fold, design, optimize DNA/RNA/protein) | `pip install proto-client` · MCP: `https://mcp.evodesign.org/mcp` |
-| **Claude** (Anthropic) | Claude Code + API credits | already on this machine (`claude --version`) |
-| **Modal** | Remote GPU for Proto / Boltz | token from sponsor booth |
+| **Proto** (Arc Institute) | proto-tools + proto-language (AlphaFold, Boltz, Evo2, ESMC, …) | `uv sync --extra proto` · MCP: `https://mcp.evodesign.org/mcp` |
+| **Claude** (Anthropic) | API credits for Pi / Claude Code | `ANTHROPIC_API_KEY` in `.env` or Pi `/login` |
+| **Modal** | Remote GPU for Proto tools ($100 re:AGENT credits) | `uv run modal setup` · [docs](https://proto.evodesign.org/docs/tools/modal-integration) |
 | **Benchling, BenchFlow, LatchBio, Boltz, Strand** | Lab, eval, compute, structure, sequence partners | on-site + Discord |
 
 ## Quick start
@@ -51,14 +54,18 @@ curl -fsSL https://paperclip.gxl.ai/install.sh | bash
 paperclip login
 paperclip install
 
+# Pi — primary coding agent (https://pi.dev/)
+curl -fsSL https://pi.dev/install.sh | sh
+
 # Keys from Discord / lightning talks — your keys, not a teammate's
 # setup.sh already copied .env.example → .env
 # edit .env: ANTHROPIC_API_KEY, PROTO_API_KEY
 
 uv run python scripts/check_setup.py
+set -a && source .env && set +a && pi
 ```
 
-In Cursor: **Cmd+Shift+P → Tools & MCPs** → enable `paperclip`, authenticate. Proto uses `PROTO_API_KEY` from the environment via `.cursor/mcp.json`.
+In Pi, project rules load from [`AGENTS.md`](AGENTS.md). Paperclip/Proto: use shell (`!paperclip …`, `uv run …`) — Pi has no built-in MCP. Cursor MCP is optional: **Cmd+Shift+P → Tools & MCPs**.
 
 Need write access? Ask Vikas ([@Kakar13](https://github.com/Kakar13)) to add you as a collaborator.
 
@@ -68,10 +75,14 @@ Need write access? Ask Vikas ([@Kakar13](https://github.com/Kakar13)) to add you
 paperclip search "CRISPR base editing efficiency" -n 5
 paperclip config
 
-# After PROTO_API_KEY is set
+# Proto stack (proto-tools + proto-language + modal) — opt-in
 uv sync --extra proto
+uv run modal setup                    # browser login; $100 re:AGENT credits day-of
+# Hosted SDK (needs PROTO_API_KEY in .env):
 uv run python -c "from proto_client import ProtoClient; print(ProtoClient())"
 ```
+
+Full Proto + Modal steps: [docs/SETUP.md](docs/SETUP.md#7-proto--modal-when-you-design--fold--optimize-sequences).
 
 ## Repo layout
 
@@ -82,7 +93,8 @@ notebooks/        exploration
 data/raw          inputs you collect (gitignored)
 data/processed    cleaned tables (gitignored)
 results/          demo artifacts (gitignored)
-.cursor/mcp.json  Paperclip + Proto MCP for this project
+AGENTS.md         Pi project instructions
+.cursor/mcp.json  Paperclip + Proto MCP (optional Cursor path)
 ```
 
 ## Useful Paperclip commands
@@ -111,7 +123,11 @@ Add names here after formation. New teammates: [docs/SETUP.md](docs/SETUP.md).
 
 ## Links
 
+- Sponsors & co-hosts: [SPONSORS.md](SPONSORS.md)
 - Paperclip docs: [paperclip.gxl.ai/docs](https://paperclip.gxl.ai/docs)
+- Pi: [pi.dev](https://pi.dev/) · [quickstart](https://pi.dev/docs/latest/quickstart)
 - Proto: [proto.evodesign.org](https://proto.evodesign.org)
-- Proto client: [github.com/evo-design/proto-client](https://github.com/evo-design/proto-client)
+- Proto tools: [github.com/evo-design/proto-tools](https://github.com/evo-design/proto-tools)
+- Proto language: [github.com/evo-design/proto-language](https://github.com/evo-design/proto-language)
+- Proto Modal: [docs/tools/modal-integration](https://proto.evodesign.org/docs/tools/modal-integration)
 - Claude Code: [code.claude.com/docs](https://code.claude.com/docs/en/quickstart)
