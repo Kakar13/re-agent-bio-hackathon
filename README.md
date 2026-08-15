@@ -11,6 +11,8 @@ You keep what you build. Open-source it, keep going, or spin it out.
 
 **Teammates:** open **[START_HERE.md](START_HERE.md)** first. Then [docs/SETUP.md](docs/SETUP.md) for the full walkthrough. Do not reuse someone else's `.env`.
 
+**Agent skills (Sundial):** [`skills/`](skills/) — start with [`skills/reagent/SKILL.md`](skills/reagent/SKILL.md), then Paperclip / Census / Proto / Boltz.
+
 **Sponsors & co-hosts (use them):** [SPONSORS.md](SPONSORS.md)
 
 ## Tracks

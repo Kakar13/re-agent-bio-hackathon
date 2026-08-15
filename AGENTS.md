@@ -17,10 +17,25 @@ If the user asks how to set up, clone, init, install tools, get keys, run checks
 
 Each teammate uses their own `.env` and Paperclip login. Never copy keys between laptops.
 
+## Skills (read before using a tool)
+
+Sundial re:AGENT skills live in [`skills/`](skills/). Read **`skills/reagent/SKILL.md` first** when scoping the weekend, then the matching tool skill before you run anything:
+
+| Skill | When |
+| --- | --- |
+| [`skills/reagent/`](skills/reagent/SKILL.md) | Track choice, judging bar, weekend plan |
+| [`skills/paperclip/`](skills/paperclip/SKILL.md) | Literature, FDA, trials, patents |
+| [`skills/cellxgene-census/`](skills/cellxgene-census/SKILL.md) | Single-cell / Census queries |
+| [`skills/proto/`](skills/proto/SKILL.md) | Structure, design, docking, bioinformatics tools |
+| [`skills/boltz/`](skills/boltz/SKILL.md) | Fold / affinity with Boltz-2 |
+
+Claude Code also loads them via `.claude/skills` → `skills/`. Follow each skill’s rules exactly (flags, gotchas, citation format).
+
 ## Tools to use
 
 - **Paperclip** — literature, FDA, trials, UniProt/PDB/ChEMBL. Prefer MCP via [pi-mcp-adapter](https://pi.dev/packages/pi-mcp-adapter) (`pi install npm:pi-mcp-adapter`) + project [`.mcp.json`](.mcp.json), or the CLI (`paperclip search|map|grep|sql|cat`). Do not download entire papers by hand.
 - **Proto** — two paths: (1) hosted MCP `proto-bio` in `.mcp.json` / Cursor (`PROTO_API_KEY` + `proto_client`); (2) local `proto-tools` / `proto-language` via `uv sync --extra proto`, run on Modal with `device="modal"` after `uv run modal setup` and deploy. Do not invent Modal tokens.
+- **CELLxGENE Census / Boltz** — no API key; follow the skills above for install and gotchas.
 - **Claude / Anthropic** — `ANTHROPIC_API_KEY` in `.env` (Pi can also `/login` for subscription providers).
 
 If a check fails, tell the user which booth / Discord channel to get the credential from (`SPONSORS.md`).
