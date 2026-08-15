@@ -9,6 +9,8 @@ Two-day build weekend for scientific agents: better datasets, sharper tools, and
 
 You keep what you build. Open-source it, keep going, or spin it out.
 
+**Teammates:** start at [docs/SETUP.md](docs/SETUP.md). Clone, run `./scripts/setup.sh`, log into Paperclip, put your own keys in `.env`. Do not reuse someone else's `.env`.
+
 ## Tracks
 
 | Track | What you demo |
@@ -33,7 +35,10 @@ Credits and access come from lightning talks + Discord. Do not commit keys.
 
 ## Quick start
 
+Full teammate walkthrough (clone → keys → Paperclip → Cursor MCP → verify): **[docs/SETUP.md](docs/SETUP.md)**
+
 ```bash
+git clone https://github.com/Kakar13/re-agent-bio-hackathon.git
 cd re-agent-bio-hackathon
 ./scripts/setup.sh
 ```
@@ -41,19 +46,21 @@ cd re-agent-bio-hackathon
 Then, in **your** terminal (these open a browser):
 
 ```bash
-# Paperclip CLI + agent skill
+# Paperclip CLI + agent skill — each person logs in as themselves
 curl -fsSL https://paperclip.gxl.ai/install.sh | bash
 paperclip login
 paperclip install
 
-# Keys from Discord / lightning talks
-cp .env.example .env   # if setup.sh did not already
+# Keys from Discord / lightning talks — your keys, not a teammate's
+# setup.sh already copied .env.example → .env
 # edit .env: ANTHROPIC_API_KEY, PROTO_API_KEY
 
 uv run python scripts/check_setup.py
 ```
 
 In Cursor: **Cmd+Shift+P → Tools & MCPs** → enable `paperclip`, authenticate. Proto uses `PROTO_API_KEY` from the environment via `.cursor/mcp.json`.
+
+Need write access? Ask Vikas ([@Kakar13](https://github.com/Kakar13)) to add you as a collaborator.
 
 ### Smoke the tools
 
@@ -62,8 +69,8 @@ paperclip search "CRISPR base editing efficiency" -n 5
 paperclip config
 
 # After PROTO_API_KEY is set
-uv pip install proto-client
-uv run python -c "from proto_client import ProtoClient; print(ProtoClient().whoami())"
+uv sync --extra proto
+uv run python -c "from proto_client import ProtoClient; print(ProtoClient())"
 ```
 
 ## Repo layout
@@ -100,7 +107,7 @@ Every paper is a directory: `/papers/<id>/meta.json`, `content.lines`, `sections
 
 - Vikas Kakar ([@Kakar13](https://github.com/Kakar13))
 
-Add teammates here after formation.
+Add names here after formation. New teammates: [docs/SETUP.md](docs/SETUP.md).
 
 ## Links
 

@@ -15,11 +15,14 @@ uv python pin 3.12
 uv sync
 
 echo
-echo "Next (run these in your own terminal — they open a browser):"
+echo "Python env is ready. Finish the rest yourself (opens a browser):"
+echo "  Full guide: docs/SETUP.md"
+echo
 echo "  1. curl -fsSL https://paperclip.gxl.ai/install.sh | bash"
 echo "  2. paperclip login && paperclip install"
-echo "  3. Fill PROTO_API_KEY and ANTHROPIC_API_KEY in .env"
-echo "  4. uv run python scripts/check_setup.py"
+echo "  3. Put YOUR keys in .env (ANTHROPIC_API_KEY, PROTO_API_KEY)"
+echo "     Do not copy a teammate's .env"
+echo "  4. Cursor: Cmd+Shift+P → Tools & MCPs → enable paperclip → authenticate"
+echo "  5. uv run python scripts/check_setup.py"
 echo
-echo "Cursor MCP: Paperclip + Proto are already in .cursor/mcp.json"
-echo "  Cmd+Shift+P → Tools & MCPs → enable paperclip, then authenticate"
+echo "Need push access? Ask Vikas (@Kakar13) to add you as a collaborator."

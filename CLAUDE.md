@@ -10,6 +10,8 @@ Hackathon repo for scientific agents. Weekend of Aug 15–16, 2026. Submission S
 
 Do not invent API keys. If a check fails, tell the user which booth / Discord channel to get the credential from.
 
+New teammates follow `docs/SETUP.md`. Each person uses their own `.env` and Paperclip login. Never copy keys between laptops.
+
 ## Working rules
 
 - Keep secrets in `.env` only. Never commit `.env`.
