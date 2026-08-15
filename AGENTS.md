@@ -1,8 +1,21 @@
-# re:AGENT — Pi project instructions
+# re:AGENT — Pi / coding-agent instructions
 
 Hackathon repo for scientific agents. Weekend of Aug 15–16, 2026. Submission Sunday 10:45 AM.
 
-We use the [Pi](https://pi.dev/) coding agent harness (`pi` in this directory). See [docs/SETUP.md](docs/SETUP.md).
+We use the [Pi](https://pi.dev/) coding agent harness (`pi` in this directory). Claude Code / Cursor also load this file or `CLAUDE.md` — keep both aligned.
+
+## First thing for humans (and for you)
+
+**Onboarding entry point is always [`START_HERE.md`](START_HERE.md).**
+
+If the user asks how to set up, clone, init, install tools, get keys, run checks, or “what do I do first”:
+
+1. Point them to **`START_HERE.md`** (read it; summarize the next 1–2 steps if helpful).
+2. For deeper troubleshooting, use **`docs/SETUP.md`**.
+3. For partners / credits / booths, use **`SPONSORS.md`**.
+4. Do **not** invent a parallel setup path. Do **not** invent API keys.
+
+Each teammate uses their own `.env` and Paperclip login. Never copy keys between laptops.
 
 ## Tools to use
 
@@ -10,9 +23,7 @@ We use the [Pi](https://pi.dev/) coding agent harness (`pi` in this directory). 
 - **Proto** — two paths: (1) hosted SDK `proto_client` with `PROTO_API_KEY`; (2) local `proto-tools` / `proto-language` via `uv sync --extra proto`, run on Modal with `device="modal"` after `uv run modal setup` and deploy. Do not invent Modal tokens.
 - **Claude / Anthropic** — `ANTHROPIC_API_KEY` in `.env` (Pi can also `/login` for subscription providers).
 
-Do not invent API keys. If a check fails, tell the user which booth / Discord channel to get the credential from. Full partner list: `SPONSORS.md`.
-
-New teammates: open `START_HERE.md`, then follow `docs/SETUP.md`. Each person uses their own `.env` and Paperclip login. Never copy keys between laptops.
+If a check fails, tell the user which booth / Discord channel to get the credential from (`SPONSORS.md`).
 
 ## Working rules
 

@@ -7,6 +7,8 @@ Welcome to **re:AGENT**. This repo is the shared project for the weekend.
 
 Each person sets up on their own laptop. **Do not copy someone else's `.env`.**
 
+Coding agents (Pi / Claude Code / Cursor): this file is the human onboarding path. Your project rules are in [`AGENTS.md`](AGENTS.md) and [`CLAUDE.md`](CLAUDE.md) — when someone asks how to init the repo, send them here.
+
 ---
 
 ## 1. Clone

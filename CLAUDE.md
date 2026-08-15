@@ -2,7 +2,20 @@
 
 Hackathon repo for scientific agents. Weekend of Aug 15–16, 2026. Submission Sunday 10:45 AM.
 
-Primary agent harness: **[Pi](https://pi.dev/)** (`pi` in this directory). Project instructions live in `AGENTS.md` (Pi loads `AGENTS.md` and this file). Keep them aligned.
+Primary agent harness: **[Pi](https://pi.dev/)** (`pi` in this directory). Project instructions also live in `AGENTS.md` (Pi loads both). **Keep `AGENTS.md` and this file aligned.**
+
+## First thing for humans (and for you)
+
+**Onboarding entry point is always [`START_HERE.md`](START_HERE.md).**
+
+If the user asks how to set up, clone, init, install tools, get keys, run checks, or “what do I do first”:
+
+1. Point them to **`START_HERE.md`** (read it; summarize the next 1–2 steps if helpful).
+2. For deeper troubleshooting, use **`docs/SETUP.md`**.
+3. For partners / credits / booths, use **`SPONSORS.md`**.
+4. Do **not** invent a parallel setup path. Do **not** invent API keys.
+
+Each teammate uses their own `.env` and Paperclip login. Never copy keys between laptops.
 
 ## Tools to use
 
@@ -10,9 +23,7 @@ Primary agent harness: **[Pi](https://pi.dev/)** (`pi` in this directory). Proje
 - **Proto** — two paths: (1) hosted MCP `proto-bio` at `https://mcp.evodesign.org/mcp` (`PROTO_API_KEY` + `proto_client`) when in Cursor; (2) local `proto-tools` / `proto-language` via `uv sync --extra proto`, run on Modal with `device="modal"` after `uv run modal setup` and deploy. Do not invent Modal tokens.
 - **Claude API** — `ANTHROPIC_API_KEY` in `.env` (also works for Pi auth).
 
-Do not invent API keys. If a check fails, tell the user which booth / Discord channel to get the credential from. Full partner list: `SPONSORS.md`.
-
-New teammates: open `START_HERE.md`, then follow `docs/SETUP.md`. Each person uses their own `.env` and Paperclip login. Never copy keys between laptops.
+If a check fails, tell the user which booth / Discord channel to get the credential from (`SPONSORS.md`).
 
 ## Working rules
 
@@ -21,6 +32,7 @@ New teammates: open `START_HERE.md`, then follow `docs/SETUP.md`. Each person us
 - Large artifacts (FASTA, PDB, paper dumps) go in `data/` or `results/` — those dirs are gitignored except `.gitkeep`.
 - Prefer inspectable structured outputs (JSON/CSV/Markdown tables) over chatty prose. Judges need to see the reasoning.
 - Paperclip workflow that works: `search` → `map` over the result id → `reduce` / synthesize. Do not download entire papers by hand.
+- After setup changes, run `uv run python scripts/check_setup.py`.
 
 ## Tracks (pick one and stay on it)
 
