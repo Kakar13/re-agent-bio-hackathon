@@ -326,10 +326,21 @@ def render() -> None:
         width="stretch",
     )
     w = protein_risk.max_risk_window
-    st.metric(
+    risk_cols = st.columns(3)
+    risk_cols[0].metric(
         "Highest-risk window",
         f"{w.peptide} @ {w.start}-{w.end}",
         f"risk={protein_risk.max_risk:.3f}",
+    )
+    risk_cols[1].metric(
+        "Confidence (that window)",
+        f"{protein_risk.max_risk_confidence:.3f}",
+        f"mean={protein_risk.mean_confidence:.3f}",
+    )
+    risk_cols[2].metric(
+        "Confidence breakdown",
+        f"TAP {w.confidence_tap:.2f} · MHC {w.confidence_mhc:.2f}",
+        f"context {w.confidence_context:.2f} · agree {w.confidence_agreement:.2f}",
     )
 
     st.subheader("Latent map")
@@ -372,6 +383,8 @@ def render() -> None:
         f"{trace.final_score['composite_risk']:.3f}",
         f"{trace.final_score['composite_risk'] - trace.initial_score['composite_risk']:.3f}",
     )
+    before.metric("Confidence before", f"{trace.initial_score.get('confidence', float('nan')):.3f}")
+    after.metric("Confidence after", f"{trace.final_score.get('confidence', float('nan')):.3f}")
 
     path_points = steering_path_points(trace, heads, client, pca2)
     st.plotly_chart(build_animated_path_figure(coords, risk_proxy, path_points), width="stretch")

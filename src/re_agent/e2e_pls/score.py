@@ -16,6 +16,10 @@ from re_agent.e2e_pls.model import ThreeHeadModel
 
 DEFAULT_PEPTIDE_LEN = 9
 DEFAULT_FLANK_LEN = 4
+# TAP bootstrap std of 1.0 log-IC50 unit maps to 0.5 tap-certainty.
+TAP_UNCERTAINTY_SCALE = 1.0
+# Max std of three values in [0, 1] is ~0.471 (e.g. 0, 0, 1).
+_HEAD_AGREEMENT_STD_MAX = float(np.std([0.0, 0.0, 1.0]))
 
 
 @dataclass
@@ -58,6 +62,11 @@ class PeptideScore:
     mhc_cosine_similarity: float
     mhc_presentation_propensity: float
     composite_risk: float
+    confidence: float
+    confidence_tap: float
+    confidence_mhc: float
+    confidence_context: float
+    confidence_agreement: float
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -79,6 +88,44 @@ def compute_peptide_risk(
     return float(np.exp(np.mean(np.log(components))))
 
 
+def compute_confidence(
+    tap_uncertainty: float,
+    mhc_presentation_propensity: float,
+    cleave_n_prob: float,
+    cleave_c_prob: float,
+    n_flank: str = "",
+    c_flank: str = "",
+    flank_len: int = DEFAULT_FLANK_LEN,
+    tap_uncertainty_scale: float = TAP_UNCERTAINTY_SCALE,
+) -> dict[str, float]:
+    """Decomposed [0, 1] confidence for one window. Not a calibrated coverage
+    probability -- four measurable sources, geometrically averaged:
+
+    - tap: bootstrap std of the TAP ridge (lower std -> higher certainty)
+    - mhc: how far presentation propensity sits from the 0.5 decision boundary
+    - context: fraction of expected N/C flank residues present
+    - agreement: how tightly the three probability heads cluster
+    """
+    tap = 1.0 / (1.0 + max(float(tap_uncertainty), 0.0) / tap_uncertainty_scale)
+    mhc = float(np.clip(2.0 * abs(mhc_presentation_propensity - 0.5), 0.0, 1.0))
+    context = 0.5 * (
+        min(len(n_flank), flank_len) / flank_len + min(len(c_flank), flank_len) / flank_len
+    )
+    probs = np.clip([cleave_n_prob, cleave_c_prob, mhc_presentation_propensity], 0.0, 1.0)
+    agreement = float(
+        np.clip(1.0 - np.std(probs) / _HEAD_AGREEMENT_STD_MAX, 0.0, 1.0)
+    )
+    parts = np.clip([tap, mhc, context, agreement], 1e-6, 1.0)
+    score = float(np.exp(np.mean(np.log(parts))))
+    return {
+        "confidence": score,
+        "confidence_tap": float(tap),
+        "confidence_mhc": mhc,
+        "confidence_context": float(context),
+        "confidence_agreement": agreement,
+    }
+
+
 def score_window(
     window: Window, hla_allele: str, esm_client: ProteinEncoder, heads: ThreeHeadModel
 ) -> PeptideScore:
@@ -93,6 +140,14 @@ def score_window(
     risk = compute_peptide_risk(
         float(cleave_n[0]), float(cleave_c[0]), mhc["presentation_propensity"]
     )
+    conf = compute_confidence(
+        tap_uncertainty=float(tap_std[0]),
+        mhc_presentation_propensity=mhc["presentation_propensity"],
+        cleave_n_prob=float(cleave_n[0]),
+        cleave_c_prob=float(cleave_c[0]),
+        n_flank=window.n_flank,
+        c_flank=window.c_flank,
+    )
     return PeptideScore(
         peptide=window.peptide,
         start=window.start,
@@ -104,6 +159,7 @@ def score_window(
         mhc_cosine_similarity=mhc["cosine_similarity"],
         mhc_presentation_propensity=mhc["presentation_propensity"],
         composite_risk=risk,
+        **conf,
     )
 
 
@@ -128,6 +184,8 @@ class ProteinRisk:
     max_risk: float
     max_risk_window: PeptideScore | None
     count_above_threshold: int
+    mean_confidence: float
+    max_risk_confidence: float
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -139,16 +197,19 @@ def aggregate_protein_risk(
     scores: list[PeptideScore], top_k: int = 5, threshold: float = 0.5
 ) -> ProteinRisk:
     if not scores:
-        return ProteinRisk(0, top_k, threshold, 0.0, 0.0, None, 0)
+        return ProteinRisk(0, top_k, threshold, 0.0, 0.0, None, 0, 0.0, 0.0)
     risks = np.array([s.composite_risk for s in scores])
     order = np.argsort(-risks)
     top_k_risks = risks[order[:top_k]]
+    max_window = scores[order[0]]
     return ProteinRisk(
         n_windows=len(scores),
         top_k=top_k,
         threshold=threshold,
         top_k_mean_risk=float(top_k_risks.mean()),
         max_risk=float(risks[order[0]]),
-        max_risk_window=scores[order[0]],
+        max_risk_window=max_window,
         count_above_threshold=int((risks >= threshold).sum()),
+        mean_confidence=float(np.mean([s.confidence for s in scores])),
+        max_risk_confidence=max_window.confidence,
     )

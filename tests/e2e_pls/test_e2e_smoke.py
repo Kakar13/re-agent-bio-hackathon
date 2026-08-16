@@ -35,6 +35,8 @@ def test_full_pipeline_smoke_and_runtime_budget(trained_heads, mock_client):
 
     assert len(scores) == len(DEMO_SEQ) - 9 + 1
     assert all(0 <= s.composite_risk <= 1 for s in scores)
+    assert all(0 <= s.confidence <= 1 for s in scores)
+    assert 0 <= risk.max_risk_confidence <= 1
     assert len(trace.mutations) <= 3
     assert (
         trace.output_sequence[: trace.target_window_start]
