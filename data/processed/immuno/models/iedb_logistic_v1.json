@@ -1,0 +1,35 @@
+{
+  "model": {
+    "type": "logistic_risk_v1",
+    "weights": [
+      0.24250741250244565,
+      -0.3850522560136608,
+      -0.011810114562769924,
+      0.18071601344406035,
+      -0.2679512184041058,
+      0.31096500056444193,
+      0.32670688118235586,
+      0.1114985035629412,
+      -0.01932564201180532
+    ],
+    "bias": -0.022586886052903328,
+    "temperature": 0.5,
+    "feature_names": [
+      "log10_affinity",
+      "presentation",
+      "processing",
+      "percentile_frac",
+      "hydrophobic_fraction",
+      "charge_proxy",
+      "aromatic_fraction",
+      "cysteine_fraction",
+      "length_frac"
+    ]
+  },
+  "n_train": 6,
+  "n_val": 1,
+  "n_test": 1,
+  "n_overlap_flagged": 4,
+  "split": "grouped_by_reference_and_source_protein",
+  "label_rule": "explicit IEDB qualitative T-cell outcomes only"
+}

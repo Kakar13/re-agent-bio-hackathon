@@ -1,16 +1,23 @@
----
-description: Start or continue the late-stage immuno-risk pipeline (cleavage → MHC → risk)
-argument-hint: "[focus note]"
----
-We are running the **last stage** of the de novo binder project for re:AGENT — not backbone/MPNN design.
+# Late-stage immuno-risk (Track C)
 
-Pipeline: **sequence (+ structure) → accessibility features → cleavage vs ~10 catalytic sites → peptide pool → MHC I (priority) / MHC II (optional) → tolerance (HLA ligand / self refs) → risk score**. Optional Boltz/AF check that flagged peptides can engage the recognition complex.
+Read [`../TASK.md`](../TASK.md) and [`../../docs/IMMUNO_RISK_DESIGN.md`](../../docs/IMMUNO_RISK_DESIGN.md).
 
-1. Read `TASK.md` in this harness folder and follow it.
-2. Read `../skills/reagent/SKILL.md`, then `../skills/paperclip/SKILL.md`, and Proto/Boltz skills only as needed for structure or complex checks.
-3. Use the **custom immuno-risk tools** (registered by the harness extension): `list_catalytic_sites`, `structure_features`, `predict_cleavage`, `score_mhc`, `check_tolerance`, `score_immuno_risk`, or end-to-end `run_immuno_pipeline`. MHC and tolerance are stubs until real predictors/Atlas are wired — say so in outputs.
-4. Work from the **repo root** (`..`): durable code in `../src/re_agent/`, artifacts in `../results/immuno_risk/`.
-5. Every claim cited (Paperclip) or measured (tool JSON + versions/paths). Naturals can have holdout ground truth; de novo does not — report uncertainty.
-6. Prefer MCP (`/mcp`) or CLI; do not download whole papers by hand.
+## Mission
 
-Focus for this turn: ${@:-Run run_immuno_pipeline on a short natural control sequence and inspect results/immuno_risk/.}
+Screen de novo / natural candidates for **intracellular / plasmid delivery**:
+
+1. **MHC-I full** — MHCflurry presentation + calibrated IEDB risk head (± optional NetMHCpan-4.2e)
+2. **MHC-II thin** — presentation only (HLAIIPred / heuristic; ± NetMHCIIpan-4.3k)
+3. **Atlas tolerance evidence** — separate from presentation
+4. **Aggregation report** — separate score; do not infer from protease accessibility
+5. **Artifacts + LangSmith** — judges must re-run and inspect
+6. **Benchling** — pull candidates / publish run summaries when credentials exist
+
+## Working rules
+
+- Prefer `run_immuno_pipeline` for end-to-end; cite predictor versions and caveats.
+- Never claim clinical immunogenicity probability or ADA from MHC-II ranks.
+- Cleavage tools are diagnostic; MHC-I peptide ranking comes from MHCflurry.
+- Benchling publish is an explicit external action (`dry_run` first).
+- Fail closed / document gaps; do not invent API keys or silently reintroduce stubs.
+- Ask before git commits.

@@ -41,8 +41,9 @@ Edit `.env`:
 | `ANTHROPIC_API_KEY` | Anthropic booth / Discord / lightning talks |
 | `PROTO_API_KEY` | Proto workspace (Arc Institute) |
 | `LANGSMITH_API_KEY` | [LangSmith](https://docs.langchain.com/langsmith/create-account-api-key) — also set `LANGSMITH_TRACING=true` and `LANGSMITH_PROJECT=reAgent-hackathon` |
+| `BENCHLING_TENANT_URL` / `BENCHLING_API_KEY` | Benchling booth / Discord — also set `BENCHLING_FOLDER_ID` for publish |
 
-Optional later: `HF_TOKEN`, Modal via `uv run modal setup` (not required for first boot).
+Optional later: `HF_TOKEN`, Modal via `uv run modal setup`, MHCflurry via `uv sync --extra immuno` (not required for first boot; set `IMMUNO_ALLOW_HEURISTIC_MHC=1` for offline demo).
 
 Full partner list: [SPONSORS.md](SPONSORS.md)
 
@@ -110,7 +111,8 @@ git push -u origin HEAD
 | Doc | Purpose |
 | --- | --- |
 | [harness/README.md](harness/README.md) | Pi harness launch for the de novo task |
-| [harness/TASK.md](harness/TASK.md) | De novo design brief (fill this in) |
+| [harness/TASK.md](harness/TASK.md) | Late immuno-risk brief (MHC-I MVP locked) |
+| [docs/IMMUNO_RISK_DESIGN.md](docs/IMMUNO_RISK_DESIGN.md) | Score semantics, NetMHCpan findings, eval |
 | [skills/reagent/SKILL.md](skills/reagent/SKILL.md) | Track pick + how to win (read first) |
 | [skills/](skills/) | Tool skills: Paperclip, Census, Proto, Boltz |
 | [docs/SETUP.md](docs/SETUP.md) | Full teammate setup (troubleshooting, Cursor MCP, etc.) |

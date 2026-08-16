@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Immuno pathway — evolution</title>
+  <style>
+    :root {
+      --bg: #f3f1ec;
+      --card: #faf9f6;
+      --ink: #1c1b19;
+      --muted: #6b6860;
+      --line: #c9c4ba;
+      --accent: #2a6f6a;
+      --bind: #3d5a73;
+      --react: #a67c2d;
+      --risk: #2a6f6a;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    }
+
+    .stage {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 48px 40px 32px;
+      gap: 36px;
+    }
+
+    header {
+      text-align: center;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    header h1 {
+      margin: 0 0 8px;
+      font-size: clamp(22px, 3vw, 34px);
+      font-weight: 650;
+      letter-spacing: -0.02em;
+    }
+    header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(14px, 1.6vw, 18px);
+    }
+
+    .narration {
+      text-align: center;
+      min-height: 2.4em;
+      font-size: clamp(16px, 2vw, 22px);
+      color: var(--ink);
+      font-weight: 500;
+      transition: opacity 0.35s ease;
+    }
+    .narration.dim { opacity: 0.35; }
+
+    .track {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(8px, 1.2vw, 18px);
+      flex-wrap: nowrap;
+      max-width: 1180px;
+      margin: 0 auto;
+      width: 100%;
+      overflow: hidden;
+      padding: 12px 0 28px;
+    }
+
+    .rail {
+      position: absolute;
+      left: 6%;
+      right: 6%;
+      top: 50%;
+      height: 3px;
+      background: var(--line);
+      transform: translateY(-50%);
+      z-index: 0;
+      overflow: hidden;
+    }
+    .rail-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      transition: width 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .step {
+      position: relative;
+      z-index: 1;
+      flex: 1 1 0;
+      max-width: 160px;
+      min-width: 96px;
+      background: var(--card);
+      border: 2px solid var(--line);
+      border-radius: 14px;
+      padding: 16px 12px;
+      text-align: center;
+      opacity: 0.22;
+      transform: translateY(12px) scale(0.96);
+      transition:
+        opacity 0.45s ease,
+        transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+        border-color 0.35s ease,
+        background 0.35s ease;
+    }
+    .step.on {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    .step.current {
+      border-color: var(--accent);
+      background: #fff;
+      transform: translateY(0) scale(1.04);
+    }
+    .step.past {
+      border-color: #9eb8b5;
+    }
+
+    .step[data-i="2"].current,
+    .step[data-i="3"].current { border-color: var(--bind); }
+    .step[data-i="4"].current { border-color: var(--react); }
+    .step[data-i="5"].current { border-color: var(--risk); }
+
+    .num {
+      display: block;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .title {
+      display: block;
+      font-size: clamp(13px, 1.5vw, 17px);
+      font-weight: 650;
+      margin-bottom: 4px;
+    }
+    .sub {
+      display: block;
+      font-size: clamp(11px, 1.2vw, 13px);
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    /* Particle / peptide traveling along the path */
+    .peptide {
+      position: absolute;
+      top: 50%;
+      left: 6%;
+      width: 14px;
+      height: 14px;
+      margin-top: -7px;
+      margin-left: -7px;
+      border-radius: 50%;
+      background: var(--accent);
+      z-index: 2;
+      opacity: 0;
+      transition: left 0.55s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+      box-shadow: 0 0 0 4px rgba(42, 111, 106, 0.15);
+    }
+    .peptide.visible { opacity: 1; }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 10px 18px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 550;
+      cursor: pointer;
+    }
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    button:hover { filter: brightness(0.97); }
+    .hint {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    kbd {
+      font-family: inherit;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 1px 6px;
+      background: #fff;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <header>
+      <h1>From de novo binder to immuno-risk</h1>
+      <p>Watch one peptide evolve through the antigen-presentation chain</p>
+    </header>
+
+    <div class="narration" id="narration">Press Play to start</div>
+
+    <div class="track" id="track">
+      <div class="rail"><div class="rail-fill" id="railFill"></div></div>
+      <div class="peptide" id="peptide"></div>
+
+      <div class="step" data-i="0">
+        <span class="num">Step 1</span>
+        <span class="title">Protein</span>
+        <span class="sub">Your de novo binder</span>
+      </div>
+      <div class="step" data-i="1">
+        <span class="num">Step 2</span>
+        <span class="title">Cut up</span>
+        <span class="sub">Proteasome / proteases</span>
+      </div>
+      <div class="step" data-i="2">
+        <span class="num">Step 3</span>
+        <span class="title">Bind MHC</span>
+        <span class="sub">Peptide fits the groove</span>
+      </div>
+      <div class="step" data-i="3">
+        <span class="num">Step 4</span>
+        <span class="title">Display</span>
+        <span class="sub">Shown on cell surface</span>
+      </div>
+      <div class="step" data-i="4">
+        <span class="num">Step 5</span>
+        <span class="title">T-cell?</span>
+        <span class="sub">Immune system reacts</span>
+      </div>
+      <div class="step" data-i="5">
+        <span class="num">Step 6</span>
+        <span class="title">Risk</span>
+        <span class="sub">What we want to score</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="primary" id="playBtn">Play</button>
+      <button id="stepBtn">Next step</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+    <p class="hint">Space = play/pause · → = next · R = reset · good for projector</p>
+  </div>
+
+  <script>
+    const STEPS = [
+      {
+        title: "1. Protein",
+        line: "Start with your de novo binder sequence — a designed protein the immune system has never seen.",
+      },
+      {
+        title: "2. Cut up",
+        line: "Inside the cell, proteasomes (and other proteases) chop the protein into short peptide fragments.",
+      },
+      {
+        title: "3. Bind MHC",
+        line: "Some fragments fit an MHC groove. This is presentation chemistry — not yet an immune attack.",
+      },
+      {
+        title: "4. Display",
+        line: "The peptide–MHC complex is shown on the cell surface, where immune cells can inspect it.",
+      },
+      {
+        title: "5. T-cell?",
+        line: "A T cell may ignore it (self-like / tolerated) or react. This is the immunogenicity question.",
+      },
+      {
+        title: "6. Risk",
+        line: "Our score ranks that risk from presentation + T-cell evidence + self checks — for design de-risking.",
+      },
+    ];
+
+    const stepsEl = [...document.querySelectorAll(".step")];
+    const railFill = document.getElementById("railFill");
+    const peptide = document.getElementById("peptide");
+    const narration = document.getElementById("narration");
+    const playBtn = document.getElementById("playBtn");
+
+    let index = -1;
+    let playing = false;
+    let timer = null;
+    const INTERVAL_MS = 2200;
+
+    function peptideLeftFor(i) {
+      if (i < 0) return "6%";
+      const el = stepsEl[i];
+      const track = document.getElementById("track");
+      const tr = track.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      const pct = ((r.left + r.width / 2 - tr.left) / tr.width) * 100;
+      return pct + "%";
+    }
+
+    function render() {
+      stepsEl.forEach((el, i) => {
+        el.classList.toggle("on", i <= index);
+        el.classList.toggle("past", i < index);
+        el.classList.toggle("current", i === index);
+      });
+      const frac = index < 0 ? 0 : ((index + 1) / STEPS.length) * 100;
+      railFill.style.width = frac + "%";
+      peptide.classList.toggle("visible", index >= 0);
+      peptide.style.left = peptideLeftFor(Math.max(index, 0));
+      if (index < 0) {
+        narration.textContent = "Press Play to start";
+      } else {
+        narration.textContent = STEPS[index].line;
+      }
+      playBtn.textContent = playing ? "Pause" : index >= STEPS.length - 1 && !playing ? "Replay" : "Play";
+    }
+
+    function goTo(i) {
+      index = Math.max(-1, Math.min(STEPS.length - 1, i));
+      if (index >= STEPS.length - 1) stop();
+      render();
+    }
+
+    function next() {
+      if (index >= STEPS.length - 1) {
+        goTo(0);
+        return;
+      }
+      goTo(index + 1);
+    }
+
+    function stop() {
+      playing = false;
+      if (timer) clearInterval(timer);
+      timer = null;
+      playBtn.textContent = index >= STEPS.length - 1 ? "Replay" : "Play";
+    }
+
+    function play() {
+      if (index >= STEPS.length - 1) goTo(-1);
+      playing = true;
+      playBtn.textContent = "Pause";
+      if (index < 0) next();
+      timer = setInterval(() => {
+        if (index >= STEPS.length - 1) {
+          stop();
+          render();
+          return;
+        }
+        next();
+      }, INTERVAL_MS);
+    }
+
+    function toggle() {
+      if (playing) stop();
+      else play();
+      render();
+    }
+
+    playBtn.addEventListener("click", toggle);
+    document.getElementById("stepBtn").addEventListener("click", () => {
+      stop();
+      next();
+    });
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      stop();
+      goTo(-1);
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        toggle();
+      } else if (e.code === "ArrowRight") {
+        stop();
+        next();
+      } else if (e.key === "r" || e.key === "R") {
+        stop();
+        goTo(-1);
+      }
+    });
+
+    window.addEventListener("resize", render);
+    render();
+  </script>
+</body>
+</html>

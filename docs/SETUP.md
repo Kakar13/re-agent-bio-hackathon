@@ -67,8 +67,11 @@ Open `.env` and add **your** keys. Leave a line blank if you do not have that to
 | --- | --- | --- |
 | `ANTHROPIC_API_KEY` | Anthropic booth / Discord / lightning talks | Claude API calls in code |
 | `PROTO_API_KEY` | Proto workspace (Arc Institute) | Hosted Proto MCP + `proto-client` SDK |
+| `LANGSMITH_API_KEY` | LangSmith account | Pi session traces |
+| `BENCHLING_TENANT_URL` / `BENCHLING_API_KEY` / `BENCHLING_FOLDER_ID` | Benchling booth / Discord | Candidate pull + run publish |
 | `HF_TOKEN` | huggingface.co → Settings → Access Tokens | Gated models only (ESM3, AlphaFold3, AlphaGenome) |
 | `MODAL_TOKEN_ID` / `MODAL_TOKEN_SECRET` | Optional fallback | Prefer `uv run modal setup` (writes `~/.modal.toml`) |
+| `NETMHCPAN_BIN` / `NETMHCIIPAN_BIN` | DTU academic download (optional) | Licensed NetMHC\* comparators |
 
 Rules:
 
@@ -322,6 +325,20 @@ Run `uv run modal setup` again. Claim $100 re:AGENT credits day-of. See [Modal i
 
 **Python 3.14 on PATH**  
 Ignore it. The repo pins 3.12 via `.python-version`. Always use `uv run ...`, not system `python3`.
+
+## Immuno-risk (Track C late stage)
+
+```bash
+uv sync --extra immuno
+# mhcflurry-downloads fetch models_class1_presentation   # real MHC-I
+export IMMUNO_ALLOW_HEURISTIC_MHC=1                      # offline demo only
+uv run python -m re_agent.immuno_risk.cli ensure-fixtures
+uv run python -m re_agent.immuno_risk.cli train
+uv run python -m re_agent.immuno_risk.cli run --fasta data/raw/immuno_tests/insulin_human.fasta
+uv run pytest tests/test_immuno_risk.py -q
+```
+
+Design: [IMMUNO_RISK_DESIGN.md](IMMUNO_RISK_DESIGN.md). Benchling dry-run: `uv run python -m re_agent.immuno_risk.cli benchling-pull --dry-run`.
 
 **Need help**  
 Partner teams are on-site and in Discord all weekend. Also: https://paperclip.gxl.ai/docs and https://proto.evodesign.org

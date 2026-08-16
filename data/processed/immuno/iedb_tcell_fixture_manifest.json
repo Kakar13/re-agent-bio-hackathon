@@ -1,0 +1,11 @@
+{
+  "name": "iedb_tcell_fixture",
+  "source_url": "fixture://local",
+  "query": "hand-curated MHC-I T-cell assays for tests",
+  "release": "fixture-v1",
+  "timestamp": "2026-08-16T00:05:28.836027+00:00",
+  "license": "Synthetic fixture for CI; not redistributed IEDB bulk data",
+  "path": "data/processed/immuno/fixtures/iedb_tcell_fixture.csv",
+  "row_count": 8,
+  "checksum_sha256": "8bd16d6bc31f971f60e28cae422cb80a90ca26a2c4b471e310c93798175d514e"
+}

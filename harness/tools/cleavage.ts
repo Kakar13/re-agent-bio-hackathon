@@ -1,22 +1,45 @@
 import { getCatalyticSites } from "./catalytic-sites.ts";
 import type { CatalyticSite, CleavageEvent } from "./types.ts";
 
+function aaAt(seq: string, i: number): string {
+  if (i < 0 || i >= seq.length) return "";
+  return seq[i]!;
+}
+
+function subsiteOk(preferred: string[] | undefined, aa: string): boolean {
+  if (!preferred?.length) return true;
+  return Boolean(aa) && preferred.includes(aa);
+}
+
 function pushCut(
   out: CleavageEvent[],
   site: CatalyticSite,
   seq: string,
   p1Index: number,
+  score = 1.0,
 ): void {
   if (p1Index < 0 || p1Index >= seq.length - 1) return;
   const p1 = seq[p1Index]!;
   const p1Prime = seq[p1Index + 1]!;
   if (site.blockedP1Prime?.includes(p1Prime)) return;
+  if (site.p1Prime?.length && !subsiteOk(site.p1Prime, p1Prime)) return;
+  const p2 = aaAt(seq, p1Index - 1);
+  const p3 = aaAt(seq, p1Index - 2);
+  if (site.p2?.length && !subsiteOk(site.p2, p2)) return;
+  if (site.p3?.length && !subsiteOk(site.p3, p3)) return;
+  let s = score;
+  if (site.p2?.length && site.p2.includes(p2)) s += 0.25;
+  if (site.p3?.length && site.p3.includes(p3)) s += 0.1;
   out.push({
     siteId: site.id,
     siteName: site.name,
+    proteaseClass: site.proteaseClass,
     position: p1Index,
     p1,
     p1Prime,
+    p2,
+    p3,
+    score: Math.round(s * 1000) / 1000,
     nTerminalProduct: seq.slice(0, p1Index + 1),
     cTerminalProduct: seq.slice(p1Index + 1),
   });
@@ -37,18 +60,41 @@ function matchMmp(seq: string, site: CatalyticSite, out: CleavageEvent[]): void 
   }
 }
 
+function matchCtsbDipeptidyl(seq: string, site: CatalyticSite, out: CleavageEvent[]): void {
+  if (seq.length < 4) return;
+  const p1Index = seq.length - 2;
+  out.push({
+    siteId: site.id,
+    siteName: site.name,
+    proteaseClass: site.proteaseClass,
+    position: p1Index,
+    p1: seq[p1Index]!,
+    p1Prime: seq[p1Index + 1]!,
+    p2: aaAt(seq, p1Index - 1),
+    p3: aaAt(seq, p1Index - 2),
+    score: 0.8,
+    nTerminalProduct: seq.slice(0, p1Index + 1),
+    cTerminalProduct: seq.slice(p1Index + 1),
+  });
+}
+
 /** Predict cleavage events against the curated catalytic-site catalog. */
 export function predictCleavage(sequence: string, siteIds?: string[]): CleavageEvent[] {
   const sites = getCatalyticSites(siteIds);
   const out: CleavageEvent[] = [];
 
   for (const site of sites) {
-    if (site.id === "furin_rxkr") {
+    const pattern = site.pattern ?? (site.id === "furin_rxkr" ? "furin" : site.id === "mmp_gp" ? "mmp" : "");
+    if (pattern === "furin" || site.id === "furin_rxkr") {
       matchFurin(sequence, site, out);
       continue;
     }
-    if (site.id === "mmp_gp") {
+    if (pattern === "mmp" || site.id === "mmp_gp") {
       matchMmp(sequence, site, out);
+      continue;
+    }
+    if (pattern === "ctsb_dipeptidyl") {
+      matchCtsbDipeptidyl(sequence, site, out);
       continue;
     }
     if (!site.p1.length) continue;

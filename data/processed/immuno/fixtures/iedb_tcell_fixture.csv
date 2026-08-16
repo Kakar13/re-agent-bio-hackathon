@@ -1,0 +1,9 @@
+peptide,allele,assay_type,qualitative_outcome,source_protein,reference_id,publication_year
+GILGFVFTL,HLA-A*02:01,tcell,Positive,Influenza M1,PMID:fixture-flu,1991
+NLVPMVATV,HLA-A*02:01,tcell,Positive,CMV pp65,PMID:fixture-cmv,1995
+AAAAAAAAA,HLA-A*02:01,tcell,Negative,Synthetic,PMID:fixture-neg1,2020
+GGGGGGGGG,HLA-A*02:01,tcell,Negative,Synthetic,PMID:fixture-neg2,2021
+KTGGPIYKR,HLA-A*03:01,tcell,Positive,Influenza NP,PMID:fixture-np,1993
+ILKEPVHGV,HLA-A*02:01,tcell,Positive,HIV RT,PMID:fixture-hiv,1996
+SLLMWITQC,HLA-A*02:01,tcell,Positive,NY-ESO-1,PMID:fixture-nyeso,2000
+YMDGTMSQV,HLA-A*02:01,tcell,Positive,Tyrosinase,PMID:fixture-tyr,1995

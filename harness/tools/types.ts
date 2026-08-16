@@ -1,24 +1,33 @@
-/** Shared types for immuno-risk Pi tools (late-stage de novo pipeline). */
+/** Shared types for immuno-risk Pi tools (evidence-backed dual-arm pipeline). */
 
 export interface CatalyticSite {
   id: string;
   name: string;
   proteaseClass: string;
-  /** One-letter motif description for humans / judges. */
   motif: string;
-  /** Residues after which cleavage is preferred (P1). Empty = custom rule. */
   p1: string[];
-  /** Optional residues blocked at P1'. */
+  /** Preferred residues at P2 (N-terminal of P1). Empty = unrestricted. */
+  p2?: string[];
+  /** Preferred residues at P3. Empty = unrestricted. */
+  p3?: string[];
+  /** Preferred residues at P1'. Empty = unrestricted. */
+  p1Prime?: string[];
   blockedP1Prime?: string[];
   notes?: string;
+  /** Special pattern: furin | mmp | ctsb_dipeptidyl */
+  pattern?: string;
 }
 
 export interface CleavageEvent {
   siteId: string;
   siteName: string;
-  position: number; // 0-based index of P1 residue
+  proteaseClass?: string;
+  position: number;
   p1: string;
   p1Prime: string;
+  p2?: string;
+  p3?: string;
+  score?: number;
   nTerminalProduct: string;
   cTerminalProduct: string;
 }
@@ -26,7 +35,6 @@ export interface CleavageEvent {
 export interface StructureFeatures {
   sequenceId: string;
   length: number;
-  /** Mean relative solvent accessibility proxy in [0,1] (heuristic until real RSA). */
   meanRsaProxy: number;
   disorderFractionProxy: number;
   longLoopCountProxy: number;
@@ -41,11 +49,19 @@ export interface MhcHit {
   allele: string;
   mhcClass: "I" | "II";
   length: number;
-  /** Stub rank percentile (lower = stronger binder). Not NetMHCpan. */
-  rankPctStub: number;
-  binderStub: boolean;
+  start?: number | null;
+  end?: number | null;
+  affinityNm?: number | null;
+  presentationScore?: number | null;
+  processingScore?: number | null;
+  percentileRank?: number | null;
+  binder: boolean;
   method: string;
+  version?: string | null;
   caveat: string;
+  /** @deprecated stub field — prefer percentileRank */
+  rankPctStub?: number;
+  binderStub?: boolean;
 }
 
 export interface ToleranceHit {
@@ -53,8 +69,32 @@ export interface ToleranceHit {
   nearestSelf: string | null;
   identity: number;
   status: "self_like" | "foreign_like" | "unknown";
+  atlasHit?: boolean;
   method: string;
   caveat: string;
+}
+
+export interface AggregationReport {
+  sequenceId: string;
+  overall: "low" | "moderate" | "high";
+  score0to100: number;
+  factors: Array<{ name: string; contribution: number; note: string }>;
+  method: string;
+  caveat: string;
+}
+
+export interface ConfidenceReport {
+  score0to1: number;
+  factors: Array<{ name: string; contribution: number }>;
+  method: string;
+}
+
+export interface ResidueRisk {
+  position: number;
+  residue: string;
+  risk: number;
+  peptideCount: number;
+  peptides: string[];
 }
 
 export interface RiskBreakdown {
@@ -65,16 +105,26 @@ export interface RiskBreakdown {
   peptidesFlagged: string[];
   method: string;
   caveat: string;
+  mhcI?: { binderCount: number; baselineScore?: number | null; iedbRiskScore?: number | null };
+  mhcII?: { binderCount: number };
 }
 
 export interface PipelineResult {
+  runId?: string;
   sequenceId: string;
   sequence: string;
-  features: StructureFeatures;
-  cleavages: CleavageEvent[];
-  peptides: string[];
+  deliveryMode?: string;
+  features?: StructureFeatures;
+  cleavages?: CleavageEvent[];
+  peptides: string[] | unknown[];
   mhc: MhcHit[];
   tolerance: ToleranceHit[];
   risk: RiskBreakdown;
+  confidence?: ConfidenceReport;
+  aggregation?: AggregationReport;
+  residueRisk?: ResidueRisk[];
+  predictorVersions?: Record<string, string>;
+  caveats?: string[];
+  artifactDir?: string;
   writtenPath?: string;
 }

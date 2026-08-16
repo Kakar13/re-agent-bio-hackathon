@@ -4,32 +4,42 @@
  */
 import { createImmunoRiskTools } from "../pi-tools.ts";
 import { runImmunoPipeline, defaultResultsDir } from "../tools/pipeline.ts";
-import { resolve } from "node:path";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const here = dirname(fileURLToPath(import.meta.url));
 
 const DEMO =
   ">demo_natural\n" +
   "MKTAYIAKQRQISFVKSHFSRQLEERLGLIEVQAPILSRVGDGTQDNLSGAEKAVQVKVKALPDAQFEVVHSLAKWKRQTLGQHDFSAGEGDPDVLT";
 
 async function main() {
-  const tools = createImmunoRiskTools({ repoRoot: resolve(import.meta.dirname, "../..") });
+  const root = resolve(here, "../..");
+  const tools = createImmunoRiskTools({ repoRoot: root });
   console.log(
     "tools:",
     tools.map((t) => t.name).join(", "),
   );
 
-  const root = resolve(import.meta.dirname, "../..");
+  process.env.IMMUNO_ALLOW_HEURISTIC_MHC ??= "1";
   const result = runImmunoPipeline(DEMO, {
     writeDir: defaultResultsDir(root),
     mhcClass: "I",
+    repoRoot: root,
   });
   console.log(
     JSON.stringify(
       {
         sequenceId: result.sequenceId,
-        cleavages: result.cleavages.length,
-        peptides: result.peptides.length,
-        mhcBinders: result.mhc.filter((h) => h.binderStub).length,
-        risk: result.risk,
+        runId: result.runId,
+        cleavages: result.cleavages?.length ?? 0,
+        peptides: Array.isArray(result.peptides) ? result.peptides.length : 0,
+        mhcBinders: result.mhc.filter((h) => h.binder || h.binderStub).length,
+        risk: result.risk.overall,
+        score: result.risk.score0to100,
+        confidence: result.confidence?.score0to1,
+        aggregation: result.aggregation?.overall,
+        artifactDir: result.artifactDir,
         writtenPath: result.writtenPath,
       },
       null,

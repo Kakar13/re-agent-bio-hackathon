@@ -1,8 +1,9 @@
 import type { CatalyticSite } from "./types.ts";
 
 /**
- * Starter catalog (~10 characterized sites). Motifs are simplified for a weekend demo;
- * replace with Mark's curated set + literature citations when ready.
+ * Catalytic-site catalog — keep in sync with
+ * ``src/re_agent/immuno_risk/cleavage.py`` (Python is source of truth for cohort scans).
+ * Motifs are simplified for weekend demo; cathepsin rules are P2-driven.
  */
 export const DEFAULT_CATALYTIC_SITES: CatalyticSite[] = [
   {
@@ -36,6 +37,7 @@ export const DEFAULT_CATALYTIC_SITES: CatalyticSite[] = [
     proteaseClass: "serine",
     motif: "R-X-[KR]-R↓",
     p1: [],
+    pattern: "furin",
     notes: "Handled by dedicated pattern matcher, not plain P1 list.",
   },
   {
@@ -74,15 +76,82 @@ export const DEFAULT_CATALYTIC_SITES: CatalyticSite[] = [
     proteaseClass: "metallo",
     motif: "P1–P1' ≈ G-P / P-X (simplified GP motif scan)",
     p1: [],
-    notes: "Pattern: GP or PX soft sites via custom rule.",
+    pattern: "mmp",
+    notes: "Pattern: GP soft sites via custom rule.",
   },
   {
     id: "legumain_n",
-    name: "Legumain-like (N)",
+    name: "Legumain / AEP (N)",
     proteaseClass: "cysteine",
-    motif: "P1 = N",
+    motif: "P1 = N; prefer non-Pro P1'",
     p1: ["N"],
-    notes: "Asn-specific endopeptidase stub.",
+    blockedP1Prime: ["P"],
+    notes: "Asn-specific endopeptidase (AEP/legumain) — MHC-II pathway relevant.",
+  },
+  {
+    id: "cathepsin_s",
+    name: "Cathepsin S (P2 hydrophobic)",
+    proteaseClass: "cysteine",
+    motif: "P2 = V/L/I/M/F; P1 broad (not P)",
+    p1: ["A", "G", "S", "T", "N", "Q", "K", "R", "H", "L", "I", "V", "M", "F", "Y", "W", "E", "D"],
+    p2: ["V", "L", "I", "M", "F"],
+    blockedP1Prime: ["P"],
+    notes:
+      "Endosomal MHC-II processing. CatS is P2-driven (bulky hydrophobic); P1 is relatively permissive.",
+  },
+  {
+    id: "cathepsin_l",
+    name: "Cathepsin L (P2 aromatic/hydrophobic)",
+    proteaseClass: "cysteine",
+    motif: "P2 = F/Y/W/L; P1 broad",
+    p1: ["A", "G", "S", "T", "N", "Q", "K", "R", "H", "L", "I", "V", "M", "F", "Y", "W", "E", "D"],
+    p2: ["F", "Y", "W", "L"],
+    blockedP1Prime: ["P"],
+    notes: "Lysosomal endopeptidase; aromatic/Leu P2 preference.",
+  },
+  {
+    id: "cathepsin_b",
+    name: "Cathepsin B (Arg P1 + hydrophobic P2)",
+    proteaseClass: "cysteine",
+    motif: "P1 = R/K; P2 = hydrophobic",
+    p1: ["R", "K"],
+    p2: ["V", "L", "I", "M", "F", "A"],
+    blockedP1Prime: ["P"],
+    notes: "Endopeptidase mode: Arg/Lys P1 with hydrophobic P2.",
+  },
+  {
+    id: "cathepsin_b_cpx",
+    name: "Cathepsin B dipeptidyl-CPX",
+    proteaseClass: "cysteine",
+    motif: "Removes C-terminal dipeptides",
+    p1: [],
+    pattern: "ctsb_dipeptidyl",
+    notes: "Dipeptidyl carboxypeptidase mode; cuts two residues from the C-terminus.",
+  },
+  {
+    id: "immunoproteasome_b5i",
+    name: "Immunoproteasome β5i / LMP7 (chymotrypsin-like)",
+    proteaseClass: "threonine",
+    motif: "P1 = F/Y/W/L (hydrophobic/aromatic)",
+    p1: ["F", "Y", "W", "L"],
+    notes: "IFN-γ-induced immunoproteasome subunit; MHC-I epitope C-termini.",
+  },
+  {
+    id: "immunoproteasome_b1i",
+    name: "Immunoproteasome β1i / LMP2 (caspase-like)",
+    proteaseClass: "threonine",
+    motif: "P1 = D/E (acidic)",
+    p1: ["D", "E"],
+    notes: "Immunoproteasome caspase-like activity.",
+  },
+  {
+    id: "immunoproteasome_b2i",
+    name: "Immunoproteasome β2i / MECL-1 (trypsin-like)",
+    proteaseClass: "threonine",
+    motif: "P1 = K/R (basic)",
+    p1: ["K", "R"],
+    blockedP1Prime: ["P"],
+    notes: "Immunoproteasome trypsin-like activity.",
   },
 ];
 

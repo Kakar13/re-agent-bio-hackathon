@@ -1,0 +1,11 @@
+{
+  "name": "netmhcpan42_overlap_ledger",
+  "source_url": "https://services.healthtech.dtu.dk/services/NetMHCpan-4.2/",
+  "query": "8-mer prefixes for leakage checks; replace with published partitions when downloaded",
+  "release": "fixture-partial",
+  "timestamp": "2026-08-16T00:05:28.836489+00:00",
+  "license": "Download full NetMHCpan_train/eval partitions from DTU for production eval",
+  "path": "data/processed/immuno/fixtures/netmhcpan42_overlap_ledger.txt",
+  "row_count": 0,
+  "checksum_sha256": "44ef0e70b12759a73c16aa75320ee0a68762ea53322088ad3abfe16c5a4a01fa"
+}

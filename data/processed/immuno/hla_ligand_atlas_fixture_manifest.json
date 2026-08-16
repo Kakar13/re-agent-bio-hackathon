@@ -1,0 +1,11 @@
+{
+  "name": "hla_ligand_atlas_fixture",
+  "source_url": "fixture://local",
+  "query": "tiny benign ligand set for tolerance join demos",
+  "release": "fixture-v1",
+  "timestamp": "2026-08-16T00:05:28.836328+00:00",
+  "license": "Synthetic fixture approximating Atlas schema",
+  "path": "data/processed/immuno/fixtures/hla_ligand_atlas_fixture.csv",
+  "row_count": 6,
+  "checksum_sha256": "5faa6502a60e32eda7491a3248ced8990c38444c69ad132b6a16b11f3bdb5c06"
+}

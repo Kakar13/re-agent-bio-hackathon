@@ -12,8 +12,8 @@
     "repl": "tsx repl.ts",
     "doctor": "pi --version && pi list --approve",
     "install-packages": "pi install -l --approve npm:pi-mcp-adapter && pi install -l --approve npm:@langchain/langsmith-pi-extension",
-    "smoke-immuno": "npx tsx scripts/smoke-immuno-tools.ts",
-    "test:real": "npx tsx scripts/run-real-queries.ts",
+    "smoke-immuno": "IMMUNO_ALLOW_HEURISTIC_MHC=1 node --import tsx scripts/smoke-immuno-tools.ts",
+    "test:real": "IMMUNO_ALLOW_HEURISTIC_MHC=1 node --import tsx scripts/run-real-queries.ts",
     "postinstall": "node -e \"console.log('Pi harness ready. From this folder: ./run.sh or ./repl.sh (after ../.env is set)')\""
   },
   "dependencies": {

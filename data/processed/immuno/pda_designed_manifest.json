@@ -1,0 +1,18 @@
+{
+  "name": "pda_designed",
+  "source_url": "/private/var/folders/2y/skys6j3s5wv6xqy3_7kpr78c0000gn/T/pytest-of-vikaskakar/pytest-9/test_pda_designed_chains_to_ne0/pda_mini.json",
+  "query": "chain_type=D designed chains; canonical AA; optional His-tag strip",
+  "release": "pda_mini.json",
+  "timestamp": "2026-08-16T00:05:28.887179+00:00",
+  "license": "PDA / Wells Wood Research Group; cite Chronowska et al. Nat Biotechnol 2025",
+  "path": "/private/var/folders/2y/skys6j3s5wv6xqy3_7kpr78c0000gn/T/pytest-of-vikaskakar/pytest-9/test_pda_designed_chains_to_ne0/out/pda_designed_chains.csv",
+  "row_count": 1,
+  "checksum_sha256": "4eea8feb3c270f60823a5c23805971b024b628ac7aafadbc6bfc5624df9e4a77",
+  "n_entries_parsed": 1,
+  "n_designed_chains": 1,
+  "n_unique_peptides": 58,
+  "netmhcpan_cmd": "netMHCpan -f /private/var/folders/2y/skys6j3s5wv6xqy3_7kpr78c0000gn/T/pytest-of-vikaskakar/pytest-9/test_pda_designed_chains_to_ne0/out/pda_designed.fasta -a HLA-A02:01,HLA-A01:01,HLA-A03:01,HLA-B07:02,HLA-B08:01,HLA-C07:01 -l 8,9,10,11",
+  "caveat": "PDA sequences have no MHC binding or T-cell labels. Use as a de novo scoring/evaluation cohort for NetMHCpan-4.2e / MHCflurry, not as training data. Retraining NetMHCpan is out of scope for this task.",
+  "mhc1_peptides_csv": "/private/var/folders/2y/skys6j3s5wv6xqy3_7kpr78c0000gn/T/pytest-of-vikaskakar/pytest-9/test_pda_designed_chains_to_ne0/out/pda_mhc1_peptides.csv",
+  "netmhcpan_peptides": "/private/var/folders/2y/skys6j3s5wv6xqy3_7kpr78c0000gn/T/pytest-of-vikaskakar/pytest-9/test_pda_designed_chains_to_ne0/out/netmhcpan_peptides.txt"
+}

@@ -1,0 +1,7 @@
+*
+!.gitignore
+!fixtures/
+!fixtures/**
+!*_manifest.json
+!models/
+!models/**

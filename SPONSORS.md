@@ -27,7 +27,7 @@ Event: [luma.com/g6org075](https://luma.com/g6org075) · Venue: 2 Marina Bouleva
 | **[LatchBio](https://www.latch.bio/)** | Cloud bio compute / workflows | [latch.bio](https://www.latch.bio/) · booth for credits |
 | **[Boltz](https://github.com/jwohlwend/boltz)** | Structure prediction (protein / biomolecular) | Available via Proto tools · also sponsor booth |
 | **[Modal](https://modal.com/)** | Remote GPU compute — **$100 free** for re:AGENT | [modal.com](https://modal.com/) · `uv run modal setup` · [Proto Modal docs](https://proto.evodesign.org/docs/tools/modal-integration) |
-| **[Benchling](https://www.benchling.com/)** | Lab notebook / R&D platform | [benchling.com](https://www.benchling.com/) · booth + Discord |
+| **[Benchling](https://www.benchling.com/)** | Lab notebook / R&D platform — **required for this team's demo handoff** | [benchling.com](https://www.benchling.com/) · booth + Discord · set `BENCHLING_TENANT_URL` + `BENCHLING_API_KEY` (+ `BENCHLING_FOLDER_ID`) in `.env` · `uv run python -m re_agent.immuno_risk.cli benchling-pull --dry-run` |
 | **[Strand AI](https://www.strand.ai/)** | Sequence / genomics tooling | Booth + Discord for access |
 
 ### Also called out in pre-event materials
@@ -46,7 +46,7 @@ Judges notice teams that actually wire sponsor tools into the demo, not just lis
 | --- | --- |
 | **A — AI Scientist** | Paperclip (evidence) + Claude/Pi (agent) + BenchFlow (evals) + optional Benchling |
 | **B — Dataset / meta-analysis** | Paperclip (`search` → `map` → `reduce`) + Claude for synthesis |
-| **C — Biological design** | Proto + Modal (+ Boltz via Proto) + Paperclip for literature backing |
+| **C — Biological design** | Proto + Modal (+ Boltz) + Paperclip + **Benchling** (candidates/runs) + MHCflurry immuno-risk |
 
 ### Quick claim checklist
 
@@ -54,7 +54,8 @@ Judges notice teams that actually wire sponsor tools into the demo, not just lis
 - [ ] **Anthropic** — `ANTHROPIC_API_KEY` in `.env` (or Pi `/login`)
 - [ ] **Proto** — `PROTO_API_KEY` and/or `uv sync --extra proto`
 - [ ] **Modal** — claim $100 credits, then `uv run modal setup`
-- [ ] **BenchFlow / LatchBio / Benchling / Strand / Boltz** — booth or Discord day-of
+- [ ] **Benchling** — booth / Discord → `BENCHLING_TENANT_URL`, `BENCHLING_API_KEY`, `BENCHLING_FOLDER_ID`
+- [ ] **BenchFlow / LatchBio / Strand / Boltz** — booth or Discord day-of
 
 Setup details: [docs/SETUP.md](docs/SETUP.md)
 

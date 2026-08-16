@@ -18,7 +18,22 @@ proto = [
     "proto-language",
     "modal",
 ]
-dev = ["ruff>=0.12.0"]
+immuno = [
+    "mhcflurry>=2.2.0",
+    "numpy>=1.26.0",
+    "pandas>=2.0.0",
+    "scikit-learn>=1.4.0",
+    "benchling-sdk>=1.25.0",
+    "torch>=2.0.0",
+]
+pda = [
+    "biopython>=1.83",
+    "biotite>=1.0.0",
+    "numpy>=1.26.0",
+    "pandas>=2.0.0",
+    "scipy>=1.11.0",
+]
+dev = ["ruff>=0.12.0", "pytest>=8.0.0"]
 
 [tool.uv]
 package = false

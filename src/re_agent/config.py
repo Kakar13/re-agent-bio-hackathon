@@ -14,6 +14,19 @@ class Settings(BaseSettings):
     modal_token_id: str = ""
     modal_token_secret: str = ""
 
+    langsmith_api_key: str = ""
+    langsmith_tracing: str = ""
+    langsmith_project: str = "reAgent-hackathon"
+
+    benchling_tenant_url: str = ""
+    benchling_url: str = ""
+    benchling_api_key: str = ""
+    benchling_folder_id: str = ""
+    benchling_run_schema_id: str = ""
+
+    netmhcpan_bin: str = ""
+    netmhciipan_bin: str = ""
+
     def missing(self) -> list[str]:
         checks = {
             "ANTHROPIC_API_KEY": self.anthropic_api_key,

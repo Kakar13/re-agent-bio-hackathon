@@ -87,14 +87,40 @@ Auth: `ANTHROPIC_API_KEY` in `../.env`, or `/login`.
 
 ## Before the agent builds
 
-Confirm [`TASK.md`](TASK.md) matches the team brief (late immuno-risk stage). Point upstream sequence/structure paths at `../data/` when Mark/others land them.
+Confirm [`TASK.md`](TASK.md) matches the team brief (late immuno-risk stage). Design doc: [`../docs/IMMUNO_RISK_DESIGN.md`](../docs/IMMUNO_RISK_DESIGN.md).
+
+## Immuno-risk Python backend
+
+From **repo root**:
+
+```bash
+uv sync --extra immuno          # MHCflurry + benchling-sdk (+ torch)
+# Optional real models:
+# mhcflurry-downloads fetch models_class1_presentation
+
+# Offline / first-boot demo without MHCflurry weights:
+export IMMUNO_ALLOW_HEURISTIC_MHC=1
+
+uv run python -m re_agent.immuno_risk.cli ensure-fixtures
+uv run python -m re_agent.immuno_risk.cli train
+uv run python -m re_agent.immuno_risk.cli run --sequence GILGFVFTLAAAAKKKLLLGGGG --sequence-id demo
+uv run python scripts/benchmark_immuno_risk.py
+uv run pytest tests/test_immuno_risk.py -q
+
+# Benchling (credentials from booth / Discord)
+uv run python -m re_agent.immuno_risk.cli benchling-pull --dry-run
+# uv run python -m re_agent.immuno_risk.cli benchling-publish --run-dir results/immuno_risk/<run-id> --dry-run
+```
+
+Optional licensed comparators: set `NETMHCPAN_BIN` / `NETMHCIIPAN_BIN` to local DTU academic binaries (pin 4.2e / 4.3k). Do not automate the public web form.
 
 ## Layout
 
 | Path | Purpose |
 | --- | --- |
-| [`pi-tools.ts`](pi-tools.ts) | Custom immuno-risk tools (`createImmunoRiskTools`) |
-| [`tools/`](tools/) | Cleavage / MHC stub / tolerance / risk logic |
+| [`pi-tools.ts`](pi-tools.ts) | Custom immuno-risk + Benchling tools |
+| [`tools/`](tools/) | Cleavage / MHC bridge / tolerance / risk / pipeline |
+| [`../src/re_agent/immuno_risk/`](../src/re_agent/immuno_risk/) | MHCflurry, IEDB head, Atlas, aggregation, Benchling |
 | [`.pi/extensions/immuno-risk-tools.ts`](.pi/extensions/immuno-risk-tools.ts) | Registers tools into Pi |
 | [`.pi/langsmith.json`](.pi/langsmith.json) | LangSmith project + metadata (no API key) |
 | [`.pi/settings.json`](.pi/settings.json) | Provider, packages, skills, sessions |
@@ -103,10 +129,13 @@ Confirm [`TASK.md`](TASK.md) matches the team brief (late immuno-risk stage). Po
 | [`AGENTS.md`](AGENTS.md) | Harness instructions (parent `AGENTS.md` also loads) |
 | `../skills/` | Sundial skills (reagent, paperclip, census, proto, boltz) |
 
+Custom tools: `list_catalytic_sites`, `structure_features`, `predict_cleavage`, `score_mhc`, `check_tolerance`, `score_immuno_risk`, `run_immuno_pipeline`, `benchling_pull_candidates`, `benchling_publish_run`
+
 `node_modules/`, `.pi/npm/`, and `.pi/sessions/` stay local (gitignored).
 
 ## Docs
 
+- Design: [`../docs/IMMUNO_RISK_DESIGN.md`](../docs/IMMUNO_RISK_DESIGN.md)
 - [pi.dev quickstart](https://pi.dev/docs/latest/quickstart)
 - [pi-mcp-adapter](https://pi.dev/packages/pi-mcp-adapter)
 - Repo onboarding: [`../START_HERE.md`](../START_HERE.md)

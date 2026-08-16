@@ -6,29 +6,26 @@ You were started from `harness/`. The **project root is the parent directory** (
 
 This harness is for the **last part** of the de novo binder pipeline (Track C):
 
-**sequence (+ structure) → cleavage peptides → MHC I/II → tolerance → risk score**
+**sequence → MHC-I (MHCflurry + IEDB head) + thin MHC-II → Atlas evidence → aggregation → risk + Benchling**
 
-Upstream design (diffusion / MPNN) happens elsewhere. Do **not** spend the weekend reinventing backbone generation here unless `TASK.md` explicitly expands scope.
+Upstream design (diffusion / MPNN) happens elsewhere. Do **not** reinvent backbone generation here unless `TASK.md` expands scope.
 
-1. Read [`TASK.md`](TASK.md) first and follow that pipeline.
+1. Read [`TASK.md`](TASK.md) and [`../docs/IMMUNO_RISK_DESIGN.md`](../docs/IMMUNO_RISK_DESIGN.md).
 2. Load [`../skills/reagent/SKILL.md`](../skills/reagent/SKILL.md), then Paperclip / Proto / Boltz as needed.
-3. Start or resume with `/denovo` in Pi, or use the text REPL: `./repl.sh` (keeps chat context + same immuno tools). Custom tools are registered by `.pi/extensions/immuno-risk-tools.ts` (see `pi-tools.ts`). Prefer `run_immuno_pipeline` for an end-to-end pass; use the staged tools when debugging one step.
+3. Start with `/denovo` in Pi, or `./repl.sh`. Prefer `run_immuno_pipeline`. Use `benchling_pull_candidates` / `benchling_publish_run` when credentials exist (dry-run first).
 
 ## Paths
 
 | What | Where |
 | --- | --- |
-| Task brief | `TASK.md` (this folder) |
-| Code | `../src/re_agent/` (e.g. `immuno_risk/`) |
-| Skills | `../skills/` (also via `.pi/settings.json`) |
-| Secrets | `../.env` (never commit; source before launch) |
-| Artifacts | `../data/`, `../results/immuno_risk/` |
+| Task brief | `TASK.md` |
+| Design doc | `../docs/IMMUNO_RISK_DESIGN.md` |
+| Python backend | `../src/re_agent/immuno_risk/` |
+| Skills | `../skills/` |
+| Secrets | `../.env` |
+| Artifacts | `../results/immuno_risk/<run-id>/` |
 | Setup check | `cd .. && uv run python scripts/check_setup.py` |
-
-Prefer editing and running commands against the **repo root**, not this `harness/` folder, except when changing Pi settings under `.pi/` or updating `TASK.md`.
 
 ## Rules
 
-Follow parent [`../AGENTS.md`](../AGENTS.md). Cite or measure every claim. Keep reasoning inspectable for judges. De novo candidates have **no ground-truth labels** — say so and use natural holdouts + structure checks as proxies.
-
-MCP (Paperclip + Proto) comes from [`.mcp.json`](.mcp.json) via `pi-mcp-adapter`. Use `/mcp` after auth; `/mcp-auth paperclip` / `/mcp-auth proto-bio` if prompted.
+Follow parent [`../AGENTS.md`](../AGENTS.md). Screening scores only — not clinical probability. Keep MHC-I, MHC-II, Atlas, and aggregation separate. Never reintroduce `stub_hash_rank_v0`. Ask before commits.
