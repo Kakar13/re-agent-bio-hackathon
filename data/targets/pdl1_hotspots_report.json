@@ -1,0 +1,27 @@
+{
+  "name": "pdl1",
+  "pdb_id": "5O45",
+  "target_chain": "A",
+  "partner_chain": null,
+  "residue_range": [
+    17,
+    131
+  ],
+  "select_hotspots": {
+    "A56": "CG,OH",
+    "A115": "CG,SD",
+    "A123": "CD2,OH"
+  },
+  "contigs": {
+    "len_55_85": "55-85,/0,A17-131",
+    "len_85_120": "85-120,/0,A17-131"
+  },
+  "caveats": [
+    "Uses foundry doc hotspots A56/A115/A123 verbatim"
+  ],
+  "notes": [
+    "no partner chain \u2014 using forced/doc hotspots only",
+    "using forced/doc hotspots"
+  ],
+  "why_undruggable": "Validated PPI control from RFD3 protein_binder_design example"
+}

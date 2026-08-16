@@ -1,0 +1,27 @@
+{
+  "name": "beta_catenin",
+  "pdb_id": "1JDH",
+  "target_chain": "A",
+  "partner_chain": "B",
+  "residue_range": [
+    151,
+    548
+  ],
+  "select_hotspots": {
+    "A312": "NZ",
+    "A435": "NZ",
+    "A306": "CD2,OH"
+  },
+  "contigs": {
+    "len_55_85": "55-85,/0,A151-548",
+    "len_85_120": "85-120,/0,A151-548"
+  },
+  "caveats": [
+    "Cropped ARM repeats 134-664; hotspots from beta-catenin\u2013hTcf-4 contacts"
+  ],
+  "notes": [
+    "literature residues present at interface: [312, 435]",
+    "contig cropped to continuous segment A151-548 (observed 508 residues in 135-663; gaps omitted)"
+  ],
+  "why_undruggable": "Extended shallow armadillo groove used by TCF/LEF/APC/cadherin"
+}

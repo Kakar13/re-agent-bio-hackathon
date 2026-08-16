@@ -1,0 +1,149 @@
+[
+  {
+    "name": "pdl1",
+    "label": "PD-L1 (positive control)",
+    "pdb_id": "5O45",
+    "n_backbones": 100,
+    "hotspots": {
+      "A56": "CG,OH",
+      "A115": "CG,SD",
+      "A123": "CD2,OH"
+    },
+    "contigs": {
+      "len_55_85": "55-85,/0,A17-131",
+      "len_85_120": "85-120,/0,A17-131"
+    },
+    "residue_range": [
+      17,
+      131
+    ],
+    "caveats": [
+      "Uses foundry doc hotspots A56/A115/A123 verbatim"
+    ],
+    "notes": [
+      "no partner chain \u2014 using forced/doc hotspots only",
+      "using forced/doc hotspots"
+    ],
+    "rg_mean": 16.51,
+    "rg_std": 0.53,
+    "chunks": 7,
+    "elapsed_total_s": 847.1
+  },
+  {
+    "name": "kras",
+    "label": "KRAS4b (effector face)",
+    "pdb_id": "6VJJ",
+    "n_backbones": 100,
+    "hotspots": {
+      "A37": "OE1,OE2",
+      "A38": "OD1,OD2",
+      "A40": "CD2,OH"
+    },
+    "contigs": {
+      "len_55_85": "55-85,/0,A1-167",
+      "len_85_120": "85-120,/0,A1-167"
+    },
+    "residue_range": [
+      1,
+      167
+    ],
+    "caveats": [
+      "6VJJ is wild-type KRAS4b\u2013RAF1 RBD, not G12D; residue 12 is not part of the binder epitope"
+    ],
+    "notes": [
+      "literature residues present at interface: [37, 38, 40]"
+    ],
+    "rg_mean": 17.72,
+    "rg_std": 0.55,
+    "chunks": 7,
+    "elapsed_total_s": 1024.1
+  },
+  {
+    "name": "myc_max",
+    "label": "MYC leucine zipper (vs MAX)",
+    "pdb_id": "1NKP",
+    "n_backbones": 100,
+    "hotspots": {
+      "A927": "OE1,NE2",
+      "A957": "OE1,OE2",
+      "A967": "CD1,CD2"
+    },
+    "contigs": {
+      "len_55_85": "55-85,/0,A897-984",
+      "len_85_120": "85-120,/0,A897-984"
+    },
+    "residue_range": [
+      897,
+      984
+    ],
+    "caveats": [
+      "Cropped to MYC chain A + MAX chain B; DNA and duplicate copies removed"
+    ],
+    "notes": [],
+    "rg_mean": 25.44,
+    "rg_std": 1.82,
+    "chunks": 7,
+    "elapsed_total_s": 738.2
+  },
+  {
+    "name": "stat3",
+    "label": "STAT3 SH2 dimer interface",
+    "pdb_id": "1BG1",
+    "n_backbones": 100,
+    "hotspots": {
+      "A609": "NH1,NH2",
+      "A611": "OG",
+      "A613": "OG"
+    },
+    "contigs": {
+      "len_55_85": "55-85,/0,A500-688",
+      "len_85_120": "85-120,/0,A500-688"
+    },
+    "residue_range": [
+      500,
+      688
+    ],
+    "caveats": [
+      "Uses biological assembly 1 (two models merged to A/B) to recover the SH2 dimer",
+      "Forced literature SH2 pocket hotspots R609/S611/S613 \u2014 computed contacts favor the reciprocal pY705 face"
+    ],
+    "notes": [
+      "using forced/doc hotspots",
+      "contig cropped to continuous segment A500-688 (observed 203 residues in 500-716; gaps omitted)"
+    ],
+    "rg_mean": 18.15,
+    "rg_std": 0.4,
+    "chunks": 7,
+    "elapsed_total_s": 1157.6
+  },
+  {
+    "name": "beta_catenin",
+    "label": "beta-catenin ARM groove (TCF site)",
+    "pdb_id": "1JDH",
+    "n_backbones": 100,
+    "hotspots": {
+      "A312": "NZ",
+      "A435": "NZ",
+      "A306": "CD2,OH"
+    },
+    "contigs": {
+      "len_55_85": "55-85,/0,A151-548",
+      "len_85_120": "85-120,/0,A151-548"
+    },
+    "residue_range": [
+      151,
+      548
+    ],
+    "caveats": [
+      "Cropped ARM repeats 134-664; hotspots from beta-catenin\u2013hTcf-4 contacts"
+    ],
+    "notes": [
+      "literature residues present at interface: [312, 435]",
+      "contig cropped to continuous segment A151-548 (observed 508 residues in 135-663; gaps omitted)"
+    ],
+    "rg_mean": 27.66,
+    "rg_std": 0.19,
+    "chunks": 7,
+    "elapsed_total_s": 2380.7
+  }
+]

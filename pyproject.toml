@@ -18,7 +18,23 @@ proto = [
     "proto-language",
     "modal",
 ]
-dev = ["ruff>=0.12.0"]
+e2e_pls = [
+    "modal>=0.68",
+    "torch>=2.2",
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "pyarrow>=17",
+    "scikit-learn>=1.4",
+    "scipy>=1.11",
+    "streamlit>=1.38",
+    "plotly>=5.24",
+    "fair-esm>=2.0.0",
+]
+e2e_pls_data = [
+    "mhcflurry>=2.2",
+    "biopython>=1.83",
+]
+dev = ["ruff>=0.12.0", "pytest>=8.0"]
 
 [tool.uv]
 package = false
