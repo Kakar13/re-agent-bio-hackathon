@@ -40,6 +40,8 @@ class ProteinScore:
     sequence: str
     risk: float
     risk_percentile: float
+    # Length-independent companion to `risk`: the single most dangerous window.
+    peak_window_risk: float
     confidence: float
     confidence_parts: dict
     regions: list[Region]
@@ -85,10 +87,30 @@ def protein_risk(
     return noisy_or(risks[idx]), idx
 
 
-def percentile_of(value: float, reference: np.ndarray) -> float:
+def percentile_of(
+    value: float,
+    reference: np.ndarray,
+    length: int | None = None,
+    reference_lengths: np.ndarray | None = None,
+    tolerance: float = 0.5,
+    min_matched: int = 30,
+) -> float:
+    """Percentile against the natural cohort, matched on length where possible.
+
+    A noisy-or over regions grows with sequence length, so a 90-residue binder
+    compared against 400-residue proteins would look artificially safe. Restricting
+    the comparison to similar-length natural proteins removes that bias.
+    """
     if len(reference) == 0:
         return float("nan")
-    return float(100.0 * np.searchsorted(np.sort(reference), value) / len(reference))
+    pool = reference
+    has_lengths = reference_lengths is not None and len(reference_lengths) == len(reference)
+    if length is not None and has_lengths:
+        low, high = length * (1 - tolerance), length * (1 + tolerance)
+        matched = reference[(reference_lengths >= low) & (reference_lengths <= high)]
+        if len(matched) >= min_matched:
+            pool = matched
+    return float(100.0 * np.searchsorted(np.sort(pool), value) / len(pool))
 
 
 # --------------------------------------------------------------------------- #
@@ -103,6 +125,7 @@ class Bundle:
     ood: OODIndex | None
     device: str
     reference_risks: np.ndarray
+    reference_lengths: np.ndarray = field(default_factory=lambda: np.array([]))
 
 
 def load_bundle(
@@ -127,9 +150,13 @@ def load_bundle(
         rows = labeled[labeled.split == "train"]["row"].to_numpy()
         ood = OODIndex(emb[rows], mask[rows])
 
-    ref_path = PATHS.models / f"{name}_reference_risks.npy"
-    reference = np.load(ref_path) if ref_path.exists() else np.array([])
-    return Bundle(student, teacher, ood, device, reference)
+    ref_path = PATHS.models / f"{name}_reference_risks.npz"
+    if ref_path.exists():
+        cached = np.load(ref_path)
+        reference, lengths = cached["risks"], cached["lengths"]
+    else:
+        reference, lengths = np.array([]), np.array([])
+    return Bundle(student, teacher, ood, device, reference, lengths)
 
 
 @torch.no_grad()
@@ -138,8 +165,8 @@ def _window_probs(
 ) -> np.ndarray:
     out = []
     for i in range(0, len(emb), batch):
-        x = torch.from_numpy(np.asarray(emb[i : i + batch], dtype=np.float32)).to(device)
-        m = torch.from_numpy(np.asarray(mask[i : i + batch], dtype=np.float32)).to(device)
+        x = torch.from_numpy(np.array(emb[i : i + batch], dtype=np.float32)).to(device)
+        m = torch.from_numpy(np.array(mask[i : i + batch], dtype=np.float32)).to(device)
         out.append(torch.sigmoid(model(x, m)).cpu().numpy())
     return np.concatenate(out) if out else np.array([])
 
@@ -155,13 +182,16 @@ def build_reference_risks(bundle: Bundle, name: str = "mean_teacher") -> np.ndar
     ref = ref.copy()
     ref["risk"] = probs
 
-    risks = []
+    risks, lengths = [], []
     for _, grp in ref.groupby("parent", sort=False):
-        r, _ = protein_risk(grp["risk"].to_numpy(), grp["start"].to_numpy())
+        starts = grp["start"].to_numpy()
+        r, _ = protein_risk(grp["risk"].to_numpy(), starts)
         risks.append(r)
-    arr = np.array(risks)
-    np.save(PATHS.models / f"{name}_reference_risks.npy", arr)
+        lengths.append(int(starts.max()) + WINDOW)
+    arr, lens = np.array(risks), np.array(lengths)
+    np.savez(PATHS.models / f"{name}_reference_risks.npz", risks=arr, lengths=lens)
     bundle.reference_risks = arr
+    bundle.reference_lengths = lens
     return arr
 
 
@@ -218,7 +248,13 @@ def score_sequence(
         name=name,
         sequence=sequence,
         risk=total_risk,
-        risk_percentile=percentile_of(total_risk, bundle.reference_risks),
+        risk_percentile=percentile_of(
+            total_risk,
+            bundle.reference_risks,
+            length=len(sequence),
+            reference_lengths=bundle.reference_lengths,
+        ),
+        peak_window_risk=float(risks.max()) if len(risks) else 0.0,
         confidence=conf_parts["confidence"],
         confidence_parts=conf_parts,
         regions=regions,
@@ -235,6 +271,7 @@ def score_to_dict(score: ProteinScore) -> dict:
         "length": len(score.sequence),
         "risk": round(score.risk, 4),
         "risk_percentile_vs_natural": round(score.risk_percentile, 1),
+        "peak_window_risk": round(score.peak_window_risk, 4),
         "confidence": round(score.confidence, 4),
         "confidence_breakdown": {k: round(v, 4) for k, v in score.confidence_parts.items()},
         "n_regions": len(score.regions),

@@ -48,8 +48,8 @@ def prepare_labeled(seed: int = 0) -> tuple[pd.DataFrame, np.ndarray]:
 
 
 def _to_tensor(emb: np.ndarray, mask: np.ndarray, rows: np.ndarray, device: str):
-    x = torch.from_numpy(np.asarray(emb[rows], dtype=np.float32)).to(device)
-    m = torch.from_numpy(np.asarray(mask[rows], dtype=np.float32)).to(device)
+    x = torch.from_numpy(np.array(emb[rows], dtype=np.float32)).to(device)
+    m = torch.from_numpy(np.array(mask[rows], dtype=np.float32)).to(device)
     return x, m
 
 

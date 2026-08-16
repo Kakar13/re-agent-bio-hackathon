@@ -49,7 +49,8 @@ def assess(
 
         print(
             f"\n{name}: risk {payload['risk']:.3f} "
-            f"({payload['risk_percentile_vs_natural']:.0f}th pct vs natural) | "
+            f"({payload['risk_percentile_vs_natural']:.0f}th pct vs length-matched natural, "
+            f"peak window {payload['peak_window_risk']:.3f}) | "
             f"confidence {payload['confidence']:.2f} "
             f"(stability {payload['confidence_breakdown']['stability']:.2f}, "
             f"agreement {payload['confidence_breakdown']['agreement']:.2f}, "

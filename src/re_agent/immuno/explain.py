@@ -93,6 +93,42 @@ def top_hotspots(heat: np.ndarray, sequence: str, k: int = 5, min_gap: int = 8) 
     ]
 
 
+# MHC class II P1 anchor pockets favour large hydrophobics; this is the textbook
+# preference the model should rediscover if its attention is biochemically meaningful.
+HYDROPHOBIC = set("FWYLIVM")
+
+
+def anchor_enrichment(attention: np.ndarray, windows: list[str]) -> dict:
+    """Mean pooling attention per amino acid, as a test of learned anchor preference.
+
+    If the head is doing something biologically real rather than memorising sequence
+    identity, attention should concentrate on the residues that actually sit in the
+    class II binding groove.
+    """
+    totals: dict[str, list[float]] = {}
+    for row, window in zip(attention, windows):
+        for weight, residue in zip(row, window):
+            totals.setdefault(residue, []).append(float(weight))
+    per_aa = {aa: float(np.mean(v)) for aa, v in totals.items() if len(v) >= 50}
+    if not per_aa:
+        return {}
+    baseline = float(np.mean(list(per_aa.values())))
+    ranked = sorted(per_aa.items(), key=lambda kv: -kv[1])
+    hydrophobic = [v for aa, v in per_aa.items() if aa in HYDROPHOBIC]
+    other = [v for aa, v in per_aa.items() if aa not in HYDROPHOBIC]
+    return {
+        "per_residue_attention": {aa: round(v / baseline, 3) for aa, v in ranked},
+        "hydrophobic_mean_ratio": round(float(np.mean(hydrophobic)) / baseline, 3)
+        if hydrophobic
+        else None,
+        "other_mean_ratio": round(float(np.mean(other)) / baseline, 3) if other else None,
+        "top5": [aa for aa, _ in ranked[:5]],
+        "top5_hydrophobic_fraction": round(
+            sum(aa in HYDROPHOBIC for aa, _ in ranked[:5]) / 5.0, 2
+        ),
+    }
+
+
 def plot_heatmap(score, path, width: float = 14.0):
     """Sequence-track figure: per-residue risk, saliency, and the called regions."""
     import matplotlib
@@ -103,29 +139,33 @@ def plot_heatmap(score, path, width: float = 14.0):
     seq = score.sequence
     n = len(seq)
     fig, axes = plt.subplots(
-        3, 1, figsize=(width, 6.0), sharex=True, height_ratios=[1.0, 1.0, 0.7]
+        3, 1, figsize=(width, 6.4), sharex=True, height_ratios=[1.0, 1.0, 0.9]
     )
 
-    axes[0].imshow(
+    im0 = axes[0].imshow(
         score.per_residue[None, :], aspect="auto", cmap="inferno", vmin=0, vmax=1,
         extent=(0.5, n + 0.5, 0, 1),
     )
     axes[0].set_yticks([])
-    axes[0].set_ylabel("attention\nrisk", rotation=0, ha="right", va="center")
+    axes[0].set_ylabel("attention\n× risk", rotation=0, ha="right", va="center")
+    fig.colorbar(im0, ax=axes[0], pad=0.01, fraction=0.02)
     axes[0].set_title(
         f"{score.name} — immunogenicity risk {score.risk:.3f} "
-        f"({score.risk_percentile:.0f}th percentile vs natural), "
-        f"confidence {score.confidence:.2f}"
+        f"({score.risk_percentile:.0f}th pct vs length-matched natural, "
+        f"peak window {score.peak_window_risk:.2f}), "
+        f"confidence {score.confidence:.2f} "
+        f"(familiarity {score.confidence_parts['familiarity']:.2f})"
     )
 
     sal = score.per_residue_saliency
     limit = max(float(np.abs(sal).max()), 1e-9)
-    axes[1].imshow(
+    im1 = axes[1].imshow(
         sal[None, :], aspect="auto", cmap="coolwarm", vmin=-limit, vmax=limit,
         extent=(0.5, n + 0.5, 0, 1),
     )
     axes[1].set_yticks([])
     axes[1].set_ylabel("integrated\ngradients", rotation=0, ha="right", va="center")
+    fig.colorbar(im1, ax=axes[1], pad=0.01, fraction=0.02)
 
     axes[2].plot(np.arange(1, n + 1), score.per_residue, color="black", lw=1.0)
     for region in score.regions[:8]:
@@ -138,6 +178,18 @@ def plot_heatmap(score, path, width: float = 14.0):
     axes[2].set_ylabel("risk", rotation=0, ha="right", va="center")
     axes[2].set_xlabel("residue position")
     axes[2].set_xlim(0.5, n + 0.5)
+    # A colorbar on the tracks above shifts their axes; match the line plot to them.
+    fig.colorbar(im1, ax=axes[2], pad=0.01, fraction=0.02).ax.set_visible(False)
+
+    if n <= 160:
+        axes[2].set_xticks(np.arange(1, n + 1))
+        axes[2].set_xticklabels(list(seq), fontsize=5.5, family="monospace")
+        axes[2].tick_params(axis="x", length=0, pad=1)
+        for tick, residue in zip(axes[2].get_xticklabels(), seq):
+            if residue in HYDROPHOBIC:
+                tick.set_color("crimson")
+                tick.set_fontweight("bold")
+        axes[2].set_xlabel("residue (hydrophobic FWYLIVM in red, for reference)")
 
     fig.tight_layout()
     fig.savefig(path, dpi=150)
