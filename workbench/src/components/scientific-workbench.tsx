@@ -20,12 +20,14 @@ import {
   Settings2,
   Square,
   Wrench,
+  Workflow,
 } from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 import { ArtifactPanel } from "@/components/artifact-panel";
 import { Chao1Screen } from "@/components/chao1-screen";
+import { DesignPipelineScreen } from "@/components/design-pipeline-screen";
 import type { AgentState, Message } from "@/lib/types";
 
 const SUGGESTIONS = [
@@ -38,6 +40,7 @@ const SUGGESTIONS = [
 type ScreeningProfile =
   | "mhc_ii_standard"
   | "mhc_ii_plus_chao1";
+type WorkspaceView = "sequence_risk" | "design_pipeline";
 
 const PROFILE_DESCRIPTIONS: Record<ScreeningProfile, string> = {
   mhc_ii_standard: "NetMHCIIpan EL/BA with the standard processing and tolerance lanes.",
@@ -48,9 +51,11 @@ const PROFILE_DESCRIPTIONS: Record<ScreeningProfile, string> = {
 export function ScientificWorkbench() {
   const [threadId, setThreadId] = useState<string | null>(null);
   const [input, setInput] = useState("");
+  const [pipelineObjective, setPipelineObjective] = useState("");
   const [sequenceInput, setSequenceInput] = useState("");
   const [selectedId, setSelectedId] = useState<string>();
   const [activityOpen, setActivityOpen] = useState(false);
+  const [activeView, setActiveView] = useState<WorkspaceView>("sequence_risk");
   const [screeningProfile, setScreeningProfile] =
     useState<ScreeningProfile>("mhc_ii_plus_chao1");
   const apiUrl = process.env.NEXT_PUBLIC_LANGGRAPH_API_URL ?? "http://localhost:2024";
@@ -76,11 +81,14 @@ export function ScientificWorkbench() {
   );
   const toolEvents = useMemo(() => {
     const messages = stream.messages as Message[];
-    const results = new Set(
+    const results = new Map(
       messages
         .filter((message) => message.type === "tool" || message.role === "tool")
-        .map((message) => message.tool_call_id)
-        .filter((id): id is string => Boolean(id)),
+        .filter(
+          (message): message is Message & { tool_call_id: string } =>
+            Boolean(message.tool_call_id),
+        )
+        .map((message) => [message.tool_call_id, getMessageText(message.content)]),
     );
     return messages.flatMap((message) =>
       (message.tool_calls ?? []).map((call) => ({
@@ -88,6 +96,7 @@ export function ScientificWorkbench() {
         name: call.name,
         args: call.args,
         completed: results.has(call.id),
+        error: results.get(call.id)?.startsWith("Error:") ?? false,
       })),
     );
   }, [stream.messages]);
@@ -145,6 +154,34 @@ export function ScientificWorkbench() {
     });
   }
 
+  async function runPipeline(objective: string) {
+    if (stream.isLoading) return;
+    setSelectedId(undefined);
+    await stream.submit({
+      messages: [
+        {
+          type: "human",
+          content: `Run the full binder design-to-screen pipeline: ${objective}`,
+        },
+      ],
+      screening_profile: screeningProfile,
+      pipeline_request: { objective },
+    });
+  }
+
+  async function replayPipeline() {
+    if (stream.isLoading) return;
+    await stream.submit({
+      messages: [
+        {
+          type: "human",
+          content: "Replay the latest completed design campaign.",
+        },
+      ],
+      screening_profile: screeningProfile,
+    });
+  }
+
   function newSession() {
     stream.switchThread(null);
     setThreadId(null);
@@ -178,7 +215,22 @@ export function ScientificWorkbench() {
       <aside className="rail">
         <div className="brand-mark"><Atom size={22} /></div>
         <nav>
-          <button className="rail-active" title="Research sessions"><Microscope size={19} /></button>
+          <button
+            className={activeView === "sequence_risk" ? "rail-active" : undefined}
+            title="Sequence risk"
+            aria-label="Sequence risk workspace"
+            onClick={() => setActiveView("sequence_risk")}
+          >
+            <Microscope size={19} />
+          </button>
+          <button
+            className={activeView === "design_pipeline" ? "rail-active" : undefined}
+            title="End-to-end pipeline"
+            aria-label="End-to-end pipeline workspace"
+            onClick={() => setActiveView("design_pipeline")}
+          >
+            <Workflow size={19} />
+          </button>
           <button title="Artifacts"><Archive size={19} /></button>
           <button title="Scientific skills"><Library size={19} /></button>
           <button title="Runs"><Activity size={19} /></button>
@@ -249,7 +301,11 @@ export function ScientificWorkbench() {
         <header className="conversation-header">
           <div>
             <span className="eyebrow">Scientific agent</span>
-            <h2>Chao1 sequence screening</h2>
+            <h2>
+              {activeView === "sequence_risk"
+                ? "Chao1 sequence screening"
+                : "End-to-end binder pipeline"}
+            </h2>
           </div>
           <div className="header-actions">
             <span className="runtime-chip"><span className="pulse-dot" /> LangGraph connected</span>
@@ -260,14 +316,28 @@ export function ScientificWorkbench() {
         </header>
 
         <div className="conversation-scroll">
-          <Chao1Screen
-            sequence={sequenceInput}
-            assessment={selected?.payload.assessment}
-            artifact={selected}
-            isLoading={stream.isLoading}
-            onSequenceChange={setSequenceInput}
-            onRun={(sequence, candidateId) => void runChao1(sequence, candidateId)}
-          />
+          {activeView === "sequence_risk" ? (
+            <Chao1Screen
+              sequence={sequenceInput}
+              assessment={selected?.payload.assessment}
+              artifact={selected}
+              isLoading={stream.isLoading}
+              onSequenceChange={setSequenceInput}
+              onRun={(sequence, candidateId) => void runChao1(sequence, candidateId)}
+            />
+          ) : (
+            <DesignPipelineScreen
+              objective={pipelineObjective}
+              artifacts={scientificArtifacts}
+              toolEvents={toolEvents}
+              isLoading={stream.isLoading}
+              onObjectiveChange={setPipelineObjective}
+              onRun={(objective) => void runPipeline(objective)}
+              onReplay={() => void replayPipeline()}
+              onStop={() => void stream.stop()}
+              onSelectArtifact={setSelectedId}
+            />
+          )}
 
           <details className="agent-notes">
             <summary>
@@ -379,6 +449,7 @@ export function ScientificWorkbench() {
       )}
 
       <ArtifactPanel
+        key={selected?.id ?? "empty-artifact"}
         artifact={selected}
         review={review}
         onFork={forkSession}

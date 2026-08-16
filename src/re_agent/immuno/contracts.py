@@ -147,6 +147,15 @@ class MHCISurrogatePrediction(BaseModel):
     tap_log_ic50_relative: float
     tap_uncertainty: float = Field(ge=0.0)
     mhc_i_presentation_propensity: float = Field(ge=0.0, le=1.0)
+    mhc_i_binding_propensity: float | None = Field(default=None, ge=0.0, le=1.0)
+    mhc_i_predicted_el_rank: float | None = Field(default=None, ge=0.0, le=100.0)
+    mhc_i_predicted_ba_rank: float | None = Field(default=None, ge=0.0, le=100.0)
+    mhc_i_predicted_ba_ic50_nm: float | None = Field(default=None, gt=0.0, le=50_000.0)
+    mhc_i_binder_class: Literal["strong", "weak", "nonbinder"] | None = None
+    # Deliberately over-calls relative to binder_class; see format_mhci_profile.
+    mhc_i_screening_flag: bool | None = None
+    mhc_i_risk_band: Literal["high", "moderate", "low"] | None = None
+    overall_mhci_risk: float | None = Field(default=None, ge=0.0, le=1.0)
     composite_processing_risk: float = Field(ge=0.0, le=1.0)
     confidence: float = Field(ge=0.0, le=1.0)
 

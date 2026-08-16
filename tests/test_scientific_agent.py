@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+import asyncio
+
+import pytest
 from langchain_core.messages import HumanMessage
 
+from re_agent.agent import tools as agent_tools
 from re_agent.agent.graph import _agent_node, _compute_approval_summary, _review_artifact
+from re_agent.agent.mcp_runtime import RuntimeMCPError
 
 
 def test_reviewer_enforces_placeholder_response_gating() -> None:
@@ -96,6 +101,76 @@ def test_direct_chao1_screen_bypasses_model_tool_selection(monkeypatch) -> None:
     assert tool_call["args"]["source_metadata"]["ui_action"] == "direct_chao1_screen"
     assert tool_call["args"]["structure_pdb_id"] == "9S14"
     assert tool_call["args"]["structure_chain_id"] == "A"
+
+
+def test_pipeline_request_begins_with_application_paperclip_research(monkeypatch) -> None:
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "not-used-by-direct-route")
+    objective = (
+        "Design an 80-residue binder to IL-7R alpha while excluding cysteine "
+        "and preserving the cytokine-binding interface."
+    )
+
+    update = _agent_node(
+        {
+            "messages": [HumanMessage(content=objective)],
+            "artifacts": [],
+            "reviews": [],
+            "screening_profile": "mhc_ii_plus_chao1",
+            "pipeline_request": {"objective": objective},
+        }
+    )
+
+    assert update["pipeline_request"] is None
+    tool_call = update["messages"][0].tool_calls[0]
+    assert tool_call["name"] == "research_design_objective"
+    assert tool_call["args"] == {"objective": objective}
+
+
+def test_paperclip_research_fails_closed_without_line_pinned_evidence(
+    monkeypatch,
+) -> None:
+    async def fake_command(command: str):
+        if command.startswith("search -s pmc"):
+            return {"output": "saved result s_test123"}
+        if command.startswith("map --from"):
+            return {"output": "No citation URL returned"}
+        return {"output": "ok"}
+
+    monkeypatch.setattr(agent_tools, "_paperclip_command", fake_command)
+
+    with pytest.raises(RuntimeMCPError, match="no line-pinned evidence"):
+        asyncio.run(
+            agent_tools.research_design_objective.ainvoke(
+                {
+                    "objective": (
+                        "Design an 80-residue IL-7R alpha binder with no cysteine "
+                        "and high monomer confidence."
+                    )
+                }
+            )
+        )
+
+
+def test_paperclip_cli_line_markers_become_durable_citation_urls() -> None:
+    citations = agent_tools._paperclip_map_citations(
+        {
+            "output": (
+                "✓ IL-7 receptor structure\n"
+                "  PMC1234567 · 42ms\n"
+                "  Interface residues were reported (L7, L15-L18).\n"
+            )
+        }
+    )
+
+    assert citations == [
+        {
+            "claim": "Paperclip mapped line evidence for PMC1234567.",
+            "url": (
+                "https://paperclip.gxl.ai/citations/papers/"
+                "PMC1234567#L7,L15-L18"
+            ),
+        }
+    ]
 
 
 def test_reviewer_rejects_rank_when_response_is_unavailable() -> None:

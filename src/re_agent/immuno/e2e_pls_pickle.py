@@ -19,6 +19,12 @@ import numpy as np
 import torch
 from torch import nn
 
+from re_agent.e2e_pls.netmhcpan_student import (
+    AFFINITY_INDEX,
+    format_mhci_profile,
+    load_student_ensemble,
+    predict_student_ensemble,
+)
 from re_agent.immuno.adapters import sequence_sha256
 from re_agent.immuno.contracts import (
     MHCISurrogatePrediction,
@@ -246,12 +252,24 @@ class TeamE2EPLSAdapter:
         self,
         checkpoint_path: Path,
         *,
+        netmhcpan_checkpoint_dir: Path | None = None,
         adapter_id: str | None = None,
         batch_size: int = 32,
     ) -> None:
         self.checkpoint_path = checkpoint_path
         model_name = re.sub(r"[^a-z0-9-]+", "-", checkpoint_path.parent.name.lower()).strip("-")
-        self.adapter_id = adapter_id or f"team-e2e-pls-{model_name}"
+        self.netmhcpan_checkpoint_dir = netmhcpan_checkpoint_dir
+        self.netmhcpan_students = None
+        self.netmhcpan_checkpoint_sha256 = None
+        self.netmhcpan_manifest = None
+        if netmhcpan_checkpoint_dir is not None:
+            (
+                self.netmhcpan_students,
+                self.netmhcpan_checkpoint_sha256,
+                self.netmhcpan_manifest,
+            ) = load_student_ensemble(netmhcpan_checkpoint_dir)
+        suffix = "-netmhcpan" if self.netmhcpan_students is not None else ""
+        self.adapter_id = adapter_id or f"team-e2e-pls-{model_name}{suffix}"
         self.bundle, self.checkpoint_sha256 = load_validated_bundle(checkpoint_path)
         self.version = self.bundle["manifest"]["model_version"]
         self.dataset_version_hash = self.bundle["manifest"]["dataset_version_hash"]
@@ -300,6 +318,12 @@ class TeamE2EPLSAdapter:
                     "peptide_length": PEPTIDE_LENGTH,
                     "flank_length": FLANK_LENGTH,
                     "allele": allele,
+                    "netmhcpan_student_checkpoint": (
+                        str(self.netmhcpan_checkpoint_dir)
+                        if self.netmhcpan_checkpoint_dir is not None
+                        else None
+                    ),
+                    "netmhcpan_student_sha256": self.netmhcpan_checkpoint_sha256,
                 },
                 input_sha256=input_hash,
                 runtime_seconds=time.perf_counter() - started,
@@ -308,6 +332,16 @@ class TeamE2EPLSAdapter:
                 "MHC-I processing surrogate; do not interpret as MHC-II or CD4 response.",
                 "Composite processing risk is not a measured immune-response probability.",
                 "PDA smoke inference may overlap the model's de novo training distribution.",
+                *(
+                    [
+                        "Cleavage and TAP use the legacy checkpoint; MHC-I EL/BA use the "
+                        "PDA-trained NetMHCpan student ensemble.",
+                        "NetMHCpan student outputs measure teacher imitation, not experimental "
+                        "binding or immune response.",
+                    ]
+                    if self.netmhcpan_students is not None
+                    else []
+                ),
             ],
             error=error,
         )
@@ -363,20 +397,40 @@ class TeamE2EPLSAdapter:
         tap_bootstrap = mer_array @ tap["bootstrap_coef"].T + tap["bootstrap_intercept"]
         tap_uncertainty = tap_bootstrap.std(axis=1)
 
-        mhc = self.bundle["mhc"]
-        projected = mer_array @ mhc["projection_weight"].T + mhc["projection_bias"]
-        projected /= np.clip(np.linalg.norm(projected, axis=1, keepdims=True), 1e-6, None)
-        cosine = projected @ mhc["centroids"][allele]
-        mhc_propensity = _interp(mhc["calibrators"][allele], cosine)
+        student_profiles = None
+        if self.netmhcpan_students is not None:
+            student_predictions = predict_student_ensemble(self.netmhcpan_students, mer_array)
+            has_affinity = student_predictions.shape[1] > AFFINITY_INDEX
+            student_profiles = [
+                format_mhci_profile(
+                    float(row[0]),
+                    float(row[1]),
+                    float(row[AFFINITY_INDEX]) if has_affinity else None,
+                )
+                for row in student_predictions
+            ]
+            mhc_propensity = student_predictions[:, 0]
+        else:
+            mhc = self.bundle["mhc"]
+            projected = mer_array @ mhc["projection_weight"].T + mhc["projection_bias"]
+            projected /= np.clip(np.linalg.norm(projected, axis=1, keepdims=True), 1e-6, None)
+            cosine = projected @ mhc["centroids"][allele]
+            mhc_propensity = _interp(mhc["calibrators"][allele], cosine)
 
         prediction_rows = []
         for index, (start, end, peptide, n_flank, c_flank) in enumerate(windows):
+            profile = student_profiles[index] if student_profiles is not None else None
+            binding_propensity = (
+                float(profile["ba_binding_propensity"])
+                if profile is not None
+                else float(mhc_propensity[index])
+            )
             composite = float(
                 math.exp(
                     np.mean(
                         np.log(
                             np.clip(
-                                [cleavage_n[index], cleavage_c[index], mhc_propensity[index]],
+                                [cleavage_n[index], cleavage_c[index], binding_propensity],
                                 1e-6,
                                 1.0,
                             )
@@ -394,10 +448,32 @@ class TeamE2EPLSAdapter:
                     tap_log_ic50_relative=float(tap_mean[index]),
                     tap_uncertainty=float(tap_uncertainty[index]),
                     mhc_i_presentation_propensity=float(mhc_propensity[index]),
+                    mhc_i_binding_propensity=(
+                        profile["ba_binding_propensity"] if profile is not None else None
+                    ),
+                    mhc_i_predicted_el_rank=(
+                        profile["predicted_el_rank"] if profile is not None else None
+                    ),
+                    mhc_i_predicted_ba_rank=(
+                        profile["predicted_ba_rank"] if profile is not None else None
+                    ),
+                    mhc_i_predicted_ba_ic50_nm=(
+                        profile.get("predicted_ba_ic50_nm") if profile is not None else None
+                    ),
+                    mhc_i_screening_flag=(
+                        profile.get("screening_flag") if profile is not None else None
+                    ),
+                    mhc_i_binder_class=(
+                        profile["binder_class"] if profile is not None else None
+                    ),
+                    mhc_i_risk_band=profile["risk_band"] if profile is not None else None,
+                    overall_mhci_risk=(
+                        profile["overall_mhci_risk"] if profile is not None else None
+                    ),
                     composite_processing_risk=composite,
                     confidence=_confidence(
                         float(tap_uncertainty[index]),
-                        float(mhc_propensity[index]),
+                        binding_propensity,
                         float(cleavage_n[index]),
                         float(cleavage_c[index]),
                         len(n_flank),
@@ -420,6 +496,54 @@ class TeamE2EPLSAdapter:
                 np.mean([row.confidence for row in prediction_rows])
             ),
         }
+        if student_profiles is not None:
+            summary["risk_profile"] = {
+                "processing": {
+                    "max_cleavage_n_probability": float(
+                        max(row.cleavage_n_probability for row in prediction_rows)
+                    ),
+                    "max_cleavage_c_probability": float(
+                        max(row.cleavage_c_probability for row in prediction_rows)
+                    ),
+                },
+                "transport": {
+                    "mean_tap_log_ic50_relative": float(
+                        np.mean([row.tap_log_ic50_relative for row in prediction_rows])
+                    ),
+                    "mean_tap_uncertainty": float(
+                        np.mean([row.tap_uncertainty for row in prediction_rows])
+                    ),
+                },
+                "mhc_i": {
+                    "max_el_presentation_propensity": float(
+                        max(row.mhc_i_presentation_propensity for row in prediction_rows)
+                    ),
+                    "max_ba_binding_propensity": float(
+                        max(
+                            row.mhc_i_binding_propensity or 0.0
+                            for row in prediction_rows
+                        )
+                    ),
+                    "highest_binder_class": next(
+                        (
+                            binder_class
+                            for binder_class in ("strong", "weak", "nonbinder")
+                            if any(
+                                row.mhc_i_binder_class == binder_class
+                                for row in prediction_rows
+                            )
+                        ),
+                        "nonbinder",
+                    ),
+                },
+                "overall": {
+                    "score": float(risks[order[:top_count]].mean()),
+                    "definition": (
+                        "top-window mean geometric processing score from N-cleavage, "
+                        "C-cleavage, and BA binding; TAP and EL are reported separately"
+                    ),
+                },
+            }
         return prediction_rows, tracks, summary
 
     @staticmethod
@@ -429,11 +553,14 @@ class TeamE2EPLSAdapter:
     ) -> dict[str, list[float]]:
         risk_values: list[list[float]] = [[] for _ in range(sequence_length)]
         mhc_values: list[list[float]] = [[] for _ in range(sequence_length)]
+        binding_values: list[list[float]] = [[] for _ in range(sequence_length)]
         for prediction in predictions:
             for position in range(prediction.start, prediction.end):
                 risk_values[position].append(prediction.composite_processing_risk)
                 mhc_values[position].append(prediction.mhc_i_presentation_propensity)
-        return {
+                if prediction.mhc_i_binding_propensity is not None:
+                    binding_values[position].append(prediction.mhc_i_binding_propensity)
+        tracks = {
             "mhci_processing_risk_max": [
                 max(values) if values else 0.0 for values in risk_values
             ],
@@ -441,3 +568,8 @@ class TeamE2EPLSAdapter:
                 float(np.mean(values)) if values else 0.0 for values in mhc_values
             ],
         }
+        if any(binding_values):
+            tracks["mhci_binding_propensity_mean"] = [
+                float(np.mean(values)) if values else 0.0 for values in binding_values
+            ]
+        return tracks

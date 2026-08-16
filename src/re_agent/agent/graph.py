@@ -57,6 +57,23 @@ CUSTOM_MODEL_CHECKPOINTS = {
 PROFILE_CHECKPOINTS = {
     "mhc_ii_plus_chao1": [CUSTOM_MODEL_CHECKPOINTS["chao1"]],
 }
+# The NetMHCpan student replaces chao1's MHCflurry-derived MHC lane. It is passed
+# alongside the chao1 checkpoint rather than instead of it, because cleavage and
+# TAP still come from chao1; only the binding and presentation lanes change.
+NETMHCPAN_STUDENT_CHECKPOINT = "models/a0201-netmhcpan-pda-cv5-v4/checkpoint"
+
+
+def _netmhcpan_student_checkpoint() -> str | None:
+    """Return the student ensemble path when it is present on disk.
+
+    Absent checkpoints degrade to the chao1-only lane instead of failing the
+    run, so a fresh clone without the downloaded weights still screens.
+    """
+
+    path = ROOT / NETMHCPAN_STUDENT_CHECKPOINT
+    if (path / "deployment_manifest.json").exists():
+        return NETMHCPAN_STUDENT_CHECKPOINT
+    return None
 
 
 def _selected_custom_checkpoints(state: ScientificAgentState) -> list[str]:
@@ -84,10 +101,45 @@ def _profiled_tool_args(
         "execute_design_campaign",
     }:
         profiled.setdefault("mhci_surrogate_checkpoints", checkpoints)
+        student = _netmhcpan_student_checkpoint()
+        if student:
+            profiled.setdefault("mhci_netmhcpan_checkpoint", student)
     return profiled
 
 
 def _agent_node(state: ScientificAgentState) -> dict[str, Any]:
+    pipeline_request = state.get("pipeline_request")
+    if pipeline_request:
+        objective = str(pipeline_request.get("objective", "")).strip()
+        if len(objective) < 20:
+            return {
+                "pipeline_request": None,
+                "messages": [
+                    AIMessage(
+                        content=(
+                            "Describe the binder target and at least one design constraint "
+                            "(for example length, interface, or excluded residues)."
+                        )
+                    )
+                ],
+            }
+        return {
+            "pipeline_request": None,
+            "messages": [
+                AIMessage(
+                    content="",
+                    tool_calls=[
+                        {
+                            "name": "research_design_objective",
+                            "args": {"objective": objective},
+                            "id": f"pipeline-research-{uuid4().hex[:10]}",
+                            "type": "tool_call",
+                        }
+                    ],
+                )
+            ],
+        }
+
     direct_request = state.get("direct_screen_request")
     if direct_request:
         sequence = re.sub(r"\s+", "", str(direct_request.get("sequence", ""))).upper()
@@ -103,6 +155,7 @@ def _agent_node(state: ScientificAgentState) -> dict[str, Any]:
                     )
                 ],
             }
+        student_checkpoint = _netmhcpan_student_checkpoint()
         return {
             "direct_screen_request": None,
             "messages": [
@@ -120,9 +173,19 @@ def _agent_node(state: ScientificAgentState) -> dict[str, Any]:
                                 "mhci_surrogate_checkpoints": [
                                     CUSTOM_MODEL_CHECKPOINTS["chao1"]
                                 ],
+                                **(
+                                    {"mhci_netmhcpan_checkpoint": student_checkpoint}
+                                    if student_checkpoint
+                                    else {}
+                                ),
                                 "source_metadata": {
                                     "ui_action": "direct_chao1_screen",
                                     "selected_model": "chao1",
+                                    "mhci_binding_lane": (
+                                        "netmhcpan_student"
+                                        if student_checkpoint
+                                        else "chao1_mhcflurry"
+                                    ),
                                 },
                                 **(
                                     {
@@ -202,6 +265,8 @@ def _agent_node(state: ScientificAgentState) -> dict[str, Any]:
             if checkpoints:
                 args["mhci_surrogate_checkpoints"] = checkpoints
             fallback_tool = ("run_reference_campaign_preflight", args)
+        elif "replay" in content and ("design" in content or "campaign" in content):
+            fallback_tool = ("replay_latest_design_campaign", {})
         elif "proto" in content and ("inspect" in content or "tool" in content):
             fallback_tool = ("inspect_proto_design_tools", {})
         elif "research" in content and ("target" in content or "design" in content):

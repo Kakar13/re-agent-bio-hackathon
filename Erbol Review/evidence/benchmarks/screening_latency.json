@@ -1,0 +1,21 @@
+{
+  "n_windows": 147,
+  "protein_length": 156,
+  "student": {
+    "runs_seconds": [
+      0.7819085829978576,
+      0.7614270409976598,
+      0.7637211670080433
+    ],
+    "best_seconds": 0.7614270409976598,
+    "peptides_per_second": 193.05854938825556,
+    "includes": "ESM-2 embedding, chao1 cleavage and TAP heads, student ensemble",
+    "device": "cpu"
+  },
+  "teacher": {
+    "seconds": 10.336362458998337,
+    "peptides_per_second": 14.221637503823109,
+    "transport": "IEDB Tools API, single batched request"
+  },
+  "speedup": 13.574987362485995
+}

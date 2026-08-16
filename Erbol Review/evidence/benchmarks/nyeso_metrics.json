@@ -1,0 +1,167 @@
+{
+  "cohort": {
+    "source": "data/processed/benchmarks/visani_nyeso_hla_a0201.csv",
+    "citation": "Visani et al. (2025) T cell receptor specificity landscape revealed through de novo peptide design. PNAS. doi:10.1073/pnas.2504783122",
+    "allele": "HLA-A*02:01",
+    "n_peptides": 95,
+    "n_responders": 32,
+    "design_origin": "HERMES-designed NY-ESO-1 variants for the 1G4 TCR, selected on TCRdock/AlphaFold3 PAE; unrelated to the PDA training corpus"
+  },
+  "models": {
+    "chao1_mhcflurry_presentation": {
+      "checkpoint_sha256": "a6a0e265e8466b08efb30f5a508eeeba954e205da66222efabc246c5a1dca41f",
+      "description": "frozen chao1 MHC head, MHCflurry-derived calibration"
+    },
+    "netmhcpan_student": {
+      "checkpoint_sha256": "984bbf528943ce20f3a8829e3d39f27d9e5f29f71cfd82165f3bb5e604cda9d8",
+      "model_version": "mhci-netmhcpan-student-v3",
+      "description": "five-fold PDA-trained NetMHCpan EL/BA student ensemble"
+    },
+    "netmhcpan_teacher": {
+      "version": "4.1",
+      "source": "https://tools-cluster-interface.iedb.org/tools_api/mhci/"
+    }
+  },
+  "endpoint_1_teacher_imitation": {
+    "el": {
+      "spearman_vs_teacher_propensity": 0.9088696120014849,
+      "pearson_vs_teacher_propensity": 0.8781481658794202,
+      "propensity_mae": 0.041014044491111186,
+      "propensity_rmse": 0.058350793543537005
+    },
+    "ba": {
+      "spearman_vs_teacher_propensity": 0.8978559324996241,
+      "pearson_vs_teacher_propensity": 0.9041832795143235,
+      "propensity_mae": 0.05036982804523946,
+      "propensity_rmse": 0.06847487883284852
+    },
+    "binder_agreement": {
+      "el_strong": {
+        "rank_cutoff": 0.5,
+        "teacher_binders": 88,
+        "student_binders": 73,
+        "agreement": 0.8421052631578947
+      },
+      "el_weak": {
+        "rank_cutoff": 2.0,
+        "teacher_binders": 93,
+        "student_binders": 91,
+        "agreement": 0.9789473684210527
+      }
+    }
+  },
+  "endpoint_2_experimental_activation": {
+    "n_rows": 95,
+    "n_positive": 32,
+    "n_negative": 63,
+    "metrics": {
+      "chao1_mhcflurry_presentation": {
+        "roc_auc": 0.6475694444444445,
+        "average_precision": 0.4177893895334362,
+        "spearman_vs_activity": 0.24802439312602698,
+        "bootstrap_95_ci": {
+          "roc_auc": [
+            0.5299266948219129,
+            0.7523233137829911
+          ],
+          "average_precision": [
+            0.301034732118712,
+            0.572257848052518
+          ],
+          "spearman_vs_activity": [
+            0.044784136085513376,
+            0.42824533960995936
+          ]
+        }
+      },
+      "netmhcpan_student_el": {
+        "roc_auc": 0.6721230158730159,
+        "average_precision": 0.4274069714956018,
+        "spearman_vs_activity": 0.3259938409854423,
+        "bootstrap_95_ci": {
+          "roc_auc": [
+            0.558965326996212,
+            0.7782191903342793
+          ],
+          "average_precision": [
+            0.3110857834259068,
+            0.5949918789524166
+          ],
+          "spearman_vs_activity": [
+            0.14614056401096817,
+            0.48886890573629205
+          ]
+        }
+      },
+      "netmhcpan_student_ba": {
+        "roc_auc": 0.6448412698412699,
+        "average_precision": 0.414316373616805,
+        "spearman_vs_activity": 0.28527435610302354,
+        "bootstrap_95_ci": {
+          "roc_auc": [
+            0.5304760585674713,
+            0.7514356235162687
+          ],
+          "average_precision": [
+            0.29919950534757345,
+            0.5836363285772698
+          ],
+          "spearman_vs_activity": [
+            0.11311771037996945,
+            0.44455395286246224
+          ]
+        }
+      },
+      "netmhcpan_teacher_el": {
+        "roc_auc": 0.7281746031746033,
+        "average_precision": 0.5096996772082558,
+        "spearman_vs_activity": 0.36481155715774655,
+        "bootstrap_95_ci": {
+          "roc_auc": [
+            0.6290779220779221,
+            0.8257143186914655
+          ],
+          "average_precision": [
+            0.36999762509492296,
+            0.6684009762637185
+          ],
+          "spearman_vs_activity": [
+            0.18339215638602435,
+            0.5353076448331574
+          ]
+        }
+      },
+      "netmhcpan_teacher_ba": {
+        "roc_auc": 0.6034226190476191,
+        "average_precision": 0.3906017898478337,
+        "spearman_vs_activity": 0.20781068074104297,
+        "bootstrap_95_ci": {
+          "roc_auc": [
+            0.4874337797619048,
+            0.7155809895193646
+          ],
+          "average_precision": [
+            0.28336788412597086,
+            0.5273037329671084
+          ],
+          "spearman_vs_activity": [
+            0.02229291229953567,
+            0.36867838746437565
+          ]
+        }
+      }
+    },
+    "interpretation": "Experimental T-cell activation is downstream of MHC presentation and TCR recognition; it is not a direct NetMHCpan teacher target."
+  },
+  "range_restriction": {
+    "teacher_el_rank_le_0p5": 88,
+    "teacher_el_rank_le_2p0": 93,
+    "n_peptides": 95,
+    "note": "The published cohort was pre-screened with NetMHCpan, so nearly every peptide is already a predicted strong binder. Activation metrics below are bounded by that restriction and do not rank the binding models."
+  },
+  "boundaries": [
+    "Peptides are pulsed synthetically, so no flanking context exists; the chao1 cleavage and TAP heads are out of scope for this cohort.",
+    "T-cell activation is downstream of presentation and TCR recognition; no model here is trained on activation labels.",
+    "Endpoint 2 is a limits result, not a ranking of the binding models."
+  ]
+}

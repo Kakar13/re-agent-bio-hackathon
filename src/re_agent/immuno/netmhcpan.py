@@ -45,6 +45,7 @@ class NetMHCpanTeacherConfig:
     batch_size: int = 500
     timeout_seconds: float = 300.0
     max_retries: int = 3
+    progress: bool = True
 
 
 class NetMHCpanTeacher:
@@ -85,6 +86,12 @@ class NetMHCpanTeacher:
             channel_tables = []
             for offset in range(0, len(unique), self.config.batch_size):
                 batch = unique[offset : offset + self.config.batch_size]
+                if self.config.progress:
+                    print(
+                        f"NetMHCpan {channel.upper()}: "
+                        f"{offset:,}-{offset + len(batch):,}/{len(unique):,}",
+                        flush=True,
+                    )
                 channel_tables.append(self._label_batch(batch, channel))
             channel_frame = pd.concat(channel_tables, ignore_index=True)
             channel_frame = channel_frame.rename(
@@ -152,8 +159,14 @@ class NetMHCpanTeacher:
             batches = []
             for offset in range(0, len(parent_rows), parents_per_batch):
                 batch = parent_rows[offset : offset + parents_per_batch]
+                if self.config.progress:
+                    print(
+                        f"NetMHCpan {channel.upper()} parents: "
+                        f"{offset:,}-{offset + len(batch):,}/{len(parent_rows):,}",
+                        flush=True,
+                    )
                 batches.append(
-                    self._label_parent_batch(
+                    self._label_parent_batch_with_validation_retries(
                         batch,
                         channel,
                         id_column=id_column,
@@ -196,6 +209,34 @@ class NetMHCpanTeacher:
         out["netmhcpan_version"] = self.config.version
         out["netmhcpan_source"] = self.endpoint
         return out
+
+    def _label_parent_batch_with_validation_retries(
+        self,
+        parents: list[dict],
+        channel: str,
+        *,
+        id_column: str,
+        sequence_column: str,
+    ) -> pd.DataFrame:
+        """Retry successful HTTP responses that contain invalid prediction tables."""
+
+        last_error: RuntimeError | None = None
+        for attempt in range(self.config.max_retries):
+            try:
+                return self._label_parent_batch(
+                    parents,
+                    channel,
+                    id_column=id_column,
+                    sequence_column=sequence_column,
+                )
+            except RuntimeError as exc:
+                last_error = exc
+                if attempt + 1 < self.config.max_retries:
+                    time.sleep(2**attempt)
+        raise RuntimeError(
+            f"NetMHCpan {channel.upper()} parent response failed validation after "
+            f"{self.config.max_retries} attempts: {last_error}"
+        ) from last_error
 
     def _label_batch(self, peptides: list[str], channel: str) -> pd.DataFrame:
         cache_path = self._cache_path(peptides, channel)

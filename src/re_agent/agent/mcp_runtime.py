@@ -38,8 +38,33 @@ def runtime_mcp_connections() -> dict[str, dict[str, Any]]:
         paperclip["headers"] = paperclip_headers
     connections["paperclip"] = paperclip
 
+    proto_repo_value = os.getenv("PROTO_TOOLS_REPO")
+    proto_repo = Path(proto_repo_value).expanduser().resolve() if proto_repo_value else None
     proto_key = os.getenv("PROTO_API_KEY")
-    if proto_key:
+    if proto_repo is not None:
+        pyproject = proto_repo / "pyproject.toml"
+        if not pyproject.is_file():
+            raise RuntimeMCPError(
+                f"PROTO_TOOLS_REPO does not contain pyproject.toml: {proto_repo}"
+            )
+        uv = shutil.which("uv")
+        if uv is None:
+            raise RuntimeMCPError("PROTO_TOOLS_REPO requires the `uv` executable")
+        connections["proto"] = {
+            "transport": "stdio",
+            "command": uv,
+            "args": [
+                "run",
+                "--directory",
+                str(proto_repo),
+                "--extra",
+                "mcp",
+                "proto-tools-mcp",
+                "--device",
+                os.getenv("RE_AGENT_PROTO_CATALOG_DEVICE", "modal"),
+            ],
+        }
+    elif proto_key:
         connections["proto"] = {
             "transport": "http",
             "url": os.getenv("PROTO_MCP_URL", "https://mcp.evodesign.org/mcp"),
@@ -78,7 +103,20 @@ def runtime_mcp_status() -> dict[str, Any]:
         "proto": {
             "configured": "proto" in connections,
             "transport": connections.get("proto", {}).get("transport"),
-            "authentication": "bearer" if os.getenv("PROTO_API_KEY") else "local_stdio",
+            "authentication": (
+                "local_modal"
+                if os.getenv("PROTO_TOOLS_REPO")
+                else "bearer"
+                if os.getenv("PROTO_API_KEY")
+                else "local_stdio"
+            ),
+            "source": (
+                "monorepo"
+                if os.getenv("PROTO_TOOLS_REPO")
+                else "hosted"
+                if os.getenv("PROTO_API_KEY")
+                else "installed"
+            ),
         },
     }
 

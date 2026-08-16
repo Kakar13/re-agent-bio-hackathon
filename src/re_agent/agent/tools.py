@@ -21,7 +21,13 @@ from re_agent.agent.mcp_runtime import (
     invoke_runtime_mcp,
     runtime_mcp_status,
 )
-from re_agent.agent.run_store import ROOT, list_runs, new_run_id, write_run_artifact
+from re_agent.agent.run_store import (
+    ROOT,
+    latest_run_artifact,
+    list_runs,
+    new_run_id,
+    write_run_artifact,
+)
 from re_agent.design.campaign import ProtoLocalRunner, run_campaign
 from re_agent.immuno.adapters import ArtifactResponseAdapter, UnavailableResponseAdapter
 from re_agent.immuno.contracts import CandidateAssessment
@@ -48,6 +54,15 @@ def _resolve_repo_file(path: str, *, allowed_roots: tuple[Path, ...]) -> Path:
     if not any(root.resolve() in target.parents for root in allowed_roots):
         raise ValueError(f"path must be below: {', '.join(str(root) for root in allowed_roots)}")
     if not target.is_file():
+        raise FileNotFoundError(target)
+    return target
+
+
+def _resolve_repo_directory(path: str, *, allowed_roots: tuple[Path, ...]) -> Path:
+    target = (ROOT / path).resolve()
+    if not any(root.resolve() in target.parents for root in allowed_roots):
+        raise ValueError(f"path must be below: {', '.join(str(root) for root in allowed_roots)}")
+    if not target.is_dir():
         raise FileNotFoundError(target)
     return target
 
@@ -139,9 +154,15 @@ def _assess_candidate(
 def _mhci_surrogates(
     checkpoint: str | None,
     checkpoints: list[str] | None = None,
+    netmhcpan_checkpoint: str | None = None,
 ) -> list[TeamE2EPLSAdapter]:
     requested = [path for path in [checkpoint, *(checkpoints or [])] if path]
     if not requested:
+        if netmhcpan_checkpoint:
+            raise ValueError(
+                "mhci_netmhcpan_checkpoint also requires a legacy MHC-I checkpoint "
+                "for the cleavage and TAP factors"
+            )
         return []
     try:
         from re_agent.immuno.e2e_pls_pickle import TeamE2EPLSAdapter
@@ -150,9 +171,15 @@ def _mhci_surrogates(
             "team MHC-I surrogate requires the ML dependencies: uv sync --extra ml"
         ) from exc
     unique_paths = list(dict.fromkeys(requested))
+    netmhcpan_checkpoint_dir = (
+        _resolve_repo_directory(netmhcpan_checkpoint, allowed_roots=(ROOT / "models",))
+        if netmhcpan_checkpoint
+        else None
+    )
     return [
         TeamE2EPLSAdapter(
-            _resolve_repo_file(path, allowed_roots=(ROOT / "models",))
+            _resolve_repo_file(path, allowed_roots=(ROOT / "models",)),
+            netmhcpan_checkpoint_dir=netmhcpan_checkpoint_dir,
         )
         for path in unique_paths
     ]
@@ -286,6 +313,42 @@ async def _paperclip_command(command: str) -> dict[str, Any]:
     return cli_result
 
 
+def _paperclip_result_id(payload: Any, prefix: str) -> str | None:
+    """Extract a saved Paperclip result id from MCP or CLI output."""
+
+    matches = re.findall(rf"\b{re.escape(prefix)}_[A-Za-z0-9]+\b", json.dumps(payload))
+    return matches[-1] if matches else None
+
+
+def _paperclip_map_citations(payload: Any) -> list[dict[str, str]]:
+    """Convert Paperclip CLI map line markers into durable citation URLs."""
+
+    text = str(payload.get("output", "")) if isinstance(payload, dict) else str(payload)
+    citations: list[dict[str, str]] = []
+    for section in re.split(r"\n\s*✓\s+", text):
+        paper_match = re.search(r"\b(PMC\d+)\b", section)
+        if paper_match is None:
+            continue
+        line_markers = list(
+            dict.fromkeys(
+                re.findall(r"\bL\d+(?:-L?\d+)?\b", section)
+            )
+        )
+        if not line_markers:
+            continue
+        paper_id = paper_match.group(1)
+        citations.append(
+            {
+                "claim": f"Paperclip mapped line evidence for {paper_id}.",
+                "url": (
+                    f"https://paperclip.gxl.ai/citations/papers/{paper_id}"
+                    f"#{','.join(line_markers)}"
+                ),
+            }
+        )
+    return citations
+
+
 def _citation_rows(payload: Any) -> list[dict[str, str]]:
     strings: list[str] = []
 
@@ -333,19 +396,39 @@ async def research_design_objective(objective: str) -> dict[str, Any]:
     literature = await _paperclip_command(
         f"search -s pmc -n 8 {shlex.quote(objective + ' structure interface hotspot')}"
     )
+    literature_id = _paperclip_result_id(literature, "s")
+    if literature_id is None:
+        raise RuntimeMCPError(
+            "Paperclip literature search did not return a saved result set; "
+            "the application cannot build line-pinned design evidence."
+        )
+    mapped_literature = await _paperclip_command(
+        "map --from "
+        f"{literature_id} "
+        + shlex.quote(
+            "Extract target identity, experimentally resolved structures, interface "
+            "residues or hotspots, binder constraints, and limitations. Cite every "
+            "claim with Paperclip line-pinned citation URLs."
+        )
+    )
     await _paperclip_command("skill proteins")
     proteins = await _paperclip_command(
         f"search -s proteins -n 8 {shlex.quote(objective)}"
     )
-    searches = [literature, proteins]
+    searches = [literature, mapped_literature, proteins]
     citations = _citation_rows(searches)
-    if not citations:
-        citations = [
-            {
-                "claim": "Paperclip was used to retrieve biomedical evidence.",
-                "url": "https://paperclip.gxl.ai",
-            }
-        ]
+    citations.extend(_paperclip_map_citations(mapped_literature))
+    citations = list({citation["url"]: citation for citation in citations}.values())
+    line_pinned = [
+        citation
+        for citation in citations
+        if "paperclip.gxl.ai/citations/" in citation["url"] and "#L" in citation["url"]
+    ]
+    if not line_pinned:
+        raise RuntimeMCPError(
+            "Paperclip returned no line-pinned evidence URLs; design-spec drafting "
+            "is blocked rather than substituting an uncited claim."
+        )
     return write_run_artifact(
         run_id=new_run_id("target-research"),
         kind="target_research",
@@ -356,6 +439,7 @@ async def research_design_objective(objective: str) -> dict[str, Any]:
             "research": {
                 "routine": routed,
                 "searches": searches,
+                "literature_result_id": literature_id,
             },
             "claim_boundary": (
                 "Search results support design-spec drafting; target residues still require "
@@ -416,6 +500,7 @@ async def inspect_proto_design_tools() -> dict[str, Any]:
             )
         )
     schemas = {}
+    deployments = {}
     for tool_key in (
         "rfdiffusion3-design",
         "proteinmpnn-sample",
@@ -429,6 +514,13 @@ async def inspect_proto_design_tools() -> dict[str, Any]:
                 {"tool_key": tool_key},
             )
         )
+        deployments[tool_key] = _json_safe(
+            await invoke_runtime_mcp(
+                "proto",
+                ("get_tool_info",),
+                {"tool_key": tool_key},
+            )
+        )
     return write_run_artifact(
         run_id=new_run_id("proto-catalog"),
         kind="proto_tool_validation",
@@ -439,6 +531,7 @@ async def inspect_proto_design_tools() -> dict[str, Any]:
             "workspace": _json_safe(workspace),
             "searches": searches,
             "schemas": schemas,
+            "deployments": deployments,
             "claim_boundary": "Tool discovery validates contracts but does not start compute.",
             "citations": [
                 {
@@ -518,6 +611,7 @@ def screen_candidate(
     response_artifact: str | None = None,
     mhci_surrogate_checkpoint: str | None = None,
     mhci_surrogate_checkpoints: list[str] | None = None,
+    mhci_netmhcpan_checkpoint: str | None = None,
     source_metadata: dict[str, Any] | None = None,
     structure_path: str | None = None,
     structure_pdb_id: str | None = None,
@@ -539,7 +633,11 @@ def screen_candidate(
     )
     _attach_mhci_surrogates(
         assessment,
-        _mhci_surrogates(mhci_surrogate_checkpoint, mhci_surrogate_checkpoints),
+        _mhci_surrogates(
+            mhci_surrogate_checkpoint,
+            mhci_surrogate_checkpoints,
+            mhci_netmhcpan_checkpoint,
+        ),
     )
     payload = {
         "title": f"Immunogenicity screen: {candidate_id}",
@@ -622,6 +720,31 @@ def list_scientific_runs(limit: int = 20) -> dict[str, Any]:
 
     bounded = max(1, min(limit, 100))
     return {"runs": list_runs(bounded)}
+
+
+@tool
+def replay_latest_design_campaign() -> dict[str, Any]:
+    """Replay the latest hash-valid completed campaign without external calls."""
+
+    source = latest_run_artifact("design_to_screen_campaign")
+    payload = json.loads(json.dumps(source["payload"]))
+    manifest = payload.get("manifest", {})
+    if manifest.get("status") != "completed":
+        raise ValueError("latest design campaign is not complete and cannot be replayed")
+    payload.update(
+        {
+            "title": f"Replay: {payload.get('title', source['title'])}",
+            "execution_mode": "replay",
+            "replay_of": source["id"],
+            "replay_source_sha256": source["sha256"],
+        }
+    )
+    return write_run_artifact(
+        run_id=new_run_id("design-replay"),
+        kind="design_to_screen_campaign_replay",
+        payload=payload,
+        parent_run_id=source["id"],
+    )
 
 
 @tool
@@ -846,9 +969,11 @@ def plan_design_campaign(
 def execute_design_campaign(
     spec_path: str = "docs/design_spec.json",
     device: str = "cuda",
+    campaign_run_id: str | None = None,
     response_artifact: str | None = None,
     mhci_surrogate_checkpoint: str | None = None,
     mhci_surrogate_checkpoints: list[str] | None = None,
+    mhci_netmhcpan_checkpoint: str | None = None,
     max_screen_candidates: int = 32,
 ) -> dict[str, Any]:
     """Run approved Proto design, structural gates, and immunogenicity screening."""
@@ -858,7 +983,11 @@ def execute_design_campaign(
         allowed_roots=(ROOT / "docs", ROOT / "results" / "design_specs"),
     )
     spec = json.loads(resolved_spec.read_text())
-    run_id = new_run_id("design")
+    run_id = campaign_run_id or new_run_id("design")
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+", run_id):
+        raise ValueError(
+            "campaign_run_id may contain only letters, numbers, dot, dash, and underscore"
+        )
     output_dir = ROOT / "results" / "design_campaigns" / run_id
     manifest = run_campaign(
         resolved_spec,
@@ -874,11 +1003,15 @@ def execute_design_campaign(
         if candidate.screening_status == "eligible"
     ][:bounded]
     assessments: list[dict[str, Any]] = []
+    manifest.phase_status["immunogenicity"] = "running" if eligible else "blocked"
+    manifest_path = output_dir / "campaign_manifest.json"
+    manifest_path.write_text(manifest.model_dump_json(indent=2) + "\n")
     if eligible:
         agent = _screening_agent(response_artifact)
         surrogates = _mhci_surrogates(
             mhci_surrogate_checkpoint,
             mhci_surrogate_checkpoints,
+            mhci_netmhcpan_checkpoint,
         )
         for candidate in eligible:
             assessment = agent.assess(
@@ -906,7 +1039,9 @@ def execute_design_campaign(
             assessments.append(assessment.model_dump(mode="json"))
 
     manifest.candidate_counts["screened"] = len(assessments)
-    manifest_path = output_dir / "campaign_manifest.json"
+    manifest.phase_status["immunogenicity"] = "completed" if eligible else "blocked"
+    if eligible:
+        manifest.status = "completed"
     manifest_path.write_text(manifest.model_dump_json(indent=2) + "\n")
     citations = [
         {"claim": row.get("title", "Design source"), "url": row["url"]}
@@ -1003,6 +1138,7 @@ def run_reference_campaign_preflight(
     response_artifact: str | None = None,
     mhci_surrogate_checkpoint: str | None = None,
     mhci_surrogate_checkpoints: list[str] | None = None,
+    mhci_netmhcpan_checkpoint: str | None = None,
 ) -> dict[str, Any]:
     """Screen a bounded subset of the 95 historical sequences without GPU generation."""
 
@@ -1013,6 +1149,7 @@ def run_reference_campaign_preflight(
     surrogates = _mhci_surrogates(
         mhci_surrogate_checkpoint,
         mhci_surrogate_checkpoints,
+        mhci_netmhcpan_checkpoint,
     )
     assessments = []
     for candidate_id, sequence in sequences[:bounded]:
@@ -1059,6 +1196,7 @@ SCIENTIFIC_TOOLS = [
     discover_scientific_skills,
     read_scientific_skill,
     list_scientific_runs,
+    replay_latest_design_campaign,
     read_design_spec,
     draft_cited_design_spec,
     plan_design_campaign,

@@ -1,0 +1,101 @@
+{
+  "profile": "data/processed/profiles/a0201-pda-mhci-profile-v4/pda_mhci_profile.parquet",
+  "n_unique_peptides": 159038,
+  "scoring": "out-of-fold student EL propensity",
+  "channels": {
+    "strong_binder": {
+      "teacher_binder_rank": 0.5,
+      "n_rows": 159038,
+      "n_teacher_binders": 3956,
+      "default_cutoff": {
+        "rule": "predicted rank <= 0.5",
+        "n_flagged": 2376,
+        "recall": 0.5232558139534884,
+        "precision": 0.8712121212121212
+      },
+      "operating_points": [
+        {
+          "target_recall": 0.8,
+          "propensity_threshold": 0.862794041633606,
+          "implied_predicted_rank": 0.8836700601140905,
+          "recall": 0.8000505561172901,
+          "precision": 0.6695578591072562,
+          "n_flagged": 4727
+        },
+        {
+          "target_recall": 0.9,
+          "propensity_threshold": 0.8251069188117981,
+          "implied_predicted_rank": 1.2415165034001527,
+          "recall": 0.9001516683518705,
+          "precision": 0.536618444846293,
+          "n_flagged": 6636
+        },
+        {
+          "target_recall": 0.95,
+          "propensity_threshold": 0.7891868352890015,
+          "implied_predicted_rank": 1.645680107315387,
+          "recall": 0.9502022244691608,
+          "precision": 0.4389816653042158,
+          "n_flagged": 8563
+        },
+        {
+          "target_recall": 0.99,
+          "propensity_threshold": 0.6981313228607178,
+          "implied_predicted_rank": 3.027558355628395,
+          "recall": 0.9901415571284126,
+          "precision": 0.2743573579883729,
+          "n_flagged": 14277
+        }
+      ]
+    },
+    "weak_or_better": {
+      "teacher_binder_rank": 2.0,
+      "n_rows": 159038,
+      "n_teacher_binders": 10738,
+      "default_cutoff": {
+        "rule": "predicted rank <= 2.0",
+        "n_flagged": 10106,
+        "recall": 0.7774259638666419,
+        "precision": 0.8260439342964575
+      },
+      "operating_points": [
+        {
+          "target_recall": 0.8,
+          "propensity_threshold": 0.7528173327445984,
+          "implied_predicted_rank": 2.1292013087229664,
+          "recall": 0.8000558763270628,
+          "precision": 0.8065909304290677,
+          "n_flagged": 10651
+        },
+        {
+          "target_recall": 0.9,
+          "propensity_threshold": 0.6985175013542175,
+          "implied_predicted_rank": 3.020386591185367,
+          "recall": 0.9000745017694171,
+          "precision": 0.6776749404010658,
+          "n_flagged": 14262
+        },
+        {
+          "target_recall": 0.95,
+          "propensity_threshold": 0.6524634957313538,
+          "implied_predicted_rank": 3.972500593992654,
+          "recall": 0.9500838144905942,
+          "precision": 0.5789354216320508,
+          "n_flagged": 17622
+        },
+        {
+          "target_recall": 0.99,
+          "propensity_threshold": 0.5456769466400146,
+          "implied_predicted_rank": 7.139718888498598,
+          "recall": 0.9900353883404731,
+          "precision": 0.3904723426136781,
+          "n_flagged": 27226
+        }
+      ]
+    }
+  },
+  "boundaries": [
+    "Recall is measured against the NetMHCpan teacher, not experimental binding.",
+    "Cutoffs are fitted on PDA de novo peptides and may shift on other domains."
+  ]
+}

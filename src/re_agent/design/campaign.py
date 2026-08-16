@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections import Counter
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -48,6 +48,7 @@ class CampaignManifest(BaseModel):
     candidates: list[CandidateRecord] = Field(default_factory=list)
     candidate_counts: dict[str, int] = Field(default_factory=dict)
     screening_fasta: str | None = None
+    phase_status: dict[str, str] = Field(default_factory=dict)
     warnings: list[str] = Field(default_factory=list)
 
 
@@ -115,6 +116,25 @@ def _sha256(path: Path) -> str:
 
 def _relative(path: Path) -> str:
     return str(path.relative_to(ROOT))
+
+
+def _write_manifest(path: Path, manifest: CampaignManifest) -> None:
+    path.write_text(manifest.model_dump_json(indent=2) + "\n")
+
+
+def _load_or_run_json(path: Path, operation: Callable[[], dict[str, Any]]) -> dict[str, Any]:
+    """Reuse a completed phase output when resuming an interrupted campaign."""
+
+    if path.is_file():
+        try:
+            payload = json.loads(path.read_text())
+        except (OSError, json.JSONDecodeError):
+            payload = None
+        if isinstance(payload, dict):
+            return payload
+    payload = operation()
+    path.write_text(json.dumps(payload, indent=2) + "\n")
+    return payload
 
 
 def _structure_text(payload: Any) -> str:
@@ -409,6 +429,12 @@ def build_campaign_plan(spec_path: Path, *, device: str = "cuda") -> CampaignMan
         target=spec["target"],
         claim_boundary=spec["objective"]["claim_boundary"],
         executions=executions,
+        phase_status={
+            "backbone_design": "pending",
+            "sequence_design": "pending",
+            "structure_validation": "pending",
+            "immunogenicity": "pending",
+        },
         warnings=[
             "AlphaFold2 confidence is a computational validation proxy, not binding proof.",
             "Candidate screening starts only after required structural metrics are recorded.",
@@ -431,20 +457,28 @@ def run_campaign(
     manifest_path = output_dir / "campaign_manifest.json"
     if not approved:
         manifest.status = "awaiting_compute_approval"
-        manifest_path.write_text(manifest.model_dump_json(indent=2) + "\n")
+        _write_manifest(manifest_path, manifest)
         return manifest
 
     spec = json.loads(spec_path.read_text())
     backbone_execution = manifest.executions[0]
-    backbone_output = runner.run(
-        backbone_execution.tool_key,
-        backbone_execution.inputs,
-        backbone_execution.config,
-    )
+    manifest.status = "running"
+    manifest.phase_status["backbone_design"] = "running"
+    _write_manifest(manifest_path, manifest)
     backbone_path = output_dir / "rfdiffusion3_output.json"
-    backbone_path.write_text(json.dumps(backbone_output, indent=2) + "\n")
+    backbone_output = _load_or_run_json(
+        backbone_path,
+        lambda: runner.run(
+            backbone_execution.tool_key,
+            backbone_execution.inputs,
+            backbone_execution.config,
+        ),
+    )
     backbone_execution.output_path = _relative(backbone_path)
     backbone_execution.status = "completed"
+    manifest.phase_status["backbone_design"] = "completed"
+    manifest.phase_status["sequence_design"] = "running"
+    _write_manifest(manifest_path, manifest)
 
     designed = [
         structure
@@ -466,22 +500,24 @@ def run_campaign(
             if isinstance(structure_payload, Mapping)
             else str(designed_path)
         )
-        mpnn_output = runner.run(
-            "proteinmpnn-sample",
-            {
-                "inputs": [
-                    {
-                        "structure": mpnn_structure_payload,
-                        "chains_to_redesign": spec["generation"]["sequence_provider"][
-                            "chains_to_redesign"
-                        ],
-                    }
-                ]
-            },
-            sequence_config,
-        )
         mpnn_path = output_dir / f"{backbone_id}.proteinmpnn.json"
-        mpnn_path.write_text(json.dumps(mpnn_output, indent=2) + "\n")
+        mpnn_output = _load_or_run_json(
+            mpnn_path,
+            lambda: runner.run(
+                "proteinmpnn-sample",
+                {
+                    "inputs": [
+                        {
+                            "structure": mpnn_structure_payload,
+                            "chains_to_redesign": spec["generation"]["sequence_provider"][
+                                "chains_to_redesign"
+                            ],
+                        }
+                    ]
+                },
+                sequence_config,
+            ),
+        )
         complexes = [
             row
             for design_set in mpnn_output.get("design_sets", [])
@@ -501,20 +537,24 @@ def run_campaign(
             if not designed_chains:
                 continue
             candidate_sequence = "".join(chain["sequence"] for chain in designed_chains)
-            monomer_output = runner.run(
-                "alphafold2-prediction",
-                {"complexes": [{"chains": designed_chains}]},
-                af2_config,
-            )
             monomer_path = output_dir / f"{candidate_id}.alphafold2.monomer.json"
-            monomer_path.write_text(json.dumps(monomer_output, indent=2) + "\n")
-            complex_output = runner.run(
-                "alphafold2-prediction",
-                {"complexes": [{"chains": complex_row["chains"]}]},
-                af2_config,
+            monomer_output = _load_or_run_json(
+                monomer_path,
+                lambda: runner.run(
+                    "alphafold2-prediction",
+                    {"complexes": [{"chains": designed_chains}]},
+                    af2_config,
+                ),
             )
             complex_path = output_dir / f"{candidate_id}.alphafold2.complex.json"
-            complex_path.write_text(json.dumps(complex_output, indent=2) + "\n")
+            complex_output = _load_or_run_json(
+                complex_path,
+                lambda: runner.run(
+                    "alphafold2-prediction",
+                    {"complexes": [{"chains": complex_row["chains"]}]},
+                    af2_config,
+                ),
+            )
             monomer_structures = monomer_output.get("structures", [])
             complex_structures = complex_output.get("structures", [])
             refold_path: Path | None = None
@@ -551,13 +591,17 @@ def run_campaign(
                 metrics["clash_check_passed"] = clash_count == 0
             if refold_path:
                 try:
-                    rmsd_output = runner.run(
-                        "pymol-rmsd-alignment",
-                        {
-                            "target_structure": str(designed_path),
-                            "mobile_structure": str(refold_path),
-                        },
-                        rmsd_config,
+                    rmsd_path = output_dir / f"{candidate_id}.pymol-rmsd.json"
+                    rmsd_output = _load_or_run_json(
+                        rmsd_path,
+                        lambda: runner.run(
+                            "pymol-rmsd-alignment",
+                            {
+                                "target_structure": str(designed_path),
+                                "mobile_structure": str(refold_path),
+                            },
+                            rmsd_config,
+                        ),
                     )
                     rmsd = rmsd_output.get("metrics", {}).get("rmsd")
                     if isinstance(rmsd, (int, float)):
@@ -584,6 +628,9 @@ def run_campaign(
         "".join(f">{row.candidate_id}\n{row.sequence}\n" for row in candidates)
     )
     manifest.candidates = candidates
+    manifest.phase_status["sequence_design"] = "completed"
+    manifest.phase_status["structure_validation"] = "running"
+    _write_manifest(manifest_path, manifest)
     evaluate_candidate_validation(candidates, spec["validation"])
     eligible = [row for row in candidates if row.screening_status == "eligible"]
     fasta_path.write_text(
@@ -604,5 +651,9 @@ def run_campaign(
     manifest.executions[1].status = "completed"
     manifest.executions[2].status = "completed"
     manifest.executions[3].status = "completed"
-    manifest_path.write_text(manifest.model_dump_json(indent=2) + "\n")
+    manifest.phase_status["structure_validation"] = "completed"
+    manifest.phase_status["immunogenicity"] = (
+        "ready" if manifest.status == "ready_for_screening" else "blocked"
+    )
+    _write_manifest(manifest_path, manifest)
     return manifest

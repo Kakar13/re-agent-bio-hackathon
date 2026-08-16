@@ -19,8 +19,18 @@ import { HeatmapTrack } from "@/components/heatmap-track";
 import { MolstarViewer } from "@/components/molstar-viewer";
 import type { Review, ScientificArtifact } from "@/lib/types";
 
-const TABS = ["Overview", "Sequence", "Structure", "Evidence", "Provenance", "Review"] as const;
-type Tab = (typeof TABS)[number];
+type Tab =
+  | "Overview"
+  | "Objective"
+  | "Literature"
+  | "Toolchain"
+  | "Candidates"
+  | "Sequence"
+  | "Structure"
+  | "Immunogenicity"
+  | "Evidence"
+  | "Provenance"
+  | "Review";
 
 export function ArtifactPanel({
   artifact,
@@ -38,11 +48,13 @@ export function ArtifactPanel({
   agentIsLoading: boolean;
 }) {
   const [tab, setTab] = useState<Tab>("Overview");
+  const [candidateIndex, setCandidateIndex] = useState(0);
   const [annotations, setAnnotations] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
-  const assessment = artifact?.payload.assessment;
   const architecture = artifact?.payload.architecture;
   const campaign = artifact?.payload.manifest;
+  const assessments = artifact?.payload.assessments ?? [];
+  const assessment = assessments[candidateIndex] ?? artifact?.payload.assessment;
   const structure = assessment?.structure;
   const structureUrl = structure
     ? `/api/structure?path=${encodeURIComponent(structure.path)}`
@@ -53,6 +65,31 @@ export function ArtifactPanel({
     [assessment],
   );
   const mhciSurrogates = assessment?.mhc_i_surrogate_results ?? [];
+  const tabs = useMemo<Tab[]>(() => {
+    if (!artifact) return ["Overview"];
+    if (artifact.kind === "target_research" || artifact.kind === "paperclip_evidence") {
+      return ["Overview", "Literature", "Provenance", "Review"];
+    }
+    if (artifact.kind === "proto_tool_validation") {
+      return ["Overview", "Toolchain", "Provenance", "Review"];
+    }
+    if (artifact.kind === "design_spec" || artifact.kind === "design_campaign_plan") {
+      return ["Overview", "Objective", "Toolchain", "Provenance", "Review"];
+    }
+    if (campaign) {
+      return [
+        "Overview",
+        "Candidates",
+        "Sequence",
+        "Structure",
+        "Immunogenicity",
+        "Evidence",
+        "Provenance",
+        "Review",
+      ];
+    }
+    return ["Overview", "Sequence", "Structure", "Evidence", "Provenance", "Review"];
+  }, [artifact, campaign]);
 
   if (!artifact) {
     return (
@@ -99,7 +136,7 @@ export function ArtifactPanel({
       />
 
       <nav className="artifact-tabs" aria-label="Artifact views">
-        {TABS.map((item) => (
+        {tabs.map((item) => (
           <button
             key={item}
             className={item === tab ? "active" : undefined}
@@ -238,6 +275,128 @@ export function ArtifactPanel({
           </div>
         )}
 
+        {tab === "Objective" && (
+          <div className="stack">
+            <section className="canvas-card">
+              <span className="eyebrow">Natural-language objective</span>
+              <h3>{artifact.payload.objective ?? artifact.title}</h3>
+              <p className="empty-copy">
+                {artifact.payload.claim_boundary ?? "No claim boundary recorded."}
+              </p>
+            </section>
+            <section className="canvas-card code-card">
+              <h3>Validated design specification</h3>
+              <pre>{JSON.stringify(artifact.payload.spec ?? { spec_path: artifact.payload.spec_path }, null, 2)}</pre>
+            </section>
+          </div>
+        )}
+
+        {tab === "Literature" && (
+          <div className="stack">
+            <section className="canvas-card">
+              <span className="eyebrow">Paperclip evidence</span>
+              <h3>Line-pinned research record</h3>
+              <div className="citation-list">
+                {(artifact.payload.citations ?? []).map((citation) => (
+                  <a key={citation.url} href={citation.url} target="_blank" rel="noreferrer">
+                    <FileCode2 size={15} />
+                    <span>{citation.claim}</span>
+                  </a>
+                ))}
+              </div>
+            </section>
+            <section className="canvas-card code-card">
+              <h3>Retrieved evidence</h3>
+              <pre>{JSON.stringify(artifact.payload.research ?? artifact.payload.result ?? {}, null, 2)}</pre>
+            </section>
+          </div>
+        )}
+
+        {tab === "Toolchain" && (
+          <div className="stack">
+            <section className="canvas-card">
+              <span className="eyebrow">Application-owned execution</span>
+              <h3>Proto tool contracts and phases</h3>
+              <div className="lane-list">
+                {(campaign?.executions ?? []).map((execution) => (
+                  <Lane
+                    key={execution.tool_key}
+                    name={execution.tool_key}
+                    status={execution.status}
+                  />
+                ))}
+                {!campaign?.executions?.length &&
+                  Object.keys(artifact.payload.schemas ?? {}).map((toolKey) => (
+                    <Lane key={toolKey} name={toolKey} status="ready" />
+                  ))}
+              </div>
+            </section>
+            <section className="canvas-card code-card">
+              <h3>Runtime record</h3>
+              <pre>
+                {JSON.stringify(
+                  {
+                    runtime: artifact.payload.runtime,
+                    workspace: artifact.payload.workspace,
+                    phases: campaign?.phase_status,
+                  },
+                  null,
+                  2,
+                )}
+              </pre>
+            </section>
+          </div>
+        )}
+
+        {tab === "Candidates" && (
+          <section className="canvas-card">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">Generated designs</span>
+                <h3>Candidate comparison</h3>
+              </div>
+              <span className="status-chip">{campaign?.status ?? "missing"}</span>
+            </div>
+            <div className="data-table-wrap">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Candidate</th>
+                    <th>Validation</th>
+                    <th>Screening</th>
+                    <th>Passed gates</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(campaign?.candidates ?? []).map((candidate) => {
+                    const assessmentIndex = assessments.findIndex(
+                      (row) => row.candidate_id === candidate.candidate_id,
+                    );
+                    return (
+                      <tr
+                        key={candidate.candidate_id}
+                        className={assessmentIndex === candidateIndex ? "selected-row" : undefined}
+                        onClick={() => assessmentIndex >= 0 && setCandidateIndex(assessmentIndex)}
+                      >
+                        <td className="mono">{candidate.candidate_id}</td>
+                        <td>{candidate.validation_status}</td>
+                        <td>{candidate.screening_status}</td>
+                        <td>
+                          {candidate.validation_checks.filter((check) => check.passed).length}/
+                          {candidate.validation_checks.length}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p className="empty-copy">
+              Select a screened candidate, then open Structure, Immunogenicity, or Evidence.
+            </p>
+          </section>
+        )}
+
         {tab === "Sequence" && (
           <section className="canvas-card sequence-card">
             <div className="section-heading">
@@ -268,6 +427,51 @@ export function ArtifactPanel({
             unresolvedSequencePositions={structure?.unresolved_sequence_positions}
             spatialTracks={assessment?.spatial_tracks}
           />
+        )}
+
+        {tab === "Immunogenicity" && (
+          <div className="stack">
+            <section className="canvas-card">
+              <div className="section-heading">
+                <div>
+                  <span className="eyebrow">Selected candidate</span>
+                  <h3>{assessment?.candidate_id ?? "No screened candidate"}</h3>
+                </div>
+                <ShieldCheck size={20} />
+              </div>
+              <div className="metric-grid">
+                <Metric
+                  label="Combined rank"
+                  value={
+                    assessment?.combined_rank_score == null
+                      ? "Withheld"
+                      : assessment.combined_rank_score.toFixed(3)
+                  }
+                  warning={assessment?.combined_rank_score == null}
+                />
+                <Metric label="MHC-II alleles" value={String(mhc?.supported_alleles.length ?? 0)} />
+                <Metric label="EL + BA hits" value={String(mhc?.hits.length ?? 0)} />
+                <Metric label="MHC-I lanes" value={String(mhciSurrogates.length)} />
+              </div>
+            </section>
+            <section className="canvas-card">
+              <h3>Independent evidence lanes</h3>
+              <div className="lane-list">
+                <Lane name="Response propensity" status={assessment?.response_results[0]?.status} />
+                <Lane name="NetMHCIIpan EL" status={mhc?.status} />
+                <Lane name="NetMHCIIpan BA" status={mhc?.status} />
+                {mhciSurrogates.map((surrogate) => (
+                  <Lane
+                    key={surrogate.adapter_id}
+                    name={`${customModelLabel(surrogate.adapter_id)} MHC-I surrogate`}
+                    status={surrogate.status}
+                  />
+                ))}
+                <Lane name="Processing" status={assessment?.processing ? "ok" : "unavailable"} />
+                <Lane name="Tolerance" status={assessment?.tolerance ? "ok" : "unavailable"} />
+              </div>
+            </section>
+          </div>
         )}
 
         {tab === "Evidence" && (
@@ -499,7 +703,11 @@ function Metric({ label, value, warning = false }: { label: string; value: strin
 }
 
 function Lane({ name, status }: { name: string; status?: string }) {
-  const ok = status === "ok" || status === "ready" || status === "separate";
+  const ok =
+    status === "ok" ||
+    status === "ready" ||
+    status === "separate" ||
+    status === "completed";
   return (
     <div className="lane">
       <span className={ok ? "lane-status ok" : "lane-status"} />

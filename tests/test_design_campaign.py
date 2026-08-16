@@ -213,8 +213,37 @@ def test_campaign_hands_only_structural_passes_to_screening_fasta(tmp_path: Path
             "validation_passed": 1,
             "validation_failed": 0,
         }
+        assert manifest.phase_status == {
+            "backbone_design": "completed",
+            "sequence_design": "completed",
+            "structure_validation": "completed",
+            "immunogenicity": "ready",
+        }
         assert manifest.candidates[0].validation_status == "pass"
         screening_fasta = output_dir / "screening_candidates.fasta"
         assert PassingCampaignRunner.sequence in screening_fasta.read_text()
+    finally:
+        shutil.rmtree(output_dir, ignore_errors=True)
+
+
+def test_campaign_resumes_from_persisted_proto_phase_outputs(tmp_path: Path) -> None:
+    output_dir = ROOT / "results" / "test-runs" / f"resume-{tmp_path.name}"
+    try:
+        first = run_campaign(
+            ROOT / "docs" / "design_spec.json",
+            output_dir,
+            PassingCampaignRunner(),
+            approved=True,
+        )
+        resumed = run_campaign(
+            ROOT / "docs" / "design_spec.json",
+            output_dir,
+            FailIfCalledRunner(),
+            approved=True,
+        )
+
+        assert first.candidate_counts == resumed.candidate_counts
+        assert resumed.phase_status["structure_validation"] == "completed"
+        assert resumed.candidates[0].sequence == PassingCampaignRunner.sequence
     finally:
         shutil.rmtree(output_dir, ignore_errors=True)

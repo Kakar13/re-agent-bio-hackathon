@@ -1,0 +1,29 @@
+{
+  "model_version": "mhci-netmhcpan-student-v3",
+  "encoder_model_id": "esm2_t33_650M_UR50D",
+  "embedding_dim": 1280,
+  "pooling": "mean over 9 peptide residues; BOS/EOS excluded",
+  "hidden_dim": 512,
+  "dropout": 0.1,
+  "n_outputs": 3,
+  "outputs": [
+    "netmhcpan_el_rank_propensity",
+    "netmhcpan_ba_rank_propensity",
+    "netmhcpan_ba_affinity_score"
+  ],
+  "profile_formatter": {
+    "function": "re_agent.e2e_pls.netmhcpan_student.format_mhci_profile",
+    "overall_mhci_risk": "EL presentation propensity only",
+    "binder_class_basis": "predicted EL rank",
+    "strong_binder_rank_max": 0.5,
+    "weak_binder_rank_max": 2.0
+  },
+  "corpus_sha256": "e1fa657c39a4a448d68a82898a84c7e2969f8b1ba58bb16f012e94ecc2ee9c27",
+  "intended_use": "fast HLA-A*02:01 NetMHCpan surrogate and separate MHC-I risk lane",
+  "not_ground_truth": true,
+  "caveats": [
+    "Student outputs estimate agreement with the NetMHCpan teacher, not biological ground truth.",
+    "EL presentation and BA binding are related teacher channels; overall MHC-I risk uses EL presentation propensity alone to avoid double-counting BA.",
+    "Predicted percentile ranks are deterministic inversions of student propensities, not direct NetMHCpan calculations."
+  ]
+}

@@ -124,6 +124,14 @@ export type ScientificArtifact = {
     manifest?: {
       status: string;
       spec_path: string;
+      phase_status?: Record<string, string>;
+      executions?: Array<{
+        tool_key: string;
+        status: string;
+        output_path?: string | null;
+        inputs: Record<string, unknown>;
+        config: Record<string, unknown>;
+      }>;
       candidate_counts: {
         generated?: number;
         validation_passed?: number;
@@ -132,6 +140,12 @@ export type ScientificArtifact = {
       };
       candidates: Array<{
         candidate_id: string;
+        sequence?: string;
+        backbone_id?: string;
+        designed_structure_path?: string;
+        refolded_structure_path?: string | null;
+        complex_structure_path?: string | null;
+        validation_metrics?: Record<string, unknown>;
         validation_status: string;
         screening_status: string;
         validation_checks: Array<{
@@ -143,6 +157,16 @@ export type ScientificArtifact = {
       }>;
     };
     assessments?: Assessment[];
+    objective?: string;
+    research?: Record<string, unknown>;
+    result?: Record<string, unknown>;
+    runtime?: Record<string, unknown>;
+    workspace?: Record<string, unknown>;
+    searches?: Record<string, unknown>;
+    schemas?: Record<string, unknown>;
+    spec?: Record<string, unknown>;
+    execution_mode?: "live" | "replay";
+    replay_of?: string;
     spec_path?: string;
     status?: string;
     checks?: ReviewCheck[];
@@ -161,5 +185,8 @@ export type AgentState = {
   direct_screen_request?: {
     sequence: string;
     candidate_id: string;
+  } | null;
+  pipeline_request?: {
+    objective: string;
   } | null;
 };

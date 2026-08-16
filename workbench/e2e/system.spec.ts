@@ -94,6 +94,24 @@ test("loads the workbench shell and live LangGraph runtime", async ({ page, requ
     .toBe(200);
 });
 
+test("opens the dedicated natural-language binder pipeline workspace", async ({ page }) => {
+  await page.getByRole("button", { name: "End-to-end pipeline workspace" }).click();
+
+  await expect(
+    page.getByRole("heading", { name: "End-to-end binder pipeline" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Natural language to screened binders" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Load IL-7Rα example" }).click();
+  await expect(page.getByLabel("What should the binder do?")).toHaveValue(/IL-7Rα/);
+  await expect(page.getByText("Paperclip evidence", { exact: true })).toBeVisible();
+  await expect(page.getByText("RFdiffusion3", { exact: true })).toBeVisible();
+  await expect(page.getByText("ProteinMPNN", { exact: true })).toBeVisible();
+  await expect(page.getByText("AlphaFold2 + structural gates", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Replay latest" })).toBeVisible();
+});
+
 test("streams architecture status through artifact and reviewer views", async ({ page }) => {
   await page.getByText("Agent notes & research tools").click();
   await page
@@ -103,7 +121,7 @@ test("streams architecture status through artifact and reviewer views", async ({
   await expect(
     page.getByRole("heading", { name: "Immunogenicity architecture readiness" }),
   ).toBeVisible();
-  await expect(page.getByText("Deterministic reviewer: pass.")).toBeVisible();
+  await expect(page.getByText("Deterministic reviewer: pass.").first()).toBeVisible();
   await expect(page.getByText("18 planned")).toBeVisible();
   await expect(page.getByText("EL + BA", { exact: true })).toBeVisible();
 
@@ -133,7 +151,7 @@ test("runs cached NetMHCIIpan EL and BA through the complete browser flow", asyn
     }),
   ).toBeVisible({ timeout: 30_000 });
   await page.getByText("Agent notes & research tools").click();
-  await expect(page.getByText("Deterministic reviewer: pass.")).toBeVisible();
+  await expect(page.getByText("Deterministic reviewer: pass.").first()).toBeVisible();
 
   const alleleMetric = page.locator(".metric").filter({ hasText: "MHC-II alleles" });
   await expect(alleleMetric).toContainText("18");
@@ -190,7 +208,7 @@ test("plans the Proto design campaign without launching GPU compute", async ({ p
     }),
   ).toBeVisible({ timeout: 30_000 });
   await page.getByText("Agent notes & research tools").click();
-  await expect(page.getByText("Deterministic reviewer: pass.")).toBeVisible();
+  await expect(page.getByText("Deterministic reviewer: pass.").first()).toBeVisible();
   await expect(page.getByText("Computational prioritization only", { exact: false })).toBeVisible();
 });
 
@@ -205,7 +223,7 @@ test("uses historical sequences only as a no-GPU screening preflight", async ({ 
   await expect(
     page.getByRole("heading", { name: "IL-7Rα no-GPU screening preflight" }),
   ).toBeVisible({ timeout: 45_000 });
-  await expect(page.getByText("Deterministic reviewer: pass.")).toBeVisible();
+  await expect(page.getByText("Deterministic reviewer: pass.").first()).toBeVisible();
   await expect(
     page.getByText("they are not inputs to RFdiffusion3", { exact: false }),
   ).toBeVisible();

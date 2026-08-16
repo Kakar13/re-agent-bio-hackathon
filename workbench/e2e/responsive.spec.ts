@@ -10,4 +10,10 @@ test("keeps the scientific conversation usable on a mobile viewport", async ({ p
   ).toBeVisible();
   await expect(page.getByLabel("Protein sequence")).toBeVisible();
   await expect(page.getByRole("button", { name: "Run chao1" })).toBeVisible();
+
+  await page.getByRole("button", { name: "End-to-end pipeline workspace" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Natural language to screened binders" }),
+  ).toBeVisible();
+  await expect(page.getByLabel("What should the binder do?")).toBeVisible();
 });

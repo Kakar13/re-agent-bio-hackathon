@@ -1,0 +1,54 @@
+{
+  "profile": "data/processed/profiles/a0201-pda-mhci-profile-v4/pda_mhci_profile.parquet",
+  "n_occurrences": 289335,
+  "n_unique_peptides": 159038,
+  "teacher": "NetMHCpan 4.1 EL, HLA-A*02:01",
+  "prevalence": {
+    "strong_binders": 3956,
+    "weak_or_better": 10738
+  },
+  "agreement": {
+    "chao1_mhcflurry_presentation": {
+      "spearman_vs_teacher_el_rank": 0.35373059219349723,
+      "strong_binder_roc_auc": 0.7306426340954377,
+      "strong_binder_average_precision": 0.0601391938379546,
+      "weak_binder_roc_auc": 0.719952660543338,
+      "weak_binder_average_precision": 0.1533021489433865
+    },
+    "netmhcpan_student_el_oof": {
+      "spearman_vs_teacher_el_rank": 0.943006818154209,
+      "strong_binder_roc_auc": 0.9928948756409227,
+      "strong_binder_average_precision": 0.8200404475887177,
+      "weak_binder_roc_auc": 0.9891903298536954,
+      "weak_binder_average_precision": 0.8919402866996395
+    },
+    "netmhcpan_student_ba_oof": {
+      "spearman_vs_teacher_el_rank": 0.828753174950518,
+      "strong_binder_roc_auc": 0.9853182583247097,
+      "strong_binder_average_precision": 0.6539497812010927,
+      "weak_binder_roc_auc": 0.9765831183285782,
+      "weak_binder_average_precision": 0.7803816483234515
+    },
+    "netmhcpan_student_affinity_oof": {
+      "spearman_vs_teacher_el_rank": 0.823053110314058,
+      "strong_binder_roc_auc": 0.9847039742137657,
+      "strong_binder_average_precision": 0.6505116820349656,
+      "weak_binder_roc_auc": 0.9753057263376189,
+      "weak_binder_average_precision": 0.7719743696836096
+    }
+  },
+  "affinity_recovery": {
+    "n_rows": 159038,
+    "n_binders_ic50_500nm": 5976,
+    "median_fold_error": 1.1112690262688325,
+    "median_fold_error_binders": 2.3236341606038398,
+    "within_2x": 0.9024258353349514,
+    "within_2x_binders": 0.42704149933065594,
+    "within_5x_binders": 0.7908299866131191,
+    "spearman_vs_teacher_ic50": 0.9377362735641688
+  },
+  "boundaries": [
+    "The chao1 MHC head was calibrated against MHCflurry, so this measures cross-teacher disagreement, not an error rate against experimental data.",
+    "Student values are out-of-fold; chao1 never saw these labels at all, so neither model is scored in sample."
+  ]
+}

@@ -15,6 +15,12 @@ class DirectScreenRequest(TypedDict):
     candidate_id: str
 
 
+class PipelineRequest(TypedDict):
+    """A UI-triggered natural-language binder-design campaign."""
+
+    objective: str
+
+
 class ScientificAgentState(MessagesState):
     """Append-only scientific artifacts and reviewer findings."""
 
@@ -25,3 +31,4 @@ class ScientificAgentState(MessagesState):
         "mhc_ii_plus_chao1",
     ]
     direct_screen_request: DirectScreenRequest | None
+    pipeline_request: PipelineRequest | None

@@ -1,0 +1,43 @@
+{
+  "profile": "data/processed/profiles/a0201-pda-mhci-profile-v4/pda_mhci_profile.parquet",
+  "coverage": {
+    "parents_requested": 1602,
+    "parents_with_structure_match": 1184,
+    "parents_missing_structure": 28,
+    "parents_sequence_unmatched": 390,
+    "occurrences_scored": 186485,
+    "occurrences_in_covered_parents": 193236
+  },
+  "buried_definition": "window mean relative SASA < 0.25",
+  "by_binder_class": {
+    "strong": {
+      "n": 2652,
+      "mean_rsa": 0.17105878906870817,
+      "median_rsa": 0.1623027625692405,
+      "buried_share": 0.8024132730015083
+    },
+    "weak": {
+      "n": 9620,
+      "mean_rsa": 0.17589067103063863,
+      "median_rsa": 0.16827999326619347,
+      "buried_share": 0.7714137214137214
+    },
+    "nonbinder": {
+      "n": 174213,
+      "mean_rsa": 0.2001073229526865,
+      "median_rsa": 0.19548656715815377,
+      "buried_share": 0.6765740788574905
+    }
+  },
+  "flagged_epitopes": {
+    "n": 12272,
+    "buried_share": 0.778112777053455,
+    "surface_share": 0.22188722294654495
+  },
+  "risk_vs_exposure_spearman": -0.1296585237418893,
+  "boundaries": [
+    "Burial does not gate MHC-I presentation; peptides derive from unfolded protein. This measures design actionability, not immunogenicity.",
+    "SASA is computed on the full deposited model, so interface residues in multi-chain entries read as buried.",
+    "Windows with fewer than five observed residues are excluded rather than averaged over partial coverage."
+  ]
+}

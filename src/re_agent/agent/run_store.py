@@ -99,3 +99,71 @@ def list_runs(limit: int = 50) -> list[dict[str, Any]]:
         if len(manifests) >= limit:
             break
     return manifests
+
+
+def load_run_artifact(manifest_path: Path) -> dict[str, Any]:
+    """Load a local artifact only after validating its manifest and referenced files."""
+
+    resolved_manifest = manifest_path.resolve()
+    if RUNS_DIR.resolve() not in resolved_manifest.parents:
+        raise ValueError("run manifest must be below the workbench run store")
+    manifest = json.loads(resolved_manifest.read_text())
+    artifact_record = manifest.get("artifact", {})
+    artifact_path = (ROOT / str(artifact_record.get("path", ""))).resolve()
+    if ROOT.resolve() not in artifact_path.parents or not artifact_path.is_file():
+        raise FileNotFoundError(f"run artifact is missing: {artifact_path}")
+    expected_hash = artifact_record.get("sha256")
+    actual_hash = _sha256(artifact_path)
+    if not expected_hash or actual_hash != expected_hash:
+        raise ValueError(
+            f"run artifact hash mismatch: expected {expected_hash}, got {actual_hash}"
+        )
+    payload = json.loads(artifact_path.read_text())
+
+    missing: list[str] = []
+
+    def inspect(value: Any, key: str = "") -> None:
+        if isinstance(value, dict):
+            for child_key, child in value.items():
+                inspect(child, child_key)
+        elif isinstance(value, list):
+            for child in value:
+                inspect(child, key)
+        elif (
+            isinstance(value, str)
+            and (key == "path" or key.endswith("_path"))
+            and value.startswith(("data/", "results/"))
+            and not (ROOT / value).is_file()
+        ):
+            missing.append(value)
+
+    inspect(payload)
+    if missing:
+        raise FileNotFoundError(
+            "run artifact references missing files: " + ", ".join(sorted(set(missing)))
+        )
+    return {
+        "id": manifest["run_id"],
+        "kind": manifest["kind"],
+        "title": payload.get("title", manifest["run_id"]),
+        "path": artifact_record["path"],
+        "manifest_path": str(resolved_manifest.relative_to(ROOT)),
+        "sha256": actual_hash,
+        "payload": payload,
+    }
+
+
+def latest_run_artifact(kind: str) -> dict[str, Any]:
+    """Return the newest hash-valid artifact of a requested kind."""
+
+    if not RUNS_DIR.exists():
+        raise FileNotFoundError(f"no {kind} runs are available")
+    for path in sorted(RUNS_DIR.glob("*/manifest.json"), reverse=True):
+        try:
+            manifest = json.loads(path.read_text())
+            if manifest.get("kind") != kind:
+                continue
+            return load_run_artifact(path)
+        except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError):
+            continue
+    raise FileNotFoundError(f"no valid {kind} run is available")

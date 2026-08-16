@@ -41,4 +41,10 @@ load_workbench_env() {
   if [[ -x "$HOME/.local/bin/paperclip" ]]; then
     export PATH="$HOME/.local/bin:$HOME/.paperclip/bin:$PATH"
   fi
+
+  local sibling_proto_repo
+  sibling_proto_repo="$(dirname "$root")/proto-tools"
+  if [[ -z "${PROTO_TOOLS_REPO:-}" && -f "$sibling_proto_repo/pyproject.toml" ]]; then
+    export PROTO_TOOLS_REPO="$sibling_proto_repo"
+  fi
 }

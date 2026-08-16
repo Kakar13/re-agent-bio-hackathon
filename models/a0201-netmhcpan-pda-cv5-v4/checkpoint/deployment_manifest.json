@@ -1,0 +1,87 @@
+{
+  "model_version": "mhci-netmhcpan-student-v3",
+  "artifact_type": "five_fold_cv_ensemble",
+  "encoder_model_id": "esm2_t33_650M_UR50D",
+  "embedding_dim": 1280,
+  "pooling": "mean over 9 peptide residues; BOS/EOS excluded",
+  "n_outputs": 3,
+  "outputs": [
+    "netmhcpan_el_rank_propensity",
+    "netmhcpan_ba_rank_propensity",
+    "netmhcpan_ba_affinity_score"
+  ],
+  "affinity_inversion": "IC50 nM = 50000 ** (1 - netmhcpan_ba_affinity_score)",
+  "ensemble_method": "arithmetic mean of each fold head for each output channel",
+  "profile_formatter": {
+    "function": "re_agent.e2e_pls.netmhcpan_student.format_mhci_profile",
+    "overall_mhci_risk": "EL presentation propensity only",
+    "binder_class_basis": "predicted EL rank",
+    "strong_binder_rank_max": 0.5,
+    "weak_binder_rank_max": 2.0
+  },
+  "checkpoints": [
+    {
+      "test_fold": 0,
+      "validation_fold": 1,
+      "training_folds": [
+        2,
+        3,
+        4
+      ],
+      "checkpoint": "fold_0/weights.pt",
+      "manifest": "fold_0/manifest.json"
+    },
+    {
+      "test_fold": 1,
+      "validation_fold": 2,
+      "training_folds": [
+        0,
+        3,
+        4
+      ],
+      "checkpoint": "fold_1/weights.pt",
+      "manifest": "fold_1/manifest.json"
+    },
+    {
+      "test_fold": 2,
+      "validation_fold": 3,
+      "training_folds": [
+        0,
+        1,
+        4
+      ],
+      "checkpoint": "fold_2/weights.pt",
+      "manifest": "fold_2/manifest.json"
+    },
+    {
+      "test_fold": 3,
+      "validation_fold": 4,
+      "training_folds": [
+        0,
+        1,
+        2
+      ],
+      "checkpoint": "fold_3/weights.pt",
+      "manifest": "fold_3/manifest.json"
+    },
+    {
+      "test_fold": 4,
+      "validation_fold": 0,
+      "training_folds": [
+        1,
+        2,
+        3
+      ],
+      "checkpoint": "fold_4/weights.pt",
+      "manifest": "fold_4/manifest.json"
+    }
+  ],
+  "corpus_sha256": "e1fa657c39a4a448d68a82898a84c7e2969f8b1ba58bb16f012e94ecc2ee9c27",
+  "intended_use": "fast HLA-A*02:01 NetMHCpan surrogate and separate MHC-I risk lane",
+  "not_ground_truth": true,
+  "caveats": [
+    "Student outputs estimate agreement with the NetMHCpan teacher, not biological ground truth.",
+    "EL presentation and BA binding are related teacher channels; overall MHC-I risk uses EL presentation propensity alone to avoid double-counting BA.",
+    "Predicted percentile ranks are deterministic inversions of student propensities, not direct NetMHCpan calculations."
+  ]
+}
