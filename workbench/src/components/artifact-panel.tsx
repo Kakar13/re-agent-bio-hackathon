@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { HeatmapTrack } from "@/components/heatmap-track";
 import { MolstarViewer } from "@/components/molstar-viewer";
@@ -36,18 +37,12 @@ export function ArtifactPanel({
   artifact,
   review,
   onFork,
-  agentPrompt,
-  agentResponse,
-  agentIsLoading,
 }: {
   artifact?: ScientificArtifact;
   review?: Review;
   onFork: () => void;
-  agentPrompt: string;
-  agentResponse: string;
-  agentIsLoading: boolean;
 }) {
-  const [tab, setTab] = useState<Tab>("Overview");
+  const [tab, setTab] = useState<Tab>("Structure");
   const [candidateIndex, setCandidateIndex] = useState(0);
   const [annotations, setAnnotations] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
@@ -59,6 +54,13 @@ export function ArtifactPanel({
   const structureUrl = structure
     ? `/api/structure?path=${encodeURIComponent(structure.path)}`
     : undefined;
+  // Peak MHC-I processing risk is the one headline number this lane can stand
+  // behind; the fused combined rank stays withheld without a response model.
+  const mhciSummary = assessment?.mhc_i_surrogate_results.find((result) =>
+    result.adapter_id.startsWith("team-e2e-pls-chao1"),
+  )?.protein_summary;
+  const peakMhciRisk = mhciSummary?.max_risk;
+  const topMeanMhciRisk = mhciSummary?.top_k_mean_risk;
 
   const mhc = useMemo(
     () => assessment?.mhc_results.find((result) => result.provider_id === "netmhciipan"),
@@ -94,11 +96,6 @@ export function ArtifactPanel({
   if (!artifact) {
     return (
       <aside className="artifact-panel">
-        <AgentResponseDock
-          prompt={agentPrompt}
-          response={agentResponse}
-          isLoading={agentIsLoading}
-        />
         <div className="artifact-empty">
           <FileCode2 size={30} strokeWidth={1.4} />
           <h2>No artifact selected</h2>
@@ -123,17 +120,22 @@ export function ArtifactPanel({
           <h2>{artifact.title}</h2>
           <p className="artifact-path">{artifact.path}</p>
         </div>
-        <button className="icon-button labeled" onClick={onFork} title="Fork this session">
-          <GitFork size={15} />
-          Fork
-        </button>
+        <div className="artifact-header-right">
+          {peakMhciRisk != null && (
+            <div className="headline-score" title="Peak MHC-I processing risk across all 9-mer windows">
+              <span className="headline-score-value">{(peakMhciRisk * 100).toFixed(1)}</span>
+              <span className="headline-score-label">
+                MHC-I risk
+                {topMeanMhciRisk != null && ` · top-5 ${(topMeanMhciRisk * 100).toFixed(1)}`}
+              </span>
+            </div>
+          )}
+          <button className="icon-button labeled" onClick={onFork} title="Fork this session">
+            <GitFork size={15} />
+            Fork
+          </button>
+        </div>
       </header>
-
-      <AgentResponseDock
-        prompt={agentPrompt}
-        response={agentResponse}
-        isLoading={agentIsLoading}
-      />
 
       <nav className="artifact-tabs" aria-label="Artifact views">
         {tabs.map((item) => (
@@ -158,6 +160,18 @@ export function ArtifactPanel({
               </div>
             </section>
             <div className="metric-grid">
+              {!architecture && !campaign && peakMhciRisk != null && (
+                <Metric
+                  label="MHC-I risk · peak 9-mer"
+                  value={(peakMhciRisk * 100).toFixed(1)}
+                />
+              )}
+              {!architecture && !campaign && topMeanMhciRisk != null && (
+                <Metric
+                  label="MHC-I risk · top-5 mean"
+                  value={(topMeanMhciRisk * 100).toFixed(1)}
+                />
+              )}
               <Metric
                 label={architecture ? "Architecture" : campaign ? "Candidates" : "Combined rank"}
                 value={
@@ -649,43 +663,6 @@ export function ArtifactPanel({
         )}
       </div>
     </aside>
-  );
-}
-
-function AgentResponseDock({
-  prompt,
-  response,
-  isLoading,
-}: {
-  prompt: string;
-  response: string;
-  isLoading: boolean;
-}) {
-  return (
-    <section className="agent-response-dock" aria-label="Agent response">
-      <header>
-        <span><Bot size={14} /> Agent response</span>
-        <span className={isLoading ? "agent-response-status running" : "agent-response-status"}>
-          {isLoading && <LoaderCircle className="spin" size={12} />}
-          {isLoading ? "Responding" : response ? "Complete" : "Ready"}
-        </span>
-      </header>
-      {prompt && (
-        <p className="agent-response-prompt" title={prompt}>
-          <b>Responding to</b>
-          {prompt}
-        </p>
-      )}
-      <div className="agent-response-copy" aria-live="polite">
-        {response ? (
-          <ReactMarkdown>{response}</ReactMarkdown>
-        ) : isLoading ? (
-          <p>The evidence is already rendering. The agent interpretation will appear here.</p>
-        ) : (
-          <p>Run a screen or ask the agent a question to see its interpretation here.</p>
-        )}
-      </div>
-    </section>
   );
 }
 

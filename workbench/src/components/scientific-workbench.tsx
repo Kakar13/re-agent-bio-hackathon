@@ -24,8 +24,10 @@ import {
 } from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { ArtifactPanel } from "@/components/artifact-panel";
+import { AgentResponseDock } from "@/components/agent-response";
 import { Chao1Screen } from "@/components/chao1-screen";
 import { DesignPipelineScreen } from "@/components/design-pipeline-screen";
 import type { AgentState, Message } from "@/lib/types";
@@ -45,7 +47,7 @@ type WorkspaceView = "sequence_risk" | "design_pipeline";
 const PROFILE_DESCRIPTIONS: Record<ScreeningProfile, string> = {
   mhc_ii_standard: "NetMHCIIpan EL/BA with the standard processing and tolerance lanes.",
   mhc_ii_plus_chao1:
-    "Standard MHC-II screen plus the separate HLA-A*02:01 chao1 MHC-I processing lane.",
+    "Standard MHC-II screen plus the separate HLA-A*02:01 chao2 MHC-I processing lane.",
 };
 
 export function ScientificWorkbench() {
@@ -241,7 +243,7 @@ export function ScientificWorkbench() {
       <aside className="sessions">
         <header className="sessions-header">
           <div>
-            <span className="eyebrow">re:AGENT</span>
+            <span className="eyebrow">Chao</span>
             <h1>Research desk</h1>
           </div>
           <button className="icon-button" onClick={newSession} title="New session"><Plus size={17} /></button>
@@ -303,7 +305,7 @@ export function ScientificWorkbench() {
             <span className="eyebrow">Scientific agent</span>
             <h2>
               {activeView === "sequence_risk"
-                ? "Chao1 sequence screening"
+                ? "Chao2 sequence screening"
                 : "End-to-end binder pipeline"}
             </h2>
           </div>
@@ -338,6 +340,12 @@ export function ScientificWorkbench() {
               onSelectArtifact={setSelectedId}
             />
           )}
+
+          <AgentResponseDock
+            prompt={latestExchange.prompt}
+            response={latestExchange.response}
+            isLoading={stream.isLoading}
+          />
 
           <details className="agent-notes">
             <summary>
@@ -388,7 +396,7 @@ export function ScientificWorkbench() {
                     setScreeningProfile(event.target.value as ScreeningProfile)
                   }
                 >
-                  <option value="mhc_ii_plus_chao1">Chao1 + MHC-II (default)</option>
+                  <option value="mhc_ii_plus_chao1">Chao2 + MHC-II (default)</option>
                   <option value="mhc_ii_standard">MHC-II standard only</option>
                 </select>
               </label>
@@ -401,7 +409,7 @@ export function ScientificWorkbench() {
                     void submit();
                   }
                 }}
-                placeholder="Ask re:AGENT to inspect, design, screen, or review…"
+                placeholder="Ask Chao to inspect, design, screen, or review…"
                 rows={2}
               />
               <div className="composer-tools">
@@ -453,9 +461,6 @@ export function ScientificWorkbench() {
         artifact={selected}
         review={review}
         onFork={forkSession}
-        agentPrompt={latestExchange.prompt}
-        agentResponse={latestExchange.response}
-        agentIsLoading={stream.isLoading}
       />
     </div>
   );
@@ -471,8 +476,8 @@ function MessageView({ message }: { message: Message }) {
     <article className={human ? "message human" : "message agent"}>
       <div className="message-avatar">{human ? "MJ" : <Bot size={16} />}</div>
       <div>
-        <span>{human ? "You" : "re:AGENT"}</span>
-        <ReactMarkdown>{content}</ReactMarkdown>
+        <span>{human ? "You" : "Chao"}</span>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
       </div>
     </article>
   );

@@ -32,7 +32,7 @@ button { color: inherit; }
 
 .workbench {
   display: grid;
-  grid-template-columns: 54px 252px minmax(420px, 1fr) 250px minmax(460px, 0.95fr);
+  grid-template-columns: 54px 232px minmax(360px, 0.72fr) 228px minmax(640px, 1.5fr);
   grid-template-rows: minmax(0, 1fr);
   width: 100vw;
   height: 100vh;
@@ -40,7 +40,7 @@ button { color: inherit; }
   background: var(--paper);
 }
 .workbench.activity-closed {
-  grid-template-columns: 54px 224px minmax(560px, 1.2fr) minmax(420px, .8fr);
+  grid-template-columns: 54px 214px minmax(400px, .72fr) minmax(640px, 1.5fr);
 }
 
 .rail {
@@ -652,11 +652,19 @@ button { color: inherit; }
 .artifact-header > div { min-width:0; }
 .artifact-header h2 { overflow:hidden; max-width:340px; text-overflow:ellipsis; white-space:nowrap; }
 .artifact-path { overflow:hidden; max-width:330px; margin:3px 0 0; color:var(--faint); font-family:var(--font-geist-mono); font-size:8px; text-overflow:ellipsis; white-space:nowrap; }
+/* Headline score sits in the header so it survives a tab switch. */
+.artifact-header-right { display:flex; flex:0 0 auto; align-items:center; gap:10px; }
+.headline-score { display:flex; flex-direction:column; align-items:flex-end; padding-right:10px; border-right:1px solid var(--line); }
+.headline-score-value { color:#b4460f; font-family:var(--font-geist-mono); font-size:21px; font-weight:600; line-height:1; letter-spacing:-.02em; }
+.headline-score-label { margin-top:3px; color:var(--faint); font-size:8px; font-weight:600; text-transform:uppercase; white-space:nowrap; }
+/* Reads as a card in the centre column rather than a pinned bottom dock. */
 .agent-response-dock {
   flex: 0 0 auto;
-  padding: 12px 15px;
+  margin: 12px 0 4px;
+  padding: 13px 15px 14px;
   background: #eef4f1;
-  border-bottom: 1px solid #d7e4de;
+  border: 1px solid #d7e4de;
+  border-radius: 10px;
 }
 .agent-response-dock > header {
   display: flex;
@@ -697,8 +705,10 @@ button { color: inherit; }
 }
 .agent-response-prompt b { flex: 0 0 auto; color: var(--ink); font-weight: 650; }
 .agent-response-copy {
-  max-height: 138px;
+  max-height: 460px;
   margin-top: 8px;
+  font-size: 10.5px;
+  line-height: 1.55;
   overflow: auto;
   color: #35413d;
   font-size: 11px;
@@ -708,6 +718,33 @@ button { color: inherit; }
 .agent-response-copy > :last-child { margin-bottom: 0; }
 .agent-response-copy p { margin: 0 0 7px; }
 .agent-response-copy ul, .agent-response-copy ol { margin: 5px 0 8px; padding-left: 18px; }
+
+/* GFM tables: the agent emits pipe tables in both the transcript and the dock. */
+.agent-response-copy table, .message table {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+.agent-response-copy th, .message th {
+  padding: 5px 7px;
+  color: var(--faint);
+  font-size: 8px;
+  font-weight: 650;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line-strong);
+}
+.agent-response-copy td, .message td {
+  padding: 5px 7px;
+  font-size: 9px;
+  white-space: nowrap;
+  border-bottom: 1px solid #e6e3dc;
+}
+.message td, .message th { font-size: 10px; }
+.agent-response-copy tbody tr:last-child td, .message tbody tr:last-child td { border-bottom: 0; }
 .artifact-tabs { display:flex; gap:2px; padding:0 12px; overflow-x:auto; border-bottom:1px solid var(--line); }
 .artifact-tabs button { padding:10px 8px 9px; border:0; border-bottom:2px solid transparent; color:var(--faint); background:transparent; font-size:9px; font-weight:600; cursor:pointer; }
 .artifact-tabs button:hover { color:var(--ink); }
@@ -831,8 +868,8 @@ button { color: inherit; }
 .data-table tbody tr.selected-row { cursor:pointer; }
 
 @media (max-width: 1450px) {
-  .workbench { grid-template-columns:54px 224px minmax(430px,1fr) minmax(420px,.9fr); }
-  .workbench.activity-closed { grid-template-columns:54px 224px minmax(520px,1fr) minmax(400px,.8fr); }
+  .workbench { grid-template-columns:54px 214px minmax(360px,.72fr) minmax(560px,1.4fr); }
+  .workbench.activity-closed { grid-template-columns:54px 214px minmax(380px,.72fr) minmax(560px,1.4fr); }
   .activity-panel { display:none; }
 }
 @media (max-width: 1050px) {
