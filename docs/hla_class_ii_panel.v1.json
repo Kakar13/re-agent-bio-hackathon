@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0.0",
+  "panel_id": "hla-class-ii-broad-v1",
+  "description": "Predeclared, broad HLA class II screening panel for comparative candidate triage. It is not an exhaustive population-coverage claim.",
+  "source_notes": [
+    "Alleles are fixed before candidate scoring to prevent post-hoc panel selection.",
+    "DR, DQ, and DP evidence remain allele-specific in output.",
+    "Provider adapters must explicitly report unsupported alleles."
+  ],
+  "alleles": [
+    "HLA-DRB1*01:01",
+    "HLA-DRB1*03:01",
+    "HLA-DRB1*04:01",
+    "HLA-DRB1*04:05",
+    "HLA-DRB1*07:01",
+    "HLA-DRB1*08:02",
+    "HLA-DRB1*09:01",
+    "HLA-DRB1*11:01",
+    "HLA-DRB1*12:01",
+    "HLA-DRB1*13:02",
+    "HLA-DRB1*15:01",
+    "HLA-DRB1*16:02",
+    "HLA-DPA1*01:03/DPB1*04:01",
+    "HLA-DPA1*02:01/DPB1*01:01",
+    "HLA-DQA1*01:01/DQB1*05:01",
+    "HLA-DQA1*01:02/DQB1*06:02",
+    "HLA-DQA1*03:01/DQB1*03:02",
+    "HLA-DQA1*05:01/DQB1*02:01"
+  ]
+}

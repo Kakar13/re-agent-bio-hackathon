@@ -10,6 +10,13 @@
       "headers": {
         "Authorization": "Bearer ${env:PROTO_API_KEY}"
       }
+    },
+    "proto-tools": {
+      "command": "${workspaceFolder}/.venv/bin/proto-tools-mcp",
+      "args": ["--device", "local"],
+      "env": {
+        "PYTHONPATH": "src"
+      }
     }
   }
 }

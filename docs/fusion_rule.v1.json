@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "rule_id": "late-fusion-v1",
+  "description": "Predeclared ranking rule over separately reported proxy channels.",
+  "required_components": [
+    "response",
+    "netmhciipan_el",
+    "netmhciipan_ba"
+  ],
+  "weights": {
+    "response": 0.45,
+    "netmhciipan_el": 0.25,
+    "netmhciipan_ba": 0.15,
+    "cleavage_accessibility": 0.1,
+    "inverse_hla_gated_tolerance": 0.05
+  },
+  "missing_optional_policy": "renormalize available weights and report coverage",
+  "missing_required_policy": "do not emit a combined rank score",
+  "constraints": [
+    "Response scores must be calibrated for the selected adapter before fusion.",
+    "NetMHCIIpan EL and BA are normalized separately and never averaged at source.",
+    "Tolerance contributes only when matched-self and query peptides share an HLA allele.",
+    "A query-only self-similarity estimate is displayed but receives no fusion weight.",
+    "The score ranks candidates within this computational workflow; it is not a measured immune response probability."
+  ]
+}

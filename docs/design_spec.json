@@ -1,0 +1,138 @@
+{
+  "schema_version": "1.0.0",
+  "spec_id": "il7ra-rfd3-20260815",
+  "status": "ready_for_compute",
+  "objective": {
+    "type": "protein_binder_design",
+    "description": "Generate de novo minibinders against the extracellular domain of human IL-7Ralpha, then screen structurally plausible candidates for MHC-II presentation and T-cell-response risk.",
+    "claim_boundary": "Computational prioritization only; generated structures and scores are not experimental evidence of folding, binding, or human immune response."
+  },
+  "target": {
+    "name": "Interleukin-7 receptor subunit alpha",
+    "gene": "IL7R",
+    "uniprot_accession": "P16871",
+    "pdb_id": "3DI3",
+    "chain_id": "B",
+    "structure_path": "data/raw/targets/3DI3.pdb",
+    "structure_sha256": "9ef4a39b6c66186cc5efb17d0b2a12f08b0b0ebd6c4ec851c6b0b68c0efd03b9",
+    "experimental_method": "X-RAY DIFFRACTION",
+    "resolution_angstrom": 2.9,
+    "resolved_residue_range": [
+      17,
+      209
+    ]
+  },
+  "interface": {
+    "selection_basis": "Published IL-7Ralpha RFdiffusion design example",
+    "hotspots": [
+      {
+        "chain": "B",
+        "residue_number": 62,
+        "residue_name": "CYS"
+      },
+      {
+        "chain": "B",
+        "residue_number": 84,
+        "residue_name": "LYS"
+      },
+      {
+        "chain": "B",
+        "residue_number": 143,
+        "residue_name": "LEU"
+      }
+    ],
+    "hotspot_validation": "All three residues are present in chain B of the pinned 3DI3 structure."
+  },
+  "generation": {
+    "backbone_provider": {
+      "tool_key": "rfdiffusion3-design",
+      "input_structure": "data/raw/targets/3DI3.pdb",
+      "target_chain": "B",
+      "binder_length": "80",
+      "select_hotspots": "B62,B84,B143",
+      "n_backbones": 8,
+      "seed": 20260815
+    },
+    "sequence_provider": {
+      "tool_key": "proteinmpnn-sample",
+      "chains_to_redesign": [
+        "A"
+      ],
+      "fixed_context_chains": [
+        "B"
+      ],
+      "sequences_per_backbone": 4,
+      "temperature": 0.1,
+      "model_choice": "proteinmpnn",
+      "seed": 20260815
+    },
+    "maximum_candidates": 32
+  },
+  "validation": {
+    "required_before_screening": [
+      "unique_sequence",
+      "proteinmpnn_perplexity_recorded",
+      "monomer_structure_confidence_recorded",
+      "designed_vs_refolded_binder_rmsd_recorded",
+      "interface_confidence_recorded",
+      "clash_check_recorded"
+    ],
+    "literature_prior_thresholds": {
+      "monomer_plddt_min": 80.0,
+      "interface_pae_max": 10.0,
+      "binder_rmsd_angstrom_max": 1.0
+    },
+    "threshold_policy": "Thresholds are triage priors from the original RFdiffusion campaign and must not be described as proof of binding."
+  },
+  "screening": {
+    "window_length": 15,
+    "response_model_registry": true,
+    "mhc_primary": [
+      "netmhciipan_el-4.3",
+      "netmhciipan_ba-4.3"
+    ],
+    "mhc_second_opinion": "MixMHC2pred-2.0",
+    "mhc_optional_challenger": "Graph-pMHC",
+    "preserve_component_scores": true
+  },
+  "reference_campaign": {
+    "sequence_fasta": "data/raw/IL7Ra_binders_sequences.fasta",
+    "sequence_count": 95,
+    "screening_results": "data/raw/il7ra/IL7Ra_binders_screening_results.csv",
+    "screening_results_sha256": "48a25c7e930b42ac80530e237a4eacaf3bf8a2ca0b5cbc37a82667d214a2244b",
+    "bli_kinetics": "data/raw/il7ra/bli_binding_data.csv",
+    "bli_kinetics_sha256": "2e9874dbd50447b800632a8d71703275f76f69f248bdad31c3bc63f1af5a0b24"
+  },
+  "approval": {
+    "required": true,
+    "approved": true,
+    "basis": "User instructed implementation of the attached plan on 2026-08-15.",
+    "approved_fields": [
+      "target",
+      "hotspots",
+      "binder_length",
+      "generation_budget",
+      "validation_gates"
+    ]
+  },
+  "sources": [
+    {
+      "title": "De novo design of protein structure and function with RFdiffusion",
+      "doi": "10.1038/s41586-023-06415-8",
+      "url": "https://paperclip.gxl.ai/citations/papers/PMC10468394#L57-L58,L63,L87"
+    },
+    {
+      "title": "RCSB PDB 3DI3",
+      "doi": "10.1016/j.str.2008.10.019",
+      "url": "https://www.rcsb.org/structure/3DI3"
+    },
+    {
+      "title": "Protein-protein binder design with RFdiffusion",
+      "url": "https://docs.openprotein.ai/walkthroughs/Protein_protein_binder_design_with_RFdiffusion.html"
+    },
+    {
+      "title": "Benchmarking RFdiffusion generated binders for IL-7Ralpha",
+      "url": "https://github.com/adaptyvbio/rfdiff_il7ra"
+    }
+  ]
+}

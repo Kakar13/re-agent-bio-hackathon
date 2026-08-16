@@ -14,6 +14,9 @@ echo "==> Syncing Python 3.12 env with uv (base deps)"
 uv python pin 3.12
 uv sync
 
+echo "==> K-Dense scientific-agent-skills (162 skills, optional submodule)"
+./scripts/install_scientific_skills.sh
+
 echo
 echo "Python env is ready. Finish the rest yourself (opens a browser):"
 echo "  Full guide: docs/SETUP.md · Pi harness: harness/README.md"

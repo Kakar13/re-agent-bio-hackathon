@@ -21,6 +21,7 @@ build/
 .ipynb_checkpoints/
 
 # Data and generated outputs (keep folder structure)
+data/
 data/raw/*
 data/processed/*
 results/*
@@ -47,6 +48,7 @@ results/*
 .paperclip/
 .proto/
 .modal/
+.langgraph_api/
 
 # Pi: ignore caches; keep committed project settings under harness/
 .pi/

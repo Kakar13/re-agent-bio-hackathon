@@ -1,6 +1,6 @@
-# Pi harness (re:AGENT — late immuno-risk stage)
+# Pi harness (re:AGENT — adapter-based immuno-risk stage)
 
-Project-local [Pi](https://pi.dev/) workspace for the **last part** of the de novo binder pipeline: cleavage → MHC → tolerance → risk score. Upstream design (diffusion / MPNN) is out of scope here unless `TASK.md` says otherwise.
+Project-local [Pi](https://pi.dev/) workspace for the **last part** of the de novo binder pipeline: response-model adapters → MHC-II EL/BA evidence → tolerance/processing proxies → transparent rank. Upstream design (diffusion / MPNN) passes candidates into this stage.
 
 ## One-time setup
 
@@ -77,7 +77,8 @@ Inside Pi (trust the project when prompted, or `/trust`):
 - `/langsmith-tracing` — confirm LangSmith export is on
 - `/denovo` — start/resume late immuno-risk workflow (reads `TASK.md`)
 - `/immuno-tools` — list custom immuno-risk tools
-- Custom tools: `list_catalytic_sites`, `structure_features`, `predict_cleavage`, `score_mhc`, `check_tolerance`, `score_immuno_risk`, `run_immuno_pipeline`
+- Custom tools: `immuno_architecture_status`, `run_immuno_pipeline`
+- `run_immuno_pipeline` requires versioned response-model and NetMHCIIpan artifacts; it never falls back to placeholder scores.
 - `/skill:reagent` then Proto / Boltz / Paperclip skills as needed
 - `/mcp` — Paperclip + Proto status
 - `/mcp-auth paperclip` / `/mcp-auth proto-bio` if prompted
@@ -94,7 +95,7 @@ Confirm [`TASK.md`](TASK.md) matches the team brief (late immuno-risk stage). Po
 | Path | Purpose |
 | --- | --- |
 | [`pi-tools.ts`](pi-tools.ts) | Custom immuno-risk tools (`createImmunoRiskTools`) |
-| [`tools/`](tools/) | Cleavage / MHC stub / tolerance / risk logic |
+| [`tools/real-pipeline.ts`](tools/real-pipeline.ts) | Bridge to the real Python adapter pipeline |
 | [`.pi/extensions/immuno-risk-tools.ts`](.pi/extensions/immuno-risk-tools.ts) | Registers tools into Pi |
 | [`.pi/langsmith.json`](.pi/langsmith.json) | LangSmith project + metadata (no API key) |
 | [`.pi/settings.json`](.pi/settings.json) | Provider, packages, skills, sessions |
