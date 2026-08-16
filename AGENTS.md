@@ -40,6 +40,8 @@ Sundial re:AGENT skills live in [`skills/`](skills/). Read **`skills/reagent/SKI
 | [`skills/proto/`](skills/proto/SKILL.md) | Structure, design, docking, bioinformatics tools |
 | [`skills/boltz/`](skills/boltz/SKILL.md) | Fold / affinity with Boltz-2 |
 
+**Extended library:** [K-Dense scientific-agent-skills](https://github.com/K-Dense-AI/scientific-agent-skills) (162 skills) lives in [`vendor/scientific-agent-skills/skills/`](vendor/scientific-agent-skills/skills/) — biopython, esm, literature-review, molecular-dynamics, and more. Pi loads both paths (`harness/.pi/settings.json`); Cursor discovers via [`.agents/skills/scientific-agent-skills`](.agents/skills/scientific-agent-skills). **Sundial skills in `skills/` win on name conflicts** (e.g. `paperclip`, `cellxgene-census`). After clone: `./scripts/install_scientific_skills.sh` or `git submodule update --init --depth 1 vendor/scientific-agent-skills`.
+
 Claude Code also loads them via `.claude/skills` → `skills/`. Follow each skill’s rules exactly (flags, gotchas, citation format).
 
 ## Tools to use

@@ -1,22 +1,9 @@
-/**
- * Immuno-risk custom tools for Pi — pattern inspired by
- * AutopsyAI qm/src/harness/pi-tools.ts (createPiTools factory + typed tools),
- * adapted for re:AGENT late-stage cleavage → MHC → tolerance → risk.
- *
- * Plain tool objects (no defineTool import) so they load in Pi extensions and
- * in local smoke tests without hitting pi-coding-agent package exports.
- */
-import { Type, type Static } from "typebox";
+/** Pi tools backed by the real Python adapter pipeline, never placeholder scores. */
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { getCatalyticSites } from "./tools/catalytic-sites.ts";
-import { peptidePool, predictCleavage } from "./tools/cleavage.ts";
-import { estimateStructureFeatures } from "./tools/features.ts";
-import { scoreMhc } from "./tools/mhc.ts";
-import { defaultResultsDir, runImmunoPipeline } from "./tools/pipeline.ts";
-import { scoreImmunoRisk } from "./tools/risk.ts";
-import { checkTolerance } from "./tools/tolerance.ts";
-import { jsonResult, parseFastaOrSequence, text } from "./tools/text.ts";
-import type { MhcHit, StructureFeatures, ToleranceHit } from "./tools/types.ts";
+import { Type, type Static } from "typebox";
+import { runRealImmunoPipeline } from "./tools/real-pipeline.ts";
+import { jsonResult, text } from "./tools/text.ts";
 
 export interface ImmunoToolsOptions {
   /** Absolute path to repo root (parent of harness/). */
@@ -43,146 +30,103 @@ function repoRootFromCwd(): string {
 export function createImmunoRiskTools(opts?: ImmunoToolsOptions): ImmunoToolDefinition[] {
   const root = opts?.repoRoot ?? repoRootFromCwd();
 
-  const listSitesParams = Type.Object({});
-  const structureParams = Type.Object({
-    sequence: Type.String({ description: "FASTA or raw amino-acid sequence" }),
-    sequence_id: Type.Optional(Type.String()),
-  });
-  const cleavageParams = Type.Object({
-    sequence: Type.String({ description: "FASTA or raw amino-acid sequence" }),
-    site_ids: Type.Optional(Type.Array(Type.String())),
-  });
-  const mhcParams = Type.Object({
-    peptides: Type.Array(Type.String()),
-    mhc_class: Type.Optional(
-      Type.Union([Type.Literal("I"), Type.Literal("II"), Type.Literal("both")]),
-    ),
-    top_n: Type.Optional(Type.Number()),
-  });
-  const toleranceParams = Type.Object({
-    peptides: Type.Array(Type.String()),
-  });
-  const riskParams = Type.Object({
-    sequence_id: Type.String(),
-    features: Type.Record(Type.String(), Type.Unknown()),
-    mhc: Type.Array(Type.Record(Type.String(), Type.Unknown())),
-    tolerance: Type.Array(Type.Record(Type.String(), Type.Unknown())),
-  });
+  const statusParams = Type.Object({});
   const pipelineParams = Type.Object({
     sequence: Type.String({ description: "FASTA or raw amino-acid sequence" }),
     sequence_id: Type.Optional(Type.String()),
-    mhc_class: Type.Optional(
-      Type.Union([Type.Literal("I"), Type.Literal("II"), Type.Literal("both")]),
+    response_artifacts: Type.Array(Type.String(), {
+      minItems: 1,
+      description: "Versioned JSON artifacts produced by response-model adapters",
+    }),
+    default_response_adapter: Type.String(),
+    calibrations: Type.Optional(Type.Array(Type.String(), {
+      description: "Optional ADAPTER_ID=PATH frozen calibration artifacts",
+    })),
+    netmhciipan_artifact: Type.Optional(Type.String({
+      description: "Versioned NetMHCIIpan cache retaining separate EL and BA columns",
+    })),
+    iedb_live: Type.Optional(Type.Boolean({
+      description: "Call documented IEDB NetMHCIIpan 4.3 EL and BA APIs with local cache",
+    })),
+    challengers: Type.Optional(
+      Type.Array(Type.String(), {
+        description: "Optional PROVIDER=VERSION=PATH challenger artifacts",
+      }),
     ),
-    site_ids: Type.Optional(Type.Array(Type.String())),
-    write: Type.Optional(Type.Boolean()),
+    accessibility_artifact: Type.Optional(Type.String()),
+    cleavage_artifact: Type.Optional(Type.String()),
+    shared_hla_artifact: Type.Optional(Type.String({
+      description: "Matched-self/query shared-HLA evidence keyed by sequence hash",
+    })),
   });
 
   const tools: ImmunoToolDefinition[] = [
     {
-      name: "list_catalytic_sites",
-      label: "List catalytic sites",
-      description:
-        "List the curated protease / catalytic sites used for cleavage prediction (~10 starters). Call before predict_cleavage.",
-      parameters: listSitesParams,
+      name: "immuno_architecture_status",
+      label: "Immuno architecture status",
+      description: "Report the frozen HLA panel, fusion rule, benchmark, and real provider artifacts.",
+      parameters: statusParams,
       async execute() {
-        const sites = getCatalyticSites();
-        return jsonResult({ sites, count: sites.length }, "Curated catalytic sites:");
-      },
-    },
-    {
-      name: "structure_features",
-      label: "Structure features",
-      description:
-        "Estimate RSA / disorder / loop / unfolding-ΔG proxies for a protein sequence. Sequence-only heuristics until real structure or MPNN scorefiles are provided.",
-      parameters: structureParams,
-      async execute(_id, params: Static<typeof structureParams>) {
-        const parsed = parseFastaOrSequence(params.sequence);
-        const id = params.sequence_id ?? parsed.id;
-        if (parsed.sequence.length < 8) return text("error: sequence too short (need ≥8 AA)");
-        return jsonResult(estimateStructureFeatures(id, parsed.sequence));
-      },
-    },
-    {
-      name: "predict_cleavage",
-      label: "Predict cleavage",
-      description:
-        "Compare a sequence against curated catalytic sites and return cleavage events plus a peptide pool (including MHC-length windows).",
-      parameters: cleavageParams,
-      async execute(_id, params: Static<typeof cleavageParams>) {
-        const parsed = parseFastaOrSequence(params.sequence);
-        if (parsed.sequence.length < 8) return text("error: sequence too short (need ≥8 AA)");
-        const cleavages = predictCleavage(parsed.sequence, params.site_ids);
-        const peptides = peptidePool(parsed.sequence, cleavages);
+        const paths = {
+          hlaPanel: resolve(root, "docs", "hla_class_ii_panel.v1.json"),
+          fusionRule: resolve(root, "docs", "fusion_rule.v1.json"),
+          benchmarkManifest: resolve(
+            root,
+            "data",
+            "processed",
+            "benchmarks",
+            "iedb-class-ii-response-v1.manifest.json",
+          ),
+          selfProteome: resolve(root, "data", "processed", "self_proteome.parquet"),
+        };
+        const available = Object.fromEntries(
+          Object.entries(paths).map(([key, path]) => [key, { path, exists: existsSync(path) }]),
+        );
+        const benchmark = existsSync(paths.benchmarkManifest)
+          ? JSON.parse(readFileSync(paths.benchmarkManifest, "utf8"))
+          : null;
         return jsonResult({
-          sequenceId: parsed.id,
-          length: parsed.sequence.length,
-          cleavages,
-          peptideCount: peptides.length,
-          peptides: peptides.slice(0, 150),
+          available,
+          benchmark,
+          registeredTools: ["immuno_architecture_status", "run_immuno_pipeline"],
+          excludedPlaceholders: [
+            "hash-derived MHC ranks",
+            "tiny hard-coded self peptide set",
+            "weighted stub risk score",
+          ],
         });
-      },
-    },
-    {
-      name: "score_mhc",
-      label: "Score MHC",
-      description:
-        "Score peptides for MHC class I and/or II. CURRENTLY A STUB — replace with NetMHCpan/MHCflurry before trusting binder calls. Prefer class I for intracellular delivery.",
-      parameters: mhcParams,
-      async execute(_id, params: Static<typeof mhcParams>) {
-        if (!params.peptides?.length) return text("error: peptides array required");
-        const hits = scoreMhc(params.peptides, {
-          mhcClass: params.mhc_class ?? "both",
-          topN: params.top_n ?? 40,
-        });
-        return jsonResult({ hits, binderCount: hits.filter((h) => h.binderStub).length });
-      },
-    },
-    {
-      name: "check_tolerance",
-      label: "Check tolerance",
-      description:
-        "Compare peptides to a self / healthy-ligand reference. CURRENTLY a tiny stub set — wire HLA Ligand Atlas before claiming clinical tolerance.",
-      parameters: toleranceParams,
-      async execute(_id, params: Static<typeof toleranceParams>) {
-        if (!params.peptides?.length) return text("error: peptides array required");
-        return jsonResult({ hits: checkTolerance(params.peptides) });
-      },
-    },
-    {
-      name: "score_immuno_risk",
-      label: "Score immuno risk",
-      description:
-        "Combine structure features + MHC stub hits + tolerance into a polarized risk score (low/moderate/high). Demo weights only.",
-      parameters: riskParams,
-      async execute(_id, params: Static<typeof riskParams>) {
-        const risk = scoreImmunoRisk({
-          sequenceId: params.sequence_id,
-          features: params.features as unknown as StructureFeatures,
-          mhc: params.mhc as unknown as MhcHit[],
-          tolerance: params.tolerance as unknown as ToleranceHit[],
-        });
-        return jsonResult(risk);
       },
     },
     {
       name: "run_immuno_pipeline",
       label: "Run immuno pipeline",
       description:
-        "End-to-end late-stage pipeline: features → cleavage → peptide pool → MHC stub → tolerance → risk. Writes JSON+MD under results/immuno_risk/ when write=true.",
+        "Run response-model adapters, NetMHCIIpan EL+BA, challenger providers, self-tolerance evidence, and transparent late fusion. Requires real versioned provider artifacts.",
       parameters: pipelineParams,
-      async execute(_id, params: Static<typeof pipelineParams>) {
+      async execute(_id, params: Static<typeof pipelineParams>, signal?: AbortSignal) {
         try {
-          const write = params.write !== false;
-          const result = runImmunoPipeline(params.sequence, {
+          if (Boolean(params.netmhciipan_artifact) === Boolean(params.iedb_live)) {
+            return text("error: provide exactly one of netmhciipan_artifact or iedb_live=true");
+          }
+          const result = await runRealImmunoPipeline(params.sequence, {
+            repoRoot: root,
             sequenceId: params.sequence_id,
-            siteIds: params.site_ids,
-            mhcClass: params.mhc_class ?? "both",
-            writeDir: write ? defaultResultsDir(root) : undefined,
-          });
+            responseArtifacts: params.response_artifacts,
+            defaultResponseAdapter: params.default_response_adapter,
+            calibrations: params.calibrations,
+            netmhciipanArtifact: params.netmhciipan_artifact,
+            iedbLive: params.iedb_live,
+            challengers: params.challengers,
+            accessibilityArtifact: params.accessibility_artifact,
+            cleavageArtifact: params.cleavage_artifact,
+            sharedHlaArtifact: params.shared_hla_artifact,
+          }, signal);
+          if (result.exitCode !== 0) {
+            return text(`pipeline failed (${result.exitCode}): ${result.stderr || result.stdout}`);
+          }
           return jsonResult(
             result,
-            `Pipeline complete. overall=${result.risk.overall} score=${result.risk.score0to100}`,
+            `Pipeline complete. Inspectable artifact: ${result.outputPath}`,
           );
         } catch (e) {
           return text(`error: ${e instanceof Error ? e.message : String(e)}`);

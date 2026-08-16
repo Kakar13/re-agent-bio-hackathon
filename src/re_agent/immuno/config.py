@@ -58,6 +58,9 @@ class Paths:
     labeled: Path = field(default=DATA_PROCESSED / "iedb_class2_windows.parquet")
     unlabeled: Path = field(default=DATA_PROCESSED / "denovo_windows.parquet")
     reference: Path = field(default=DATA_PROCESSED / "reference_windows.parquet")
+    self_proteome: Path = field(default=DATA_PROCESSED / "self_proteome.parquet")
+    mhc_cache: Path = field(default=DATA_PROCESSED / "mhc_cache")
+    benchmarks: Path = field(default=DATA_PROCESSED / "benchmarks")
     embed_cache: Path = field(default=DATA_PROCESSED / "esm_cache")
     models: Path = field(default=RESULTS / "models")
     figures: Path = field(default=RESULTS / "figures")
@@ -72,6 +75,8 @@ def ensure_dirs() -> None:
         DATA_RAW,
         DATA_PROCESSED,
         PATHS.embed_cache,
+        PATHS.mhc_cache,
+        PATHS.benchmarks,
         PATHS.models,
         PATHS.figures,
         PATHS.reports,

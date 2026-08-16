@@ -5,7 +5,10 @@
     "npm:pi-mcp-adapter",
     "npm:@langchain/langsmith-pi-extension"
   ],
-  "skills": ["../../skills"],
+  "skills": [
+    "../../skills",
+    "../../vendor/scientific-agent-skills/skills"
+  ],
   "prompts": ["./prompts"],
   "sessionDir": ".pi/sessions",
   "enableSkillCommands": true,

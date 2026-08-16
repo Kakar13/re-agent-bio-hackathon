@@ -29,6 +29,8 @@ Sundial re:AGENT skills live in [`skills/`](skills/). Read **`skills/reagent/SKI
 | [`skills/proto/`](skills/proto/SKILL.md) | Structure, design, docking, bioinformatics tools |
 | [`skills/boltz/`](skills/boltz/SKILL.md) | Fold / affinity with Boltz-2 |
 
+**Extended library:** [K-Dense scientific-agent-skills](https://github.com/K-Dense-AI/scientific-agent-skills) (162 skills) in [`vendor/scientific-agent-skills/skills/`](vendor/scientific-agent-skills/skills/). Pi + Cursor paths wired; Sundial `skills/` takes precedence on conflicts. `./scripts/install_scientific_skills.sh` after clone.
+
 Project skills are also linked at `.claude/skills` → `skills/` for Claude Code auto-discovery. Follow each skill’s rules exactly.
 
 ## Tools to use

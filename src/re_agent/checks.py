@@ -84,16 +84,16 @@ def immuno_checks() -> list[Check]:
         checks.append(Check("immuno package", False, str(exc)))
         return checks
 
-    data_hint = "run: uv run python -m re_agent.immuno.data"
+    data_hint = "run: uv run python scripts/immuno.py data"
     checks += [
         _immuno_artifact("labeled windows", PATHS.labeled, data_hint),
         _immuno_artifact("unlabeled de novo", PATHS.unlabeled, data_hint),
         _immuno_artifact("reference cohort", PATHS.reference, data_hint),
     ]
-    embed_hint = "run: uv run python -m re_agent.immuno.embed"
+    embed_hint = "run: uv run python scripts/immuno.py embed"
     for name in ("labeled", "unlabeled", "reference"):
         checks.append(_immuno_artifact(f"{name} embeddings", cache_paths(name)[0], embed_hint))
-    train_hint = "run: uv run python -m re_agent.immuno.train"
+    train_hint = "run: uv run python scripts/immuno.py train"
     for arm in ("baseline", "mean_teacher"):
         checks.append(_immuno_artifact(f"model: {arm}", PATHS.models / f"{arm}.pt", train_hint))
     return checks
