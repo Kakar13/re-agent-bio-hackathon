@@ -1,0 +1,14 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/", "destination": "/deck/sample_deck_design/index.html" },
+    { "source": "/deck", "destination": "/deck/sample_deck_design/index.html" },
+    { "source": "/deck/", "destination": "/deck/sample_deck_design/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/deck/sample_deck_design/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=60" }]
+    }
+  ]
+}

@@ -1,0 +1,2762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CHAO — Continuous Hidden Antigen Optimizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────────────────────
+   CHAO — presentation deck
+   Continuous Hidden Antigen Optimizer.
+
+   Sizing: everything is expressed in design pixels against a
+   1600×900 reference, multiplied by --u. The deck fills the
+   browser window at any size.
+   ───────────────────────────────────────────────────────────── */
+
+:root{
+  --u: max(0.46px, min(0.0625vw, 0.11111vh));   /* 1 design px */
+  --pad-x: calc(72 * var(--u));
+  --pad-y: calc(58 * var(--u));
+
+  --paper:      #E7E8EC;
+  --paper-hi:   #F2F3F6;
+  --paper-lo:   #D9DBE2;
+  --ink:        #0E1015;
+  --graphite:   #5B616E;
+  --graphite-2: #8B909B;
+  --hair:       #C4C7D0;
+  --void:       #07080D;
+  --void-2:     #0F131C;
+  --void-line:  #1B2130;
+  --sig:        #E8237E;   /* immunogenic / presented */
+  --sig-deep:   #2B2AD9;   /* latent operations */
+  --ok:         #1F7A55;   /* steered to safety */
+  --ok-hi:      #35C48A;
+
+  --display: "Bricolage Grotesque", "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --sans: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; margin:0; }
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+#deck{ position:fixed; inset:0; overflow:hidden; }
+/* paper grain */
+#deck::after{
+  content:""; position:absolute; inset:0; pointer-events:none; z-index:60; opacity:.35;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.42'/></svg>");
+  mix-blend-mode:multiply;
+}
+
+.slide{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column;
+  padding:var(--pad-y) var(--pad-x) calc(96 * var(--u));
+  opacity:0; visibility:hidden;
+  transition:opacity .42s ease;
+}
+.slide.is-active{ opacity:1; visibility:visible; }
+
+/* ── shared type ─────────────────────────────────────────────── */
+.eyebrow{
+  font-family:var(--mono); font-size:max(10px, calc(12 * var(--u))); font-weight:500;
+  letter-spacing:.22em; text-transform:uppercase; color:var(--graphite);
+}
+.h2{
+  font-family:var(--display); font-weight:600; font-size:calc(44 * var(--u));
+  line-height:1.04; letter-spacing:-.022em; margin:calc(14 * var(--u)) 0 0;
+}
+.h2 em{ font-style:normal; color:var(--graphite-2); }
+.lede{
+  font-size:max(12px, calc(17 * var(--u))); line-height:1.5;
+  color:var(--graphite); margin:calc(14 * var(--u)) 0 0;
+}
+.foot{
+  margin-top:auto; padding-top:calc(16 * var(--u));
+  font-family:var(--mono); font-size:max(8.5px, calc(10.5 * var(--u)));
+  letter-spacing:.06em; color:var(--graphite-2); line-height:1.5;
+}
+.slide-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:calc(40 * var(--u)); }
+
+/* reveal helper */
+.rv{ opacity:0; transform:translateY(calc(14 * var(--u))); }
+.is-active .rv{ animation:rv .7s cubic-bezier(.2,.7,.2,1) forwards; }
+@keyframes rv{ to{ opacity:1; transform:none; } }
+
+.replay{
+  font-family:var(--mono); font-size:max(8.5px, calc(10.5 * var(--u)));
+  letter-spacing:.16em; text-transform:uppercase; white-space:nowrap;
+  background:none; border:1px solid var(--hair); color:var(--graphite);
+  padding:calc(8 * var(--u)) calc(14 * var(--u)); cursor:pointer;
+  transition:border-color .2s, color .2s;
+}
+.replay:hover{ border-color:var(--ink); color:var(--ink); }
+.replay:focus-visible{ outline:2px solid var(--sig); outline-offset:2px; }
+.replay.hot{ border-color:var(--sig); color:var(--sig); }
+.replay.hot:hover{ background:var(--sig); color:var(--paper-hi); }
+
+/* ═══════════ 01 · IDENTITY ═══════════════════════════════════ */
+.s1-cols{
+  flex:1; min-height:0;
+  display:grid; grid-template-columns:minmax(0,1fr) minmax(0,27%);
+  gap:calc(56 * var(--u));
+}
+.s1-left{ display:flex; flex-direction:column; justify-content:center; min-width:0; }
+.s1-name{
+  font-family:var(--display); font-weight:700; font-size:calc(112 * var(--u));
+  line-height:.86; letter-spacing:-.05em; margin:calc(18 * var(--u)) 0 0;
+  background:linear-gradient(118deg, var(--sig-deep) 0%, #5A3EE8 36%, var(--sig) 72%, #FF6BA8 100%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  -webkit-text-fill-color:transparent;
+}
+.s1-expand{
+  margin-top:calc(14 * var(--u)); font-family:var(--mono);
+  font-size:max(10px, calc(13 * var(--u))); letter-spacing:.14em;
+  text-transform:uppercase; color:var(--sig);
+}
+#markWrap{
+  position:relative; width:min(100%, calc(960 * var(--u)));
+  aspect-ratio:960 / 210; margin:calc(22 * var(--u)) 0 0;
+}
+#markCanvas{ position:absolute; left:0; top:0; width:100%; height:100%; }
+.sr-only{
+  position:absolute; width:1px; height:1px; margin:-1px;
+  overflow:hidden; clip-path:inset(50%); white-space:nowrap;
+}
+.s1-tag{
+  font-family:var(--display); font-weight:400; font-size:calc(31 * var(--u));
+  letter-spacing:-.018em; color:var(--ink); margin:calc(26 * var(--u)) 0 0;
+  max-width:36ch; line-height:1.16;
+}
+.s1-tag b{ font-weight:600; }
+
+.s1-right{
+  min-width:0; border-left:1px solid var(--hair);
+  padding-left:calc(32 * var(--u));
+  display:flex; flex-direction:column; justify-content:center;
+}
+.spec{ padding:calc(19 * var(--u)) 0; border-bottom:1px solid var(--hair); margin:0; }
+.spec:first-child{ padding-top:0; }
+.spec dt{
+  font-family:var(--mono); font-size:max(8.5px, calc(10.5 * var(--u)));
+  letter-spacing:.18em; text-transform:uppercase; color:var(--graphite-2);
+}
+.spec dd{
+  margin:calc(7 * var(--u)) 0 0; font-family:var(--display);
+  font-size:calc(25 * var(--u)); font-weight:500; letter-spacing:-.02em;
+}
+.spec dd small{
+  display:block; font-family:var(--sans); font-size:max(11px, calc(12.5 * var(--u)));
+  font-weight:400; color:var(--graphite); letter-spacing:0;
+  margin-top:calc(5 * var(--u)); line-height:1.45;
+}
+.s1-strip{
+  display:flex; flex-wrap:wrap; gap:calc(44 * var(--u)); align-items:baseline;
+  border-top:1px solid var(--hair); padding-top:calc(16 * var(--u));
+  margin-top:calc(22 * var(--u));
+  font-family:var(--mono); font-size:max(10px, calc(12 * var(--u)));
+  letter-spacing:.04em; color:var(--graphite);
+}
+.s1-strip b{ color:var(--ink); font-weight:600; }
+
+/* ═══════════ 02 · THE LAST GATE ══════════════════════════════ */
+.gate-grid{
+  flex:1 1 auto; min-height:0; display:grid;
+  grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr);
+  gap:calc(30 * var(--u)); margin-top:calc(18 * var(--u));
+}
+.gate-div{ width:1px; background:var(--ink); opacity:.22; }
+.gate-pane{ min-width:0; display:flex; flex-direction:column; }
+.pane-bar{
+  display:flex; justify-content:space-between; align-items:flex-end;
+  gap:calc(16 * var(--u)); padding-bottom:calc(8 * var(--u)); white-space:nowrap;
+}
+.pane-bar .who{
+  font-family:var(--mono); font-size:max(9px, calc(11 * var(--u)));
+  letter-spacing:.15em; text-transform:uppercase; padding-bottom:calc(7 * var(--u));
+  overflow:hidden; text-overflow:ellipsis; color:var(--graphite);
+}
+.gate-pane.ours .pane-bar .who{ color:var(--sig-deep); }
+.count{ display:flex; align-items:baseline; gap:calc(9 * var(--u)); }
+.count b{
+  font-family:var(--display); font-weight:600; font-size:calc(50 * var(--u));
+  line-height:.86; letter-spacing:-.035em; font-variant-numeric:tabular-nums;
+  color:var(--sig);
+}
+.count i{
+  font-style:normal; font-family:var(--mono); font-size:max(9px, calc(10.5 * var(--u)));
+  letter-spacing:.16em; text-transform:uppercase; color:var(--graphite-2);
+}
+.gate-pane.ours .count b{ color:var(--ink); }
+.pane-rule{ height:1px; background:var(--hair); }
+
+.tile-strip{
+  margin-top:calc(16 * var(--u)); display:flex; flex-wrap:wrap;
+  gap:calc(3 * var(--u)); font-family:var(--mono);
+  font-size:max(9px, calc(12 * var(--u))); line-height:1;
+}
+.tile-strip span{
+  padding:calc(6 * var(--u)) calc(4 * var(--u)); background:var(--paper-lo);
+  color:var(--graphite-2); transition:background .18s ease, color .18s ease;
+}
+.tile-strip span.on{ background:var(--ink); color:var(--paper-hi); }
+.tile-strip span.hot{ background:var(--sig); color:#fff; }
+.strip-note{
+  margin-top:calc(10 * var(--u)); font-family:var(--mono);
+  font-size:max(9px, calc(11 * var(--u))); color:var(--graphite-2); letter-spacing:.04em;
+}
+.strip-note b{ color:var(--graphite); font-weight:500; }
+
+.gates{ margin-top:calc(20 * var(--u)); display:grid; gap:calc(9 * var(--u)); }
+.gate{
+  display:grid; grid-template-columns:calc(26 * var(--u)) minmax(0,1fr) auto;
+  align-items:center; gap:calc(13 * var(--u));
+  border:1px solid var(--hair); background:var(--paper-hi);
+  padding:calc(13 * var(--u)) calc(15 * var(--u));
+  transition:border-color .3s ease, background .3s ease, opacity .3s ease;
+}
+.gate .dot{
+  width:calc(13 * var(--u)); height:calc(13 * var(--u)); min-width:9px; min-height:9px;
+  border-radius:50%; border:1px solid var(--graphite-2); background:transparent;
+  transition:background .3s ease, border-color .3s ease;
+}
+.gate .lbl{
+  font-family:var(--mono); font-size:max(9.5px, calc(12 * var(--u)));
+  letter-spacing:.1em; text-transform:uppercase; color:var(--graphite); min-width:0;
+}
+.gate .val{
+  font-family:var(--mono); font-size:max(8.5px, calc(10.5 * var(--u)));
+  letter-spacing:.12em; text-transform:uppercase; color:var(--graphite-2);
+  font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+.gate.miss{ background:transparent; border-style:dashed; }
+.gate.miss .lbl,.gate.miss .val{ color:var(--graphite-2); }
+.gate.lit{ border-color:var(--ink); }
+.gate.lit .dot{ background:var(--sig-deep); border-color:var(--sig-deep); }
+.gate.lit .lbl{ color:var(--ink); }
+.gate.lit .val{ color:var(--sig-deep); }
+.gate.warn.lit .dot{ background:var(--sig); border-color:var(--sig); }
+.gate.warn.lit .val{ color:var(--sig); }
+
+.blind{
+  margin-top:auto; border-left:2px solid var(--sig); padding-left:calc(14 * var(--u));
+  font-family:var(--mono); font-size:max(9.5px, calc(11.5 * var(--u)));
+  line-height:1.55; color:var(--graphite);
+}
+.blind b{ color:var(--sig); }
+.gate-pane.ours .blind{ border-color:var(--sig-deep); }
+.gate-pane.ours .blind b{ color:var(--sig-deep); }
+
+.bill{
+  display:grid; grid-template-columns:repeat(3,1fr) auto; margin-top:calc(22 * var(--u));
+  border-top:1px solid var(--ink); opacity:0; transform:translateY(calc(10 * var(--u)));
+  transition:opacity .45s ease, transform .45s ease;
+}
+.bill.on{ opacity:1; transform:none; }
+.bill .cell{ padding:calc(13 * var(--u)) calc(22 * var(--u)) 0; border-right:1px solid var(--hair); min-width:0; }
+.bill .cell:first-child{ padding-left:0; }
+.bill .cell:last-child{ border-right:0; padding-right:0; text-align:right; }
+.bill dt{ font-family:var(--mono); font-size:max(8px, calc(10 * var(--u))); letter-spacing:.18em; text-transform:uppercase; color:var(--graphite-2); }
+.bill dd{ margin:calc(6 * var(--u)) 0 0; font-family:var(--display); font-size:calc(26 * var(--u)); font-weight:600; letter-spacing:-.02em; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.bill dd s{ text-decoration:none; color:var(--graphite-2); font-weight:400; }
+.bill dd .ar{ color:var(--graphite-2); font-weight:400; margin:0 calc(6 * var(--u)); }
+.bill .big dd{ color:var(--sig-deep); }
+
+/* ═══════════ 03 · THE THREE OPERATIONS ═══════════════════════ */
+#pipesvg{ flex:1 1 auto; min-height:0; width:100%; height:100%; margin-top:calc(10 * var(--u)); }
+.p-lbl{ font-family:var(--mono); font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; fill:var(--graphite-2); }
+.p-lbl-l{ font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; fill:#6A7183; }
+.p-tx{ font-family:var(--mono); font-size:12.5px; fill:var(--graphite); }
+.p-math{ font-family:var(--mono); font-size:14px; fill:var(--ink); }
+.p-wire{ stroke:var(--hair); stroke-width:1.5; fill:none; }
+.p-chip{ fill:#EDEEF2; stroke:var(--hair); }
+.p-chip-t{ font-family:var(--mono); font-size:12.5px; fill:var(--ink); }
+.p-head{ opacity:0; transform:translateX(-14px); transition:opacity .45s ease, transform .5s cubic-bezier(.2,.75,.2,1); }
+.p-head.on{ opacity:1; transform:none; }
+.p-headbox{ fill:var(--paper-hi); stroke:var(--hair); stroke-width:1; transition:stroke .35s ease, fill .35s ease; }
+.p-head.on .p-headbox{ stroke:var(--sig-deep); stroke-width:2; fill:#fff; }
+.p-title{ font-family:var(--display); font-size:20px; font-weight:600; fill:var(--ink); letter-spacing:-.01em; }
+.p-out{ font-family:var(--display); font-size:27px; font-weight:600; fill:var(--graphite-2); font-variant-numeric:tabular-nums; letter-spacing:-.02em; transition:fill .35s ease; }
+.p-head.on .p-out{ fill:var(--sig-deep); }
+.p-head.risky.on .p-out{ fill:var(--sig); }
+.p-item{ opacity:0; transform:translateX(-14px); transition:opacity .4s ease, transform .5s cubic-bezier(.2,.75,.2,1); }
+.p-item.on{ opacity:1; transform:none; }
+.p-note{ font-family:var(--sans); font-size:15px; fill:var(--graphite); }
+.p-final{ font-family:var(--display); font-size:50px; font-weight:600; letter-spacing:-.04em; fill:#FF4D99; font-variant-numeric:tabular-nums; }
+.p-conf{ font-family:var(--display); font-size:22px; font-weight:600; letter-spacing:-.03em; fill:#F2F3F6; font-variant-numeric:tabular-nums; }
+.p-cf-lbl{ font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; fill:#6F778A; }
+.p-cf-val{ font-family:var(--mono); font-size:10px; fill:#9AA3B5; font-variant-numeric:tabular-nums; }
+.p-brk{ stroke:#E8237E; stroke-width:1.6; fill:none; opacity:0; transition:opacity .3s ease; }
+.p-brk.on{ opacity:1; }
+.p-brk-lbl{ font-family:var(--mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; fill:#E8237E; opacity:0; transition:opacity .3s ease; }
+.p-brk-lbl.on{ opacity:1; }
+.p-vec{ opacity:0; transform:translateX(-14px); transition:opacity .4s ease, transform .5s cubic-bezier(.2,.75,.2,1); }
+.p-vec.on{ opacity:1; transform:none; }
+.p-vec-lbl{ font-family:var(--mono); font-size:12px; font-weight:500; fill:#FFFFFF; }
+.p-vec-sub{ font-family:var(--mono); font-size:9.5px; fill:var(--graphite-2); letter-spacing:.06em; }
+.p-enc-t{ font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; fill:#E7E8EC; }
+.p-enc-sub{ font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; fill:#9AA3B5; }
+.p-enc-cap{ font-family:var(--mono); font-size:11px; fill:#8B909B; }
+.p-aa{ transition:fill .3s ease; }
+.pipe-strip{
+  display:flex; flex-wrap:wrap; gap:calc(40 * var(--u)); align-items:baseline;
+  border-top:1px solid var(--hair); padding-top:calc(14 * var(--u)); margin-top:calc(10 * var(--u));
+  font-family:var(--mono); font-size:max(9.5px, calc(11.5 * var(--u)));
+  letter-spacing:.04em; color:var(--graphite-2);
+}
+.pipe-strip b{ color:var(--ink); font-weight:600; }
+
+/* ═══════════ 04 · WHAT TAUGHT IT ═════════════════════════════ */
+.train-grid{
+  flex:1 1 auto; min-height:0; display:grid;
+  grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);
+  gap:calc(34 * var(--u)); margin-top:calc(24 * var(--u));
+}
+#datasvg{ width:100%; height:100%; min-height:0; }
+.d-lbl{ font-family:var(--mono); font-size:12px; letter-spacing:.16em; text-transform:uppercase; fill:var(--graphite-2); }
+.d-name{ font-family:var(--mono); font-size:13px; fill:var(--graphite); letter-spacing:.04em; }
+.d-num{ font-family:var(--display); font-size:19px; font-weight:600; fill:var(--ink); font-variant-numeric:tabular-nums; }
+.d-bar{ fill:var(--graphite-2); }
+.d-bar.denovo{ fill:var(--sig-deep); }
+.d-total{ font-family:var(--display); font-size:62px; font-weight:600; letter-spacing:-.04em; fill:var(--ink); font-variant-numeric:tabular-nums; }
+.d-flow{ stroke:var(--hair); stroke-width:1.4; fill:none; }
+.d-pill{ fill:#EDEEF2; stroke:var(--hair); }
+.d-pill-t{ font-family:var(--mono); font-size:12px; fill:var(--ink); }
+.d-item{ opacity:0; transition:opacity .45s ease; }
+.d-item.on{ opacity:1; }
+.d-stamp{ font-family:var(--mono); font-size:12px; letter-spacing:.16em; text-transform:uppercase; fill:var(--ok); }
+
+.teach-stack{ display:grid; grid-template-rows:repeat(3,1fr); gap:calc(12 * var(--u)); min-height:0; }
+.teach{
+  border:1px solid var(--hair); background:var(--paper-hi);
+  padding:calc(18 * var(--u)) calc(20 * var(--u));
+  display:flex; flex-direction:column; justify-content:center; min-height:0;
+}
+.teach.dark{ background:var(--void); border-color:var(--void); }
+.teach-k{
+  font-family:var(--mono); font-size:max(8.5px, calc(10.5 * var(--u)));
+  letter-spacing:.18em; text-transform:uppercase; color:var(--graphite-2);
+}
+.teach.dark .teach-k{ color:#727B90; }
+.teach-t{
+  margin-top:calc(8 * var(--u)); font-family:var(--display); font-weight:600;
+  font-size:calc(23 * var(--u)); letter-spacing:-.02em; line-height:1.1;
+}
+.teach.dark .teach-t{ color:var(--paper-hi); }
+.teach-t em{ font-style:normal; color:var(--sig); }
+.teach-c{
+  margin:calc(8 * var(--u)) 0 0; font-family:var(--mono);
+  font-size:max(9px, calc(11 * var(--u))); line-height:1.55; color:var(--graphite);
+}
+.teach.dark .teach-c{ color:#9AA3B5; }
+.teach-c b{ color:var(--ink); font-weight:600; }
+.teach.dark .teach-c b{ color:var(--paper-hi); }
+
+/* the finding strip on 04 */
+.finding{
+  margin-top:calc(18 * var(--u)); border-top:1px solid var(--ink); padding-top:calc(13 * var(--u));
+}
+.finding-k{
+  font-family:var(--mono); font-size:max(8px, calc(9.5 * var(--u)));
+  letter-spacing:.18em; text-transform:uppercase; color:var(--graphite-2);
+}
+.finding-cols{
+  margin-top:calc(11 * var(--u));
+  display:grid; grid-template-columns:repeat(4, calc(112 * var(--u))) minmax(0,1fr);
+  gap:calc(20 * var(--u)); align-items:start;
+}
+.fcol{ min-width:0; }
+.fcol b{
+  display:block; font-family:var(--display); font-size:calc(30 * var(--u)); line-height:1;
+  font-weight:600; letter-spacing:-.035em; color:var(--graphite); font-variant-numeric:tabular-nums;
+}
+.fcol.hot b{ color:var(--sig); }
+.fcol span{
+  display:block; margin-top:calc(4 * var(--u)); font-family:var(--mono);
+  font-size:max(8px, calc(9.5 * var(--u))); letter-spacing:.14em;
+  text-transform:uppercase; color:var(--graphite-2);
+}
+.ftrack{
+  display:block; margin-top:calc(8 * var(--u)); height:calc(6 * var(--u)); min-height:4px;
+  background:var(--paper-lo);
+}
+.ftrack em{ display:block; height:100%; width:0; background:var(--graphite-2); transition:width .9s cubic-bezier(.2,.8,.2,1) .2s; }
+.fcol.hot .ftrack em{ background:var(--sig); }
+.is-active .ftrack em{ width:var(--w); }
+.finding-note{
+  margin:0; align-self:center; max-width:60ch;
+  font-family:var(--mono); font-size:max(9px, calc(11 * var(--u)));
+  line-height:1.55; color:var(--graphite);
+  border-left:2px solid var(--sig); padding-left:calc(14 * var(--u));
+}
+.finding-note b{ color:var(--ink); font-weight:600; }
+
+/* ═══════════ 05 · READING THE SCORE ══════════════════════════ */
+.score-grid{
+  flex:1 1 auto; min-height:0; display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.25fr);
+  gap:calc(20 * var(--u)); margin-top:calc(20 * var(--u));
+}
+.score-card{
+  min-width:0; min-height:0; border:1px solid var(--hair); background:var(--paper-hi);
+  padding:calc(22 * var(--u)); display:flex; flex-direction:column;
+}
+.score-card.dark{ background:var(--void); border-color:var(--void); }
+.score-k{
+  font-family:var(--mono); font-size:max(8.5px, calc(10.5 * var(--u)));
+  letter-spacing:.18em; text-transform:uppercase; color:var(--graphite-2);
+}
+.score-card.dark .score-k{ color:#727B90; }
+.score-t{
+  margin-top:calc(9 * var(--u)); font-family:var(--display); font-weight:600;
+  font-size:calc(25 * var(--u)); letter-spacing:-.025em; line-height:1.06;
+}
+.score-card.dark .score-t{ color:var(--paper-hi); }
+.score-c{
+  margin:calc(10 * var(--u)) 0 0; font-family:var(--mono);
+  font-size:max(8.5px, calc(10.5 * var(--u))); line-height:1.55; color:var(--graphite);
+}
+.score-card.dark .score-c{ color:#9AA3B5; }
+.score-c b{ color:var(--ink); font-weight:600; }
+.score-card.dark .score-c b{ color:#FF6FAE; }
+
+/* geometric-mean rows */
+.gm{ margin-top:calc(16 * var(--u)); display:grid; gap:calc(9 * var(--u)); }
+.gm-row{
+  display:grid; grid-template-columns:calc(74 * var(--u)) minmax(0,1fr) calc(38 * var(--u));
+  align-items:center; gap:calc(10 * var(--u));
+}
+.gm-n, .cf-n{
+  font-family:var(--mono); font-size:max(8px, calc(9.5 * var(--u)));
+  letter-spacing:.1em; text-transform:uppercase; color:var(--graphite);
+}
+.gm-track, .cf-track{ display:block; height:calc(10 * var(--u)); min-height:7px; background:var(--paper-lo); }
+.gm-track em, .cf-track em{ display:block; height:100%; width:0; background:var(--sig-deep); }
+.gm-row b, .cf-row b{
+  font-family:var(--mono); font-size:max(9px, calc(11 * var(--u)));
+  text-align:right; color:var(--ink); font-variant-numeric:tabular-nums;
+}
+.gm-eq{
+  margin-top:calc(15 * var(--u)); border-top:1px solid var(--hair); padding-top:calc(12 * var(--u));
+  display:flex; justify-content:space-between; align-items:baseline; gap:calc(12 * var(--u));
+}
+.gm-eq-l{ font-family:var(--mono); font-size:max(9px, calc(11 * var(--u))); color:var(--graphite); }
+.gm-eq-r{
+  font-family:var(--display); font-size:calc(34 * var(--u)); font-weight:600;
+  letter-spacing:-.035em; color:var(--sig); font-variant-numeric:tabular-nums; line-height:1;
+}
+.gm-tap{
+  margin-top:auto; padding-top:calc(14 * var(--u));
+  border-left:2px solid var(--graphite-2); padding-left:calc(12 * var(--u));
+}
+.gm-tap span{
+  display:block; font-family:var(--mono); font-size:max(8.5px, calc(10.5 * var(--u)));
+  letter-spacing:.1em; text-transform:uppercase; color:var(--graphite-2);
+}
+.gm-tap span b{ color:var(--ink); font-weight:600; }
+.gm-tap em{
+  display:block; margin-top:calc(6 * var(--u)); font-style:normal; font-family:var(--mono);
+  font-size:max(8px, calc(9.5 * var(--u))); line-height:1.5; color:var(--graphite-2);
+}
+
+/* confidence rows */
+.cf{ margin-top:calc(14 * var(--u)); display:grid; gap:calc(11 * var(--u)); }
+.cf-row{
+  display:grid; grid-template-columns:calc(56 * var(--u)) minmax(0,1fr) calc(34 * var(--u));
+  align-items:center; gap:calc(9 * var(--u));
+}
+.cf-row small{
+  grid-column:1 / -1; font-family:var(--mono); font-size:max(7.5px, calc(9 * var(--u)));
+  color:var(--graphite-2); line-height:1.4; margin-top:calc(-2 * var(--u));
+}
+.cf-row.low .cf-track em{ background:var(--sig); }
+.cf-row.low b{ color:var(--sig); }
+.cf-out{
+  margin-top:auto; padding-top:calc(14 * var(--u)); border-top:1px solid var(--hair);
+  display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:baseline;
+  gap:calc(10 * var(--u));
+}
+.cf-out span{
+  font-family:var(--mono); font-size:max(8.5px, calc(10.5 * var(--u)));
+  letter-spacing:.18em; text-transform:uppercase; color:var(--graphite-2);
+}
+.cf-out b{
+  font-family:var(--display); font-size:calc(34 * var(--u)); font-weight:600;
+  letter-spacing:-.035em; color:var(--ink); font-variant-numeric:tabular-nums; line-height:1;
+}
+.cf-out em{
+  grid-column:1 / -1; font-style:normal; font-family:var(--mono);
+  font-size:max(8px, calc(9.5 * var(--u))); line-height:1.5; color:var(--graphite);
+}
+
+/* residue tracks */
+.track-block{ margin-top:calc(20 * var(--u)); }
+.track-k{
+  font-family:var(--mono); font-size:max(7.5px, calc(9 * var(--u)));
+  letter-spacing:.14em; text-transform:uppercase; color:#6F778A;
+  margin-bottom:calc(5 * var(--u));
+}
+.heat{
+  display:flex; flex-wrap:nowrap; gap:1px;
+  height:calc(70 * var(--u)); min-height:28px;
+  overflow:hidden; contain:paint; transform:translateZ(0);
+}
+.heat i{
+  flex:1 1 0; min-width:0; display:block;
+  background:#141824; opacity:0;
+  backface-visibility:hidden;
+}
+.heat-seq{
+  margin-top:calc(6 * var(--u)); display:flex; gap:1px;
+  font-family:var(--mono); font-size:max(7px, calc(9 * var(--u)));
+  color:#6F778A; line-height:1;
+}
+.heat-seq i{ flex:1 1 0; min-width:0; text-align:center; font-style:normal; }
+.heat-seq i.hot{ color:#FF6FAE; }
+.attr-out{
+  margin-top:auto; padding-top:calc(14 * var(--u)); border-top:1px solid var(--void-line);
+  opacity:0; transition:opacity .5s ease;
+}
+.attr-out.on{ opacity:1; }
+.attr-flag{
+  display:inline-block; font-family:var(--mono); font-size:max(8px, calc(9.5 * var(--u)));
+  letter-spacing:.14em; text-transform:uppercase; color:#FF6FAE;
+  border:1px solid #4A1F33; padding:calc(5 * var(--u)) calc(9 * var(--u));
+}
+.attr-note{
+  display:block; margin-top:calc(9 * var(--u)); font-family:var(--mono);
+  font-size:max(8px, calc(9.5 * var(--u))); line-height:1.55; color:#9AA3B5;
+}
+.attr-note b{ color:var(--paper-hi); font-weight:600; }
+
+/* ═══════════ 06 · STEER TO SAFETY ════════════════════════════ */
+.steer-grid{
+  flex:1 1 auto; min-height:0; display:grid;
+  grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr);
+  gap:calc(30 * var(--u)); margin-top:calc(16 * var(--u));
+}
+.latent-box{ position:relative; min-width:0; min-height:0; display:flex; flex-direction:column; }
+.lz-wrap{ position:relative; flex:1 1 auto; min-height:0; background:var(--void); }
+#latentsvg{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+.lz-lbl{ font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase; fill:#6A7183; }
+.lz-lbl.hot{ fill:#FF6FAE; }
+.lz-lbl.safe{ fill:var(--ok-hi); }
+.lz-pt{ transition:opacity .5s ease; }
+.lz-ghost{ opacity:0; transition:opacity .3s ease, transform .5s cubic-bezier(.2,.8,.2,1); }
+.lz-ghost.on{ opacity:.85; }
+.lz-trail{ stroke:#FF6FAE; stroke-width:1.6; fill:none; stroke-dasharray:4 5; opacity:.85; }
+.lz-axis{ font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; fill:#39415A; }
+
+.seq-row{
+  margin-top:calc(12 * var(--u)); display:flex; align-items:stretch;
+  gap:calc(4 * var(--u)); font-family:var(--mono);
+}
+.aa{
+  flex:1 1 0; min-width:0; text-align:center; padding:calc(10 * var(--u)) 0 calc(7 * var(--u));
+  background:var(--paper-lo); color:var(--ink);
+  font-size:max(11px, calc(17 * var(--u))); line-height:1;
+  transition:background .3s ease, color .3s ease;
+  position:relative;
+}
+.aa i{
+  display:block; margin-top:calc(6 * var(--u)); font-style:normal;
+  font-size:max(7px, calc(8.5 * var(--u))); letter-spacing:.1em; color:var(--graphite-2);
+}
+.aa.anchor{ background:#F0C9DC; }
+.aa.locked{ background:var(--ink); color:var(--paper-hi); }
+.aa.locked i{ color:#8A91A2; }
+.aa.mut{ background:var(--ok); color:#fff; }
+.aa.mut i{ color:#BFE8D6; }
+.seq-legend{
+  margin-top:calc(9 * var(--u)); display:flex; flex-wrap:wrap; gap:calc(22 * var(--u));
+  font-family:var(--mono); font-size:max(8.5px, calc(10 * var(--u)));
+  letter-spacing:.1em; text-transform:uppercase; color:var(--graphite-2);
+}
+.seq-legend em{ font-style:normal; }
+.seq-legend .k1{ color:var(--ink); }
+.seq-legend .k2{ color:var(--sig); }
+.seq-legend .k3{ color:var(--ok); }
+
+.steer-side{ display:flex; flex-direction:column; min-width:0; gap:calc(12 * var(--u)); }
+.risk-card{ background:var(--void); color:var(--paper-hi); padding:calc(24 * var(--u)); }
+.risk-k{
+  font-family:var(--mono); font-size:max(8.5px, calc(10.5 * var(--u)));
+  letter-spacing:.18em; text-transform:uppercase; color:#6F778A;
+}
+.risk-num{
+  display:flex; align-items:baseline; gap:calc(12 * var(--u)); margin-top:calc(8 * var(--u));
+}
+.risk-num b{
+  font-family:var(--display); font-size:calc(64 * var(--u)); line-height:.86;
+  font-weight:600; letter-spacing:-.045em; color:#FF4D99; font-variant-numeric:tabular-nums;
+  transition:color .4s ease;
+}
+.risk-num.safe b{ color:var(--ok-hi); }
+.risk-num span{
+  font-family:var(--mono); font-size:max(8.5px, calc(10 * var(--u)));
+  letter-spacing:.12em; text-transform:uppercase; color:#858DA0; line-height:1.5;
+}
+.risk-track{ margin-top:calc(16 * var(--u)); height:calc(7 * var(--u)); min-height:5px; background:var(--void-line); }
+.risk-fill{ display:block; height:100%; width:78%; background:#FF4D99; transition:width .55s cubic-bezier(.2,.8,.2,1), background .55s ease; }
+.risk-fill.safe{ background:var(--ok-hi); }
+.risk-sub{
+  margin-top:calc(12 * var(--u)); font-family:var(--mono);
+  font-size:max(8.5px, calc(10 * var(--u))); line-height:1.6; color:#737B8D;
+}
+.risk-sub b{ color:var(--paper-hi); font-weight:500; }
+
+.constraints{ border:1px solid var(--hair); background:var(--paper-hi); padding:calc(20 * var(--u)); flex:1; min-height:0; }
+.constraints .risk-k{ color:var(--graphite-2); }
+.clist{ list-style:none; margin:calc(12 * var(--u)) 0 0; padding:0; display:grid; gap:calc(10 * var(--u)); }
+.clist li{
+  position:relative; padding-left:calc(20 * var(--u)); font-family:var(--mono);
+  font-size:max(9px, calc(11 * var(--u))); line-height:1.5; color:var(--graphite);
+}
+.clist li::before{
+  content:""; position:absolute; left:0; top:calc(5 * var(--u));
+  width:calc(8 * var(--u)); height:calc(8 * var(--u)); min-width:6px; min-height:6px;
+  border:1px solid var(--graphite-2); border-radius:50%;
+  transition:background .3s ease, border-color .3s ease;
+}
+.clist li.on::before{ background:var(--ok); border-color:var(--ok); }
+.clist li b{ color:var(--ink); font-weight:600; }
+.verify{
+  margin-top:calc(14 * var(--u)); border-top:1px solid var(--hair); padding-top:calc(12 * var(--u));
+  font-family:var(--mono); font-size:max(8.5px, calc(10 * var(--u)));
+  letter-spacing:.1em; text-transform:uppercase; color:var(--graphite-2);
+  opacity:0; transition:opacity .5s ease;
+}
+.verify.on{ opacity:1; }
+.verify b{ color:var(--ok); }
+
+/* ═══════════ 06 · WHAT IT UNLOCKS ════════════════════════════ */
+.unlock-grid{
+  flex:1 1 auto; min-height:0; display:grid;
+  grid-template-columns:minmax(0,1.6fr) minmax(280px,.5fr);
+  gap:calc(34 * var(--u)); margin-top:calc(26 * var(--u));
+}
+.target-board{
+  border-top:1px solid var(--ink); border-bottom:1px solid var(--ink);
+  display:flex; flex-direction:column; justify-content:center;
+}
+.target-row{
+  display:grid; grid-template-columns:calc(230 * var(--u)) minmax(0,1fr) calc(96 * var(--u));
+  gap:calc(18 * var(--u)); align-items:center; padding:calc(19 * var(--u)) 0;
+  border-bottom:1px solid var(--hair);
+}
+.target-row:last-child{ border-bottom:0; }
+.target-name{ min-width:0; }
+.target-name b{
+  display:block; font-family:var(--display); font-size:calc(21 * var(--u));
+  font-weight:600; letter-spacing:-.02em; line-height:1.1;
+}
+.target-name small{
+  display:block; margin-top:calc(4 * var(--u)); font-family:var(--mono);
+  font-size:max(8px, calc(9.5 * var(--u))); letter-spacing:.12em;
+  text-transform:uppercase; color:var(--graphite-2);
+}
+.target-track{ height:calc(18 * var(--u)); min-height:11px; background:var(--paper-lo); overflow:hidden; }
+.target-fill{ display:block; height:100%; width:0; background:var(--graphite-2); transition:width .8s cubic-bezier(.2,.8,.2,1); }
+.target-row.control .target-fill{ background:var(--ink); }
+.is-active .target-fill{ width:var(--w); }
+.target-val{
+  text-align:right; font-family:var(--display); font-size:calc(25 * var(--u));
+  font-weight:600; letter-spacing:-.03em; font-variant-numeric:tabular-nums;
+}
+.target-val small{
+  display:block; font-family:var(--mono); font-size:max(8px, calc(9 * var(--u)));
+  font-weight:400; letter-spacing:.1em; text-transform:uppercase; color:var(--graphite-2);
+  margin-top:calc(3 * var(--u));
+}
+.unlock-stack{ display:grid; grid-template-rows:1fr 1fr 1fr; gap:1px; background:var(--void-line); min-height:0; }
+.unlock-card{
+  background:var(--void); color:var(--paper-hi); padding:calc(22 * var(--u));
+  display:flex; flex-direction:column; justify-content:center; min-height:0;
+}
+.unlock-card.signal{ background:linear-gradient(145deg,#2A0A1B 0%,#08090E 70%); }
+.unlock-card strong{
+  display:block; font-family:var(--display); font-size:calc(48 * var(--u)); line-height:.88;
+  letter-spacing:-.045em; color:var(--paper-hi);
+}
+.unlock-card.signal strong{ color:#FF4D99; }
+.unlock-card span{
+  display:block; margin-top:calc(10 * var(--u)); font-family:var(--mono);
+  font-size:max(8.5px, calc(10.5 * var(--u))); line-height:1.5; color:#7C8496;
+}
+
+/* ═══════════ 08 · THE FULL LOOP ══════════════════════════════ */
+.loop-grid{
+  flex:1 1 auto; min-height:0; display:grid;
+  grid-template-columns:repeat(7, minmax(0,1fr));
+  gap:calc(14 * var(--u)); margin-top:calc(24 * var(--u));
+}
+.loop-step{
+  position:relative; min-width:0; display:flex; flex-direction:column;
+  padding:calc(14 * var(--u)) calc(11 * var(--u)) calc(12 * var(--u));
+  border-top:1px solid var(--hair);
+  opacity:.3; transition:opacity .5s ease;
+}
+.loop-step.on{ opacity:1; }
+.loop-step::before{
+  content:""; position:absolute; left:0; right:0; top:-1px; height:2px;
+  background:var(--graphite-2); transform:scaleX(0); transform-origin:left;
+  transition:transform .55s cubic-bezier(.2,.8,.2,1);
+}
+.loop-step.on::before{ transform:scaleX(1); }
+.loop-step.ours{ background:var(--paper-hi); }
+.loop-step.ours::before{ background:var(--sig); }
+.loop-step.wet::before{ background:var(--ok); }
+.ls-num{
+  font-family:var(--mono); font-size:max(8px, calc(9.5 * var(--u)));
+  letter-spacing:.18em; color:var(--graphite-2);
+}
+.ls-tool{
+  margin-top:calc(7 * var(--u)); font-family:var(--mono);
+  font-size:max(8px, calc(9.5 * var(--u))); letter-spacing:.14em;
+  text-transform:uppercase; color:var(--graphite);
+}
+.loop-step.ours .ls-tool{ color:var(--sig); }
+.loop-step.wet .ls-tool{ color:var(--ok); }
+.loop-step.design .ls-tool{ color:var(--sig-deep); }
+.ls-title{
+  margin-top:calc(9 * var(--u)); font-family:var(--display); font-weight:600;
+  font-size:calc(17 * var(--u)); line-height:1.12; letter-spacing:-.018em;
+}
+.ls-desc{
+  margin:calc(9 * var(--u)) 0 0; font-family:var(--mono);
+  font-size:max(7.5px, calc(9 * var(--u))); line-height:1.5; color:var(--graphite);
+}
+.ls-out{
+  margin-top:auto; padding-top:calc(11 * var(--u));
+  border-left:2px solid var(--hair); padding-left:calc(8 * var(--u));
+  font-family:var(--mono); font-size:max(7.5px, calc(9 * var(--u)));
+  line-height:1.45; color:var(--graphite-2);
+}
+.loop-step.ours .ls-out{ border-color:var(--sig); color:var(--graphite); }
+.loop-step.wet .ls-out{ border-color:var(--ok); color:var(--graphite); }
+.ls-state{
+  display:inline-block; margin-top:calc(9 * var(--u)); align-self:flex-start;
+  font-family:var(--mono); font-size:max(7px, calc(8.5 * var(--u)));
+  letter-spacing:.16em; text-transform:uppercase;
+  padding:calc(4 * var(--u)) calc(7 * var(--u));
+  border:1px solid var(--hair); color:var(--graphite-2);
+}
+.ls-state.built{ border-color:var(--ink); color:var(--ink); }
+.ls-state.next{ border-style:dashed; }
+.loop-legend{
+  display:flex; flex-wrap:wrap; gap:calc(34 * var(--u)); align-items:baseline;
+  border-top:1px solid var(--hair); padding-top:calc(13 * var(--u));
+  margin-top:calc(16 * var(--u));
+  font-family:var(--mono); font-size:max(9px, calc(11 * var(--u)));
+  letter-spacing:.04em; color:var(--graphite-2);
+}
+.loop-legend b{ color:var(--ink); font-weight:600; }
+.loop-legend em{ font-style:normal; color:var(--sig); }
+.loop-legend .g{ color:var(--ok); }
+
+/* per-stage glyphs — fill the stretch between copy and output */
+.ls-viz{
+  flex:1 1 auto; min-height:calc(96 * var(--u));
+  display:flex; flex-direction:column; justify-content:center;
+  margin:calc(12 * var(--u)) 0 calc(4 * var(--u));
+}
+.lv-cap{
+  font-family:var(--mono); font-size:max(6.5px, calc(8 * var(--u)));
+  letter-spacing:.14em; text-transform:uppercase; color:var(--graphite-2);
+  margin-bottom:calc(6 * var(--u));
+}
+.lv-pop{ opacity:0; transform:translateX(-8px); }
+.loop-step.on .lv-pop{
+  opacity:1; transform:none;
+  transition:opacity .35s ease, transform .4s cubic-bezier(.2,.75,.2,1);
+  transition-delay:calc(var(--i, 0) * 45ms);
+}
+.loop-step.on .lv-seq .lv-pop{ transition-delay:calc(var(--i, 0) * 22ms); }
+.loop-step.on .lv-heat .lv-pop{ transition-delay:calc(380ms + var(--i, 0) * 16ms); }
+.loop-step.on .lv-heat.mhc .lv-pop{ transition-delay:calc(640ms + var(--i, 0) * 16ms); }
+.lv-card{
+  background:var(--void);
+  padding:calc(9 * var(--u)) calc(8 * var(--u)) calc(8 * var(--u));
+  opacity:0; transform:translateX(-8px);
+}
+.loop-step.on .lv-card{
+  opacity:1; transform:none;
+  transition:opacity .4s ease, transform .45s cubic-bezier(.2,.75,.2,1);
+}
+.lv-cites{ display:grid; gap:calc(4 * var(--u)); }
+.lv-cite, .lv-row{
+  font-family:var(--mono); font-size:max(6.5px, calc(8 * var(--u)));
+  line-height:1.35; color:var(--graphite);
+  padding:calc(4 * var(--u)) calc(6 * var(--u));
+  background:var(--paper-hi); border-left:2px solid var(--hair);
+}
+.lv-cite b, .lv-row b{
+  font-weight:500; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--graphite-2); margin-right:calc(5 * var(--u));
+}
+.lv-cite.hot{ border-color:var(--sig); color:var(--ink); background:#F2F3F6; }
+.lv-cite.hot b{ color:var(--sig); }
+.lv-bars{
+  display:flex; align-items:flex-end; gap:calc(3 * var(--u));
+  height:calc(78 * var(--u));
+}
+.lv-bar{
+  flex:1 1 0; min-width:0; height:100%;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+}
+.lv-bar i{
+  display:block; width:100%; height:var(--h); background:var(--graphite-2);
+}
+.lv-bar:first-child i{ background:var(--ink); }
+.lv-bar em{
+  display:block; margin-top:calc(3 * var(--u)); font-style:normal;
+  font-family:var(--mono); font-size:max(6px, calc(7 * var(--u)));
+  letter-spacing:.02em; color:var(--graphite-2);
+  max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.lv-reg{ display:grid; gap:calc(4 * var(--u)); }
+.lv-reg.dashed .lv-row{ border-left-style:dashed; border-color:var(--ok); }
+.lv-row.dim{ color:var(--graphite-2); background:transparent; }
+.lv-row.ready{ border-color:var(--ok); color:var(--ink); }
+.lv-row.ready b{ color:var(--ok); }
+.lv-link{
+  font-family:var(--mono); font-size:max(6.5px, calc(8 * var(--u)));
+  color:var(--ok); letter-spacing:.04em; padding-left:calc(6 * var(--u));
+}
+.lv-seq{ display:flex; gap:1px; }
+.lv-seq i{
+  flex:1 1 0; min-width:0; text-align:center; font-style:normal;
+  font-family:var(--mono); font-size:max(6px, calc(7.5 * var(--u)));
+  line-height:calc(15 * var(--u)); background:#C4C7D0; color:#5B616E;
+}
+.lv-seq i.core{ background:#0E1015; color:#F2F3F6; }
+.lv-seq-lab{
+  margin-top:calc(5 * var(--u)); text-align:center;
+  font-family:var(--mono); font-size:max(6px, calc(7 * var(--u)));
+  letter-spacing:.04em; color:#6F778A;
+}
+.lv-heat-k{
+  margin-top:calc(7 * var(--u)); margin-bottom:calc(2 * var(--u));
+  font-family:var(--mono); font-size:max(6px, calc(7 * var(--u)));
+  letter-spacing:.12em; text-transform:uppercase; color:#6F778A;
+}
+.lv-heat{ display:flex; flex-wrap:nowrap; gap:1px; height:calc(9 * var(--u)); min-height:6px; overflow:hidden; }
+.lv-heat i{ flex:1 1 0; min-width:0; display:block; background:#141824; }
+.lv-latent{ width:100%; height:calc(48 * var(--u)); display:block; }
+.lv-mut{
+  display:flex; align-items:baseline; justify-content:space-between; gap:calc(4 * var(--u));
+  margin-top:calc(6 * var(--u));
+  font-family:var(--mono); font-size:max(7px, calc(8.5 * var(--u)));
+  letter-spacing:.04em;
+}
+.lv-from{ color:#8B909B; }
+.lv-to{ color:#FF6FAE; }
+.lv-arrow{ color:#6F778A; }
+.lv-delta{
+  margin-top:calc(4 * var(--u));
+  font-family:var(--display); font-size:calc(16 * var(--u)); font-weight:600;
+  letter-spacing:-.03em; color:#35C48A; font-variant-numeric:tabular-nums;
+}
+.lv-delta s{ color:#E8237E; text-decoration:none; font-weight:500; margin-right:calc(6 * var(--u)); }
+.lv-json .lv-row{ background:var(--paper-hi); }
+.lv-json .lv-row.ok{ border-color:var(--ok); }
+
+/* ═══════════ 09 · WHAT WE WILL NOT CLAIM ═════════════════════ */
+.honest-grid{
+  flex:1 1 auto; min-height:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:calc(22 * var(--u)); margin-top:calc(28 * var(--u));
+}
+.honest-card{
+  min-width:0; border:1px solid var(--hair); background:var(--paper-hi);
+  padding:calc(26 * var(--u)); display:flex; flex-direction:column;
+}
+.honest-card.dark{ background:var(--void); border-color:var(--void); color:#F2F3F6; }
+.honest-k{
+  font-family:var(--mono); font-size:max(8.5px,calc(10.5 * var(--u)));
+  letter-spacing:.18em; text-transform:uppercase; color:var(--graphite-2);
+}
+.honest-card.dark .honest-k{ color:#727B90; }
+.honest-t{
+  margin-top:calc(12 * var(--u)); font-family:var(--display); font-weight:600;
+  font-size:calc(29 * var(--u)); line-height:1.05; letter-spacing:-.025em;
+}
+.honest-rule{ height:1px; background:var(--hair); margin:calc(20 * var(--u)) 0; }
+.honest-card.dark .honest-rule{ background:var(--void-line); }
+.honest-list{ display:grid; gap:calc(12 * var(--u)); margin:0; padding:0; list-style:none; }
+.honest-list li{
+  font-family:var(--mono); font-size:max(9.5px,calc(11.5 * var(--u)));
+  line-height:1.55; color:var(--graphite); padding-left:calc(15 * var(--u));
+  position:relative;
+}
+.honest-list li::before{
+  content:""; position:absolute; left:0; top:calc(7 * var(--u));
+  width:calc(7 * var(--u)); height:1px; min-width:5px; background:var(--graphite-2);
+}
+.honest-card.dark .honest-list li{ color:#9AA3B5; }
+.honest-card.dark .honest-list li::before{ background:var(--sig); }
+.honest-list li b{ color:var(--ink); font-weight:600; }
+.honest-card.dark .honest-list li b{ color:var(--paper-hi); }
+.honest-tail{
+  margin-top:auto; padding-top:calc(18 * var(--u));
+  font-family:var(--mono); font-size:max(9px,calc(11 * var(--u)));
+  line-height:1.55; color:var(--graphite);
+  border-left:2px solid var(--sig-deep); padding-left:calc(13 * var(--u));
+}
+.honest-card.dark .honest-tail{ color:#CED3DE; border-color:var(--sig); }
+.ask-strip{
+  display:grid; grid-template-columns:repeat(3,1fr); margin-top:calc(20 * var(--u));
+  border-top:1px solid var(--hair); border-bottom:1px solid var(--hair);
+}
+.ask{ min-width:0; padding:calc(14 * var(--u)) calc(18 * var(--u)); border-right:1px solid var(--hair); }
+.ask:first-child{ padding-left:0; }
+.ask:last-child{ border-right:0; }
+.ask b{
+  display:block; font-family:var(--mono); font-size:max(8px,calc(9.5 * var(--u)));
+  letter-spacing:.16em; text-transform:uppercase; color:var(--graphite-2); margin-bottom:calc(5 * var(--u));
+}
+.ask span{ font-family:var(--display); font-size:calc(20 * var(--u)); font-weight:600; letter-spacing:-.015em; }
+.ask em{ font-style:normal; color:var(--sig); }
+
+/* ═══════════ navigation rail ═════════════════════════════════ */
+#rail{
+  position:absolute; left:var(--pad-x); right:var(--pad-x); bottom:calc(46 * var(--u)); z-index:50;
+  display:grid; gap:0;
+  border-top:1px solid var(--hair);
+}
+.rail-i{
+  appearance:none; background:none; border:0; text-align:left; cursor:pointer;
+  padding:calc(12 * var(--u)) 0 0; position:relative; min-width:0;
+  font-family:var(--mono); font-size:max(8.5px, calc(10.5 * var(--u)));
+  letter-spacing:.2em; text-transform:uppercase; white-space:nowrap; overflow:hidden;
+  color:var(--graphite-2); transition:color .25s ease;
+}
+.rail-i::before{
+  content:""; position:absolute; left:0; right:calc(6 * var(--u)); top:-1px; height:1px;
+  background:var(--ink); transform:scaleX(0); transform-origin:left; transition:transform .5s ease;
+}
+.rail-i.done::before{ transform:scaleX(1); background:var(--hair); }
+.rail-i.cur::before{ transform:scaleX(1); background:var(--sig); }
+.rail-i.cur{ color:var(--ink); }
+.rail-i b{ font-weight:500; margin-right:calc(9 * var(--u)); color:inherit; }
+.rail-i:focus-visible{ outline:2px solid var(--sig); outline-offset:2px; }
+#hint{
+  position:absolute; left:var(--pad-x); bottom:calc(12 * var(--u)); z-index:50;
+  font-family:var(--mono); font-size:max(8.5px, calc(10 * var(--u)));
+  letter-spacing:.18em; text-transform:uppercase; color:var(--graphite-2);
+  transition:opacity .4s ease;
+}
+#pager{
+  position:absolute; right:var(--pad-x); bottom:calc(9 * var(--u)); z-index:50;
+  display:flex; gap:calc(8 * var(--u));
+}
+.pager-b{
+  appearance:none; cursor:pointer;
+  width:calc(46 * var(--u)); height:calc(28 * var(--u));
+  min-width:36px; min-height:26px;
+  display:grid; place-items:center;
+  background:none; border:1px solid var(--hair); color:var(--graphite);
+  font-family:var(--mono); font-size:max(12px, calc(14 * var(--u))); line-height:1;
+  transition:border-color .2s ease, color .2s ease, opacity .2s ease;
+}
+.pager-b:hover:not(:disabled){ border-color:var(--ink); color:var(--ink); }
+.pager-b:disabled{ opacity:.28; cursor:default; }
+.pager-b:focus-visible{ outline:2px solid var(--sig); outline-offset:2px; }
+
+@media (max-width: 900px){
+  .s1-cols{ grid-template-columns:minmax(0,1fr); }
+  .s1-right{ display:none; }
+  .gate-grid{ grid-template-columns:minmax(0,1fr); }
+  .gate-div{ display:none; }
+  .train-grid,.steer-grid,.unlock-grid{ grid-template-columns:1fr; }
+  .teach-stack,.steer-side,.unlock-stack{ display:none; }
+  .honest-grid{ grid-template-columns:1fr; }
+  .bill{ grid-template-columns:repeat(2,1fr); }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .rv{ opacity:1; transform:none; animation:none !important; }
+  .slide{ transition:none; }
+}
+</style>
+</head>
+<body>
+<div id="deck">
+
+<!-- ═════════════ 01 · IDENTITY ═════════════ -->
+<section class="slide s1" data-i="0">
+  <div class="s1-cols">
+    <div class="s1-left">
+      <div class="eyebrow rv" style="animation-delay:.05s">Track C · de novo protein design · T-cell risk</div>
+
+      <h1 class="s1-name rv" style="animation-delay:.1s">CHAO</h1>
+      <div class="s1-expand rv" style="animation-delay:.18s">Continuous Hidden Antigen Optimizer</div>
+
+      <div id="markWrap" class="rv" style="animation-delay:.26s">
+        <canvas id="markCanvas" aria-hidden="true"></canvas>
+        <p class="sr-only">A protein's latent vector travelling through three antigen-processing checkpoints.</p>
+      </div>
+
+      <p class="s1-tag rv" style="animation-delay:.55s">Your binder doesn't fail because it binds badly.<br><b>It fails because a T cell read it.</b></p>
+    </div>
+
+    <div class="s1-right">
+      <dl class="spec rv" style="animation-delay:.24s">
+        <dt>What it is</dt>
+        <dd>Three heads, one vector<small>Proteasomal cleavage, TAP transport, and MHC-I presentation as three projections of a single ESM-2 embedding.</small></dd>
+      </dl>
+      <dl class="spec rv" style="animation-delay:.32s">
+        <dt>What it's built on</dt>
+        <dd>5,000,613 9-mers<small>28,741 human, viral, bacterial and de novo parents, cluster-split, teacher-labelled, provenance on every row.</small></dd>
+      </dl>
+      <dl class="spec rv" style="animation-delay:.4s">
+        <dt>What it does</dt>
+        <dd>Steers, not just screens<small>The same geometry that scores a peptide tells you which residue to change to move it out of the danger zone.</small></dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="s1-strip rv" style="animation-delay:.58s">
+    <span>encoder <b>ESM-2 650M</b> · 1280-d</span>
+    <span><b>28,741</b> parent proteins</span>
+    <span><b>0</b> of 29,353 clusters leaking across splits</span>
+    <span><b>500</b> RFD3 binder backbones screened</span>
+  </div>
+</section>
+
+<!-- ═════════════ 02 · THE LAST GATE ═════════════ -->
+<section class="slide s2" data-i="1">
+  <div class="slide-head">
+    <div>
+      <div class="eyebrow rv">The blind spot</div>
+      <h2 class="h2 rv" style="animation-delay:.06s">Today's tools check whether a peptide binds.<br><em>They never ask whether it was ever made.</em></h2>
+    </div>
+    <button class="replay rv" id="replay2" style="animation-delay:.12s">Run again</button>
+  </div>
+
+  <div class="gate-grid">
+    <!-- the standard pipeline -->
+    <div class="gate-pane">
+      <div class="pane-bar">
+        <span class="who">Slice → score · one 100-aa binder</span>
+        <span class="count"><b id="tileCount">0</b><i>peptide calls</i></span>
+      </div>
+      <div class="pane-rule"></div>
+      <div class="tile-strip" id="tileStrip"></div>
+      <div class="strip-note">The protein is cut into <b>92 overlapping 9-mers</b> and each is handed to a binding predictor as if it arrived in the ER on its own.</div>
+
+      <div class="gates" id="gatesA">
+        <div class="gate miss"><span class="dot"></span><span class="lbl">Proteasome · was it cut here?</span><span class="val">not modelled</span></div>
+        <div class="gate miss"><span class="dot"></span><span class="lbl">TAP · did it reach the ER?</span><span class="val">not modelled</span></div>
+        <div class="gate warn" id="gateA3"><span class="dot"></span><span class="lbl">MHC-I · does it fit the groove?</span><span class="val" id="gateA3v">—</span></div>
+      </div>
+
+      <div class="blind">A peptide that the proteasome never cuts out, or that TAP never transports, <b>cannot be presented</b> — no matter how well it binds. Two of the three gates are simply assumed open.</div>
+    </div>
+
+    <div class="gate-div"></div>
+
+    <!-- ours -->
+    <div class="gate-pane ours">
+      <div class="pane-bar">
+        <span class="who">CHAO · the same binder</span>
+        <span class="count"><b id="ourCount">0</b><i>encoder passes</i></span>
+      </div>
+      <div class="pane-rule"></div>
+      <div class="tile-strip" id="tileStripB"></div>
+      <div class="strip-note">Every window is embedded <b>with its real N- and C-flanks</b> — the residues the proteasome actually sees when it decides where to cut.</div>
+
+      <div class="gates" id="gatesB">
+        <div class="gate" id="gateB1"><span class="dot"></span><span class="lbl">f<sub>cleave</sub> · calibrated MLP</span><span class="val" id="gateB1v">—</span></div>
+        <div class="gate" id="gateB2"><span class="dot"></span><span class="lbl">f<sub>TAP</sub> · ridge + bootstrap σ</span><span class="val" id="gateB2v">—</span></div>
+        <div class="gate warn" id="gateB3"><span class="dot"></span><span class="lbl">f<sub>MHC</sub> · centroid cosine</span><span class="val" id="gateB3v">—</span></div>
+      </div>
+
+      <div class="blind">Three gates, <b>one shared geometry</b>. The journey from ribosome to T-cell receptor becomes a sequence of operations on the same 1280-dimensional vector.</div>
+    </div>
+  </div>
+
+  <dl class="bill" id="bill">
+    <div class="cell"><dt>Checkpoints modelled</dt><dd><s>1 of 3</s><span class="ar">→</span>3 of 3</dd></div>
+    <div class="cell"><dt>Separate tools to install</dt><dd><s>3</s><span class="ar">→</span>1</dd></div>
+    <div class="cell"><dt>Sequence context used</dt><dd><s>none</s><span class="ar">→</span>±4 aa flanks</dd></div>
+    <div class="cell big"><dt>Runs inside the design loop</dt><dd>yes</dd></div>
+  </dl>
+
+  <div class="foot">Illustrative single protein at 100 aa → 92 windows of length 9. "Not modelled" describes the common binding-only screen (an MHC-I affinity predictor used alone), which is how most de novo design pipelines currently gate immunogenicity; dedicated cleavage and TAP tools exist but are separate installs on separate inputs.</div>
+</section>
+
+<!-- ═════════════ 03 · THE THREE OPERATIONS ═════════════ -->
+<section class="slide s3" data-i="2">
+  <div class="slide-head">
+    <div>
+      <div class="eyebrow rv">The idea</div>
+      <h2 class="h2 rv" style="animation-delay:.06s">Antigen processing, rewritten as<br><em>three projections of one vector.</em></h2>
+    </div>
+    <button class="replay rv" id="replay3" style="animation-delay:.12s">Run again</button>
+  </div>
+
+  <svg id="pipesvg" viewBox="0 0 1420 470" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <marker id="ah" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0 L7,3.5 L0,7 z" fill="#C4C7D0"/>
+      </marker>
+      <linearGradient id="gVec" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#2B2AD9"/><stop offset="1" stop-color="#E8237E"/>
+      </linearGradient>
+    </defs>
+
+    <!-- ── A · the window, and the three ways it gets pooled ── -->
+    <g class="p-item" id="pipeIn">
+      <text class="p-lbl" x="110.5" y="30" text-anchor="middle">One window of a de novo binder</text>
+      <g id="pipeSeq"></g>
+    </g>
+    <g id="pipeBrackets"></g>
+
+    <!-- ── B · the encoder, run once ── -->
+    <g class="p-item" id="pipeEnc">
+      <path class="p-wire" d="M221,198 C 240,198 248,198 268,198" marker-end="url(#ah)"/>
+      <rect x="274" y="148" width="128" height="100" rx="3" fill="#07080D"/>
+      <text class="p-enc-t" x="338" y="172" text-anchor="middle">ESM-2 650M</text>
+      <g id="pipeLayers" fill="#1E2536"></g>
+      <text class="p-enc-sub" x="338" y="236" text-anchor="middle">frozen · 1 pass</text>
+      <rect id="pipePulse" x="286" y="226" width="104" height="4" fill="#E8237E" opacity="0"/>
+      <text class="p-enc-cap" x="338" y="268" text-anchor="middle">17 residue vectors · 1280-d</text>
+    </g>
+    <g id="pipeEncFan" opacity="0">
+      <path class="p-wire" d="M402,198 C 416,198 416,86  428,86"/>
+      <path class="p-wire" d="M402,198 C 416,198 416,198 428,198"/>
+      <path class="p-wire" d="M402,198 C 416,198 416,310 428,310"/>
+    </g>
+
+    <!-- ── C · three pooled vectors ── -->
+    <g class="p-item" id="pipeVecLbl">
+      <text class="p-lbl" x="519" y="30" text-anchor="middle">Three pooling recipes</text>
+    </g>
+    <g id="pipeVecs"></g>
+
+    <!-- ── fan-out wires ── -->
+    <g id="pipeFan" opacity="0">
+      <path class="p-wire" d="M614,86  C 640,86  640,86  666,86"  marker-end="url(#ah)"/>
+      <path class="p-wire" d="M614,198 C 640,198 640,198 666,198" marker-end="url(#ah)"/>
+      <path class="p-wire" d="M614,310 C 640,310 640,310 666,310" marker-end="url(#ah)"/>
+    </g>
+
+    <!-- ── D · the three heads ── -->
+    <g class="p-head" id="head1">
+      <rect class="p-headbox" x="676" y="38" width="418" height="96" rx="3"/>
+      <text class="p-lbl" x="694" y="64" style="fill:#8B909B">Step 1 · Proteasome</text>
+      <text class="p-title" x="694" y="94">Can it be cut out?</text>
+      <text class="p-tx" x="694" y="118" font-size="11.5">2-layer MLP on [N-cut ‖ C-cut] · isotonic-calibrated</text>
+      <text class="p-out" id="out1" x="1078" y="92" text-anchor="end">—</text>
+    </g>
+
+    <g class="p-head" id="head2">
+      <rect class="p-headbox" x="676" y="150" width="418" height="96" rx="3"/>
+      <text class="p-lbl" x="694" y="176" style="fill:#8B909B">Step 2 · TAP transporter</text>
+      <text class="p-title" x="694" y="206">Does it reach the ER?</text>
+      <text class="p-tx" x="694" y="230" font-size="11.5">ridge on z · 50 bootstrap refits carry σ</text>
+      <text class="p-out" id="out2" x="1078" y="204" text-anchor="end">—</text>
+    </g>
+
+    <g class="p-head risky" id="head3">
+      <rect class="p-headbox" x="676" y="262" width="418" height="96" rx="3"/>
+      <text class="p-lbl" x="694" y="288" style="fill:#8B909B">Step 3 · MHC-I groove · HLA-A*02:01</text>
+      <text class="p-title" x="694" y="318">Does it fit the groove?</text>
+      <text class="p-tx" x="694" y="342" font-size="11.5">64-d projection · cosine to the binder centroid</text>
+      <text class="p-out" id="out3" x="1078" y="316" text-anchor="end">—</text>
+    </g>
+
+    <!-- three travelling dots, one per horizontal track -->
+    <g id="pipeDots">
+      <circle class="pipe-dot" r="6" fill="#E8237E" opacity="0"/>
+      <circle class="pipe-dot" r="6" fill="#E8237E" opacity="0"/>
+      <circle class="pipe-dot" r="6" fill="#E8237E" opacity="0"/>
+    </g>
+
+    <!-- ── E · the answer ── -->
+    <g class="p-item" id="pipeOut">
+      <path class="p-wire" d="M1098,86  C 1116,86  1116,198 1134,198"/>
+      <path class="p-wire" d="M1098,198 C 1116,198 1116,198 1134,198"/>
+      <path class="p-wire" d="M1098,310 C 1116,310 1116,198 1134,198"/>
+      <rect x="1144" y="38" width="276" height="320" rx="3" fill="#07080D"/>
+      <text class="p-lbl-l" x="1166" y="70">Composite risk</text>
+      <text class="p-final" id="pipeRisk" x="1166" y="126">0.00</text>
+      <text class="p-tx" x="1166" y="152" font-size="11" style="fill:#7C8496">geometric mean of the three</text>
+      <text class="p-tx" x="1166" y="169" font-size="11" style="fill:#7C8496">calibrated probability gates</text>
+      <line x1="1166" y1="192" x2="1398" y2="192" stroke="#1B2130"/>
+      <text class="p-lbl-l" x="1166" y="216">Confidence</text>
+      <text class="p-conf" id="pipeConf" x="1398" y="218" text-anchor="end">0.00</text>
+      <g id="pipeConfBars"></g>
+    </g>
+
+    <!-- why it matters strip -->
+    <g class="p-item" id="pipeWhy">
+      <line x1="0" y1="400" x2="1420" y2="400" stroke="#C4C7D0" stroke-width="1"/>
+      <text class="p-note" x="0" y="430">A checkpoint stops being a tool call. It becomes a <tspan font-weight="600" fill="#0E1015">direction in one shared space</tspan> — which is the only reason the steering on slide 06 is possible.</text>
+    </g>
+  </svg>
+
+  <div class="pipe-strip rv" style="animation-delay:.2s">
+    <span>cleavage <b>2560→128→64→2</b>, BCE + isotonic</span>
+    <span>TAP <b>ridge α=10</b>, 50-sample bootstrap σ</span>
+    <span>MHC <b>PCA-64</b> + per-allele binder centroid</span>
+    <span>risk = <b>geometric mean</b>, TAP reported beside it</span>
+  </div>
+
+  <div class="foot">Scores shown are an illustrative window. TAP is deliberately excluded from the composite: at 613 measured peptides it is a regularized ridge with bootstrap uncertainty, not a calibrated probability, so it is reported alongside the risk rather than multiplied into it. Confidence is a decomposed 0–1 diagnostic, not a coverage probability.</div>
+</section>
+
+<!-- ═════════════ 04 · WHAT TAUGHT IT ═════════════ -->
+<section class="slide s4" data-i="3">
+  <div class="slide-head">
+    <div>
+      <div class="eyebrow rv">What taught it · and what it already shows</div>
+      <h2 class="h2 rv" style="animation-delay:.06s">Five million labelled windows —<br><em>and de novo proteins already stand out.</em></h2>
+    </div>
+    <button class="replay rv" id="replay4" style="animation-delay:.12s">Run again</button>
+  </div>
+
+  <div class="train-grid">
+    <svg id="datasvg" viewBox="0 0 720 470" preserveAspectRatio="xMidYMid meet">
+      <text class="d-lbl" x="0" y="16">9-mer windows sampled per domain</text>
+
+      <g id="dataRows"></g>
+
+      <line x1="0" y1="250" x2="720" y2="250" stroke="#C4C7D0"/>
+      <text class="d-lbl d-item" id="dTotalLbl" x="0" y="278">Aligned rows in the build</text>
+      <text class="d-total d-item" id="dTotal" x="0" y="336">0</text>
+      <text class="d-name d-item" id="dTotalSub" x="0" y="362">28,741 parent proteins · stratified across 10 percentile bins · HLA-A*02:01</text>
+
+      <!-- split bar -->
+      <g class="d-item" id="dSplit">
+        <text class="d-lbl" x="0" y="404">Cluster-grouped split</text>
+        <rect x="0" y="416" width="575" height="22" fill="#8B909B"/>
+        <rect x="575" y="416" width="72" height="22" fill="#5B616E"/>
+        <rect x="647" y="416" width="73" height="22" fill="#0E1015"/>
+        <text class="d-name" x="0" y="458" font-size="11">train 3,993,079</text>
+        <text class="d-name" x="720" y="458" font-size="11" text-anchor="end">val 497,364 · test 510,170</text>
+      </g>
+
+      <g class="d-item" id="dStamp">
+        <text class="d-stamp" x="720" y="404" text-anchor="end">✓ 0 of 29,353 protein clusters span two splits</text>
+      </g>
+    </svg>
+
+    <div class="teach-stack">
+      <div class="teach rv" style="animation-delay:.18s">
+        <div class="teach-k">Cleavage labels</div>
+        <div class="teach-t">Pepsickle</div>
+        <p class="teach-c">Run once per <b>parent protein</b>, not per peptide — it predicts a cleavage probability at every residue, and we slice per window. Pinned to torch 1.13, so it lives in its own venv and is called as a subprocess.</p>
+      </div>
+      <div class="teach rv" style="animation-delay:.24s">
+        <div class="teach-k">Presentation labels</div>
+        <div class="teach-t">MHCflurry 2</div>
+        <p class="teach-c">Affinity in nM and allele percentile for all <b>5,000,000</b> teacher rows. Binders (≤2nd percentile) define the centroid the MHC head measures cosine distance to.</p>
+      </div>
+      <div class="teach dark rv" style="animation-delay:.3s">
+        <div class="teach-k">Transport labels</div>
+        <div class="teach-t"><em>613</em> measured peptides</div>
+        <p class="teach-c">DS613 is the whole world of public TAP measurements. We impute the rest with a ridge on one-hot 9-mers <b>and flag every imputed row</b> — the TAP head is only ever fit on the 613 real ones.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="finding rv" style="animation-delay:.36s">
+    <div class="finding-k">Mean proteasomal cleavage probability · uncorrelated with the sampling variable (r = −0.003)</div>
+    <div class="finding-cols">
+      <div class="fcol hot">
+        <b>0.345</b><span>de novo</span>
+        <i class="ftrack"><em style="--w:100%"></em></i>
+      </div>
+      <div class="fcol">
+        <b>0.336</b><span>bacterial</span>
+        <i class="ftrack"><em style="--w:74%"></em></i>
+      </div>
+      <div class="fcol">
+        <b>0.325</b><span>human</span>
+        <i class="ftrack"><em style="--w:41%"></em></i>
+      </div>
+      <div class="fcol">
+        <b>0.312</b><span>viral</span>
+        <i class="ftrack"><em style="--w:6%"></em></i>
+      </div>
+      <p class="finding-note">De novo designs are the <b>most cleavable class in the build</b>, ahead of the human proteome with non-overlapping bootstrap intervals — and they are <b>1.33× over-represented among predicted binders</b> where human sits at 0.99× and viral at 0.78×. On both gates, the class we are learning to design is the class most likely to be read.</p>
+    </div>
+  </div>
+
+  <div class="foot">Sources: UniProt Swiss-Prot (CC BY 4.0) for human / viral / bacterial parents, RCSB PDB de novo design entities (public domain), DS613 (Diez-Rivero et al. 2010, unverified mirror, downloaded locally and never redistributed). Windows are quantile-stratified on mhc_percentile, so the corpus deliberately over-represents binders (7.5% at ≤2nd percentile against ~2% for a representative set) and no absolute binder frequency here is a natural rate — the 1.33× figure is within-corpus enrichment, and cleavage is quoted instead because it is uncorrelated with that sampling variable. Cleavage values are Pepsickle teacher predictions, not measured proteasome assays. De novo is the smallest domain (631 parents, 33,444 rows). Split groups are protein and peptide clusters, so a near-duplicate cannot sit on both sides of the wall.</div>
+</section>
+
+<!-- ═════════════ 05 · READING THE SCORE ═════════════ -->
+<section class="slide s5x" data-i="4">
+  <div class="slide-head">
+    <div>
+      <div class="eyebrow rv">Reading the score</div>
+      <h2 class="h2 rv" style="animation-delay:.06s">One number is a rumour.<br><em>Three decompositions are an argument.</em></h2>
+    </div>
+    <button class="replay rv" id="replay6" style="animation-delay:.12s">Run again</button>
+  </div>
+
+  <div class="score-grid">
+    <!-- ── risk ── -->
+    <div class="score-card rv" style="animation-delay:.14s">
+      <div class="score-k">1 · The risk score</div>
+      <div class="score-t">Why a product, not an average.</div>
+      <p class="score-c">Presentation needs <b>every</b> gate to open. An average forgives a closed one; a geometric mean does not — one near-zero gate drags the whole score to zero, which is what biology does.</p>
+      <div class="gm" id="gmRows">
+        <div class="gm-row"><span class="gm-n">cleave N</span><i class="gm-track"><em id="gmb0"></em></i><b id="gmv0">0.91</b></div>
+        <div class="gm-row"><span class="gm-n">cleave C</span><i class="gm-track"><em id="gmb1"></em></i><b id="gmv1">0.88</b></div>
+        <div class="gm-row"><span class="gm-n">presentation</span><i class="gm-track"><em id="gmb2"></em></i><b id="gmv2">0.97</b></div>
+      </div>
+      <div class="gm-eq">
+        <span class="gm-eq-l">³√( 0.91 × 0.88 × 0.97 )</span>
+        <span class="gm-eq-r" id="gmOut">0.92</span>
+      </div>
+      <div class="gm-tap">
+        <span>TAP <b id="gmTap">−0.42 ± 0.31</b></span>
+        <em>reported beside the risk, never multiplied into it — 613 measured peptides is a ridge with error bars, not a calibrated probability</em>
+      </div>
+    </div>
+
+    <!-- ── confidence ── -->
+    <div class="score-card rv" style="animation-delay:.2s">
+      <div class="score-k">2 · The confidence score</div>
+      <div class="score-t">Four things we can measure.</div>
+      <p class="score-c">Not a coverage probability. Four <b>observable</b> quantities, geometrically averaged, so a low one cannot be hidden by three high ones.</p>
+      <div class="cf" id="cfRows">
+        <div class="cf-row"><span class="cf-n">σ<sub>TAP</sub></span><i class="cf-track"><em id="cfb0"></em></i><b id="cfv0">0.76</b><small>how tightly the 50 bootstrap ridges agree</small></div>
+        <div class="cf-row"><span class="cf-n">margin</span><i class="cf-track"><em id="cfb1"></em></i><b id="cfv1">0.94</b><small>how far presentation sits from the 0.5 boundary</small></div>
+        <div class="cf-row"><span class="cf-n">context</span><i class="cf-track"><em id="cfb2"></em></i><b id="cfv2">1.00</b><small>fraction of the ±4 aa flanks actually present</small></div>
+        <div class="cf-row low"><span class="cf-n">agreement</span><i class="cf-track"><em id="cfb3"></em></i><b id="cfv3">0.31</b><small>how tightly the three heads cluster — they don't, here</small></div>
+      </div>
+      <div class="cf-out">
+        <span>Confidence</span><b id="cfOut">0.61</b>
+        <em>The heads disagree on this window. The score says so instead of hiding it.</em>
+      </div>
+    </div>
+
+    <!-- ── attribution ── -->
+    <div class="score-card wide dark rv" style="animation-delay:.26s">
+      <div class="score-k">3 · Explainability</div>
+      <div class="score-t">We do not show you attention.</div>
+      <p class="score-c">The heads are an MLP, a ridge, and a cosine — <b>there are no attention maps to show</b>, and borrowing ESM's would explain the encoder, not the prediction. So we decompose the prediction itself onto residues.</p>
+
+      <div class="track-block">
+        <div class="track-k">risk_max · worst 9-mer covering each residue</div>
+        <div class="heat" id="heatRisk"></div>
+      </div>
+      <div class="track-block">
+        <div class="track-k">mhc_importance · residue cosine to the binder centroid</div>
+        <div class="heat" id="heatMhc"></div>
+      </div>
+      <div class="heat-seq" id="heatSeq"></div>
+
+      <div class="attr-out" id="attrOut">
+        <span class="attr-flag">Worst window · <b>34–43</b></span>
+        <span class="attr-note">Nine windows cover each residue; each is painted by the worst one. The second track is the same cosine that <b>Steer to Safety picks its mutation site from</b> — so the picture and the decision are the same quantity.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">Both tracks come from <span style="letter-spacing:0">score.compute_residue_heatmap</span> and <span style="letter-spacing:0">score.attach_mhc_residue_importance</span>; values shown are illustrative for one binder region. risk_max is the maximum composite risk over the ≤9 windows covering a residue, carrying the confidence of that window. mhc_importance maps residue-level cosine from [−1,1] to [0,1] so it shares the risk colour scale — it is an alignment score, not an attribution with a conservation guarantee.</div>
+</section>
+
+<!-- ═════════════ 06 · STEER TO SAFETY ═════════════ -->
+<section class="slide s5" data-i="5">
+  <div class="slide-head">
+    <div>
+      <div class="eyebrow rv">The point of a shared space</div>
+      <h2 class="h2 rv" style="animation-delay:.06s">If risk is a region, safety is a direction.<br><em>Steer, don't re-roll.</em></h2>
+    </div>
+    <button class="replay hot rv" id="replay5" style="animation-delay:.12s">Steer to safety</button>
+  </div>
+
+  <div class="steer-grid">
+    <div class="latent-box">
+      <div class="lz-wrap">
+      <svg id="latentsvg" viewBox="0 0 760 430" preserveAspectRatio="none">
+        <g id="lzCloud"></g>
+        <g id="lzZones">
+          <ellipse cx="556" cy="150" rx="132" ry="104" fill="none" stroke="#E8237E" stroke-width="1.2" stroke-dasharray="5 6" opacity=".75"/>
+          <ellipse cx="232" cy="300" rx="140" ry="98" fill="none" stroke="#1F7A55" stroke-width="1.2" stroke-dasharray="5 6" opacity=".75"/>
+          <text class="lz-lbl hot" x="556" y="36" text-anchor="middle">HLA-A*02:01 binder cluster</text>
+          <text class="lz-lbl safe" x="232" y="416" text-anchor="middle">low-presentation region</text>
+        </g>
+        <g id="lzGhosts"></g>
+        <path id="lzTrail" class="lz-trail" d="" />
+        <circle id="lzDot" cx="540" cy="168" r="9" fill="#E8237E" stroke="#fff" stroke-width="1.6"/>
+        <circle id="lzHalo" cx="540" cy="168" r="9" fill="none" stroke="#E8237E" stroke-width="1.6" opacity=".7"/>
+        <text class="lz-axis" x="16" y="26">2-D sketch of the 64-d MHC projection</text>
+      </svg>
+      </div>
+
+      <div class="seq-row" id="seqRow"></div>
+      <div class="seq-legend">
+        <span class="k1"><em>■</em> interface residue · locked</span>
+        <span class="k2"><em>■</em> A*02:01 anchor</span>
+        <span class="k3"><em>■</em> substituted this run</span>
+      </div>
+    </div>
+
+    <div class="steer-side">
+      <div class="risk-card">
+        <div class="risk-k">Composite risk · worst window</div>
+        <div class="risk-num" id="riskNum"><b id="riskVal">0.78</b><span id="riskDelta">before steering</span></div>
+        <div class="risk-track"><span class="risk-fill" id="riskFill"></span></div>
+        <div class="risk-sub" id="riskSub">peptide <b id="riskPep">YLLPAIVHI</b> · position <b>34–43</b> of a 96-aa PD-L1 binder</div>
+      </div>
+
+      <div class="constraints">
+        <div class="risk-k">The guard rails</div>
+        <ul class="clist" id="clist">
+          <li><b>≤ 3 substitutions</b>, ≤ 6 steps, 8 ESM-2 mask-fill candidates per step</li>
+          <li><b>Protected positions</b> — hotspot-contacting residues are never masked</li>
+          <li><b>Preservation gate</b> — reject if ESM log-likelihood drops &gt; 0.5 per residue</li>
+          <li><b>No cleavage/TAP regression</b> — penalised in the objective, not ignored</li>
+        </ul>
+        <div class="verify" id="verify">✓ <b>Accepted on the re-embedded discrete sequence</b> — latent distance only ranks candidates; it never decides.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">Animated illustration of the objective implemented in <span style="letter-spacing:0">src/re_agent/e2e_pls/steer.py</span>, not a recorded run. The latent plane is a 2-D sketch of the 64-d MHC projection. Every accepted mutation in the real loop is re-encoded and re-scored on the discrete sequence before acceptance, and the trace is written to JSON with the model version, dataset hash, and every rejected candidate and its reason.</div>
+</section>
+
+<!-- ═════════════ 06 · WHAT IT UNLOCKS ═════════════ -->
+<section class="slide s6" data-i="6">
+  <div class="slide-head">
+    <div>
+      <div class="eyebrow rv">Why we built it this weekend</div>
+      <h2 class="h2 rv" style="animation-delay:.06s">500 fresh binder backbones against<br><em>five targets nobody can drug.</em></h2>
+    </div>
+    <p class="lede rv" style="animation-delay:.12s; max-width:36ch">Generated here with RFdiffusion3 on Modal. Every one of them is a de novo protein that has to survive a human immune system — and none of them exists in any immunogenicity dataset.</p>
+  </div>
+
+  <div class="unlock-grid">
+    <div class="target-board rv" style="animation-delay:.16s">
+      <div class="target-row control">
+        <span class="target-name"><b>PD-L1</b><small>5O45 · positive control</small></span>
+        <span class="target-track"><i class="target-fill" style="--w:36%"></i></span>
+        <span class="target-val">100<small>backbones</small></span>
+      </div>
+      <div class="target-row">
+        <span class="target-name"><b>KRAS4b</b><small>6VJJ · effector face</small></span>
+        <span class="target-track"><i class="target-fill" style="--w:43%"></i></span>
+        <span class="target-val">100<small>backbones</small></span>
+      </div>
+      <div class="target-row">
+        <span class="target-name"><b>MYC · MAX</b><small>1NKP · leucine zipper</small></span>
+        <span class="target-track"><i class="target-fill" style="--w:31%"></i></span>
+        <span class="target-val">100<small>backbones</small></span>
+      </div>
+      <div class="target-row">
+        <span class="target-name"><b>STAT3</b><small>1BG1 · SH2 dimer interface</small></span>
+        <span class="target-track"><i class="target-fill" style="--w:49%"></i></span>
+        <span class="target-val">100<small>backbones</small></span>
+      </div>
+      <div class="target-row">
+        <span class="target-name"><b>β-catenin</b><small>1JDH · ARM groove, TCF site</small></span>
+        <span class="target-track"><i class="target-fill" style="--w:100%"></i></span>
+        <span class="target-val">100<small>backbones</small></span>
+      </div>
+    </div>
+
+    <div class="unlock-stack rv" style="animation-delay:.24s">
+      <div class="unlock-card signal">
+        <strong>16 / 16</strong>
+        <span>PD-L1 control designs contact all three foundry hotspots within 4.5 Å — the generator is aimed correctly before we score anything</span>
+      </div>
+      <div class="unlock-card">
+        <strong>1.7 h</strong>
+        <span>total GPU time for all 500 backbones · bars show wall-clock per target</span>
+      </div>
+      <div class="unlock-card">
+        <strong>92 ×</strong>
+        <span>windows per design that a binding-only screen would score without context — and that CHAO scores with it</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">Backbones only: sequence design (ProteinMPNN) and AF2/ESMFold validation are out of scope for the weekend. Bar length is GPU wall-clock per target (847–2381 s), not a quality score. Hotspots and contigs follow the RosettaCommons foundry binder protocol; per-target caveats — including that 6VJJ is wild-type KRAS4b rather than G12D — are recorded in results/rfd3_binders/report.md.</div>
+</section>
+
+<!-- ═════════════ 08 · THE FULL LOOP ═════════════ -->
+<section class="slide s8" data-i="7">
+  <div class="slide-head">
+    <div>
+      <div class="eyebrow rv">System architecture</div>
+      <h2 class="h2 rv" style="animation-delay:.06s">From "is this target real?"<br><em>to a construct a wet lab can pick up.</em></h2>
+    </div>
+    <button class="replay rv" id="replay8" style="animation-delay:.12s">Run again</button>
+  </div>
+
+  <div class="loop-grid" id="loopGrid">
+    <div class="loop-step">
+      <div class="ls-num">01</div>
+      <div class="ls-tool">Paperclip</div>
+      <div class="ls-title">Is the target worth hitting?</div>
+      <p class="ls-desc">Agent-native search over literature, trials and structures. Disease linkage, prior binder attempts, epitope liabilities — before a backbone exists.</p>
+      <div class="ls-viz">
+        <div class="lv-cap lv-pop" style="--i:0">target dossier</div>
+        <div class="lv-cites">
+          <div class="lv-cite lv-pop" style="--i:1"><b>lit</b> KRAS4b effector face</div>
+          <div class="lv-cite lv-pop" style="--i:2"><b>nct</b> 14 trials · no binder</div>
+          <div class="lv-cite lv-pop hot" style="--i:3"><b>pdb</b> 6VJJ · H104 / D108</div>
+        </div>
+      </div>
+      <div class="ls-out">→ target dossier<br>+ hotspot residues</div>
+      <span class="ls-state built">built</span>
+    </div>
+
+    <div class="loop-step design">
+      <div class="ls-num">02</div>
+      <div class="ls-tool">Proto · Modal</div>
+      <div class="ls-title">Design binders to the antigen.</div>
+      <p class="ls-desc">rfdiffusion3-design on Modal GPUs, foundry binder protocol, hotspot-conditioned contigs across two length bins.</p>
+      <div class="ls-viz">
+        <div class="lv-cap lv-pop" style="--i:0">wall-clock · 5 targets</div>
+        <div class="lv-bars">
+          <span class="lv-bar lv-pop" style="--i:1;--h:36%"><i></i><em>PD-L1</em></span>
+          <span class="lv-bar lv-pop" style="--i:2;--h:48%"><i></i><em>KRAS</em></span>
+          <span class="lv-bar lv-pop" style="--i:3;--h:32%"><i></i><em>MYC</em></span>
+          <span class="lv-bar lv-pop" style="--i:4;--h:54%"><i></i><em>STAT3</em></span>
+          <span class="lv-bar lv-pop" style="--i:5;--h:100%"><i></i><em>β-cat</em></span>
+        </div>
+      </div>
+      <div class="ls-out">→ 500 de novo backbones<br>across 5 targets</div>
+      <span class="ls-state built">built</span>
+    </div>
+
+    <div class="loop-step wet">
+      <div class="ls-num">03</div>
+      <div class="ls-tool">Benchling ELN</div>
+      <div class="ls-title">Register the design library.</div>
+      <p class="ls-desc">Every de novo sequence lands in the ELN with its target, contig, hotspots and generation parameters — one entry per design, before any filtering.</p>
+      <div class="ls-viz">
+        <div class="lv-cap lv-pop" style="--i:0">unfiltered library</div>
+        <div class="lv-reg dashed">
+          <div class="lv-row lv-pop" style="--i:1"><b>DN-0041</b> KRAS · 80 aa</div>
+          <div class="lv-row lv-pop" style="--i:2"><b>DN-0042</b> KRAS · 80 aa</div>
+          <div class="lv-row lv-pop dim" style="--i:3">… 498 still raw</div>
+        </div>
+      </div>
+      <div class="ls-out">→ versioned<br>design registry</div>
+      <span class="ls-state next">next</span>
+    </div>
+
+    <div class="loop-step ours">
+      <div class="ls-num">04</div>
+      <div class="ls-tool">CHAO</div>
+      <div class="ls-title">Score the immune journey.</div>
+      <p class="ls-desc">Three latent projections per 9-mer: cleavage, TAP, MHC-I. Composite risk, decomposed confidence, per-residue attribution.</p>
+      <div class="ls-viz">
+        <div class="lv-card">
+          <div class="lv-seq">
+            <i class="lv-pop" style="--i:0">G</i><i class="lv-pop" style="--i:1">T</i><i class="lv-pop" style="--i:2">L</i><i class="lv-pop" style="--i:3">R</i><i class="lv-pop core" style="--i:4">Y</i><i class="lv-pop core" style="--i:5">L</i><i class="lv-pop core" style="--i:6">L</i><i class="lv-pop core" style="--i:7">P</i><i class="lv-pop core" style="--i:8">A</i><i class="lv-pop core" style="--i:9">I</i><i class="lv-pop core" style="--i:10">V</i><i class="lv-pop core" style="--i:11">H</i><i class="lv-pop core" style="--i:12">I</i><i class="lv-pop" style="--i:13">K</i><i class="lv-pop" style="--i:14">D</i><i class="lv-pop" style="--i:15">S</i><i class="lv-pop" style="--i:16">A</i>
+          </div>
+          <div class="lv-seq-lab lv-pop" style="--i:17">4 aa flank · 9 aa core · 4 aa flank</div>
+          <div class="lv-heat-k lv-pop" style="--i:18">risk_max</div>
+          <div class="lv-heat">
+            <i class="lv-pop" style="--i:0;background:color-mix(in srgb,#E8237E 18%,#141824)"></i>
+            <i class="lv-pop" style="--i:1;background:color-mix(in srgb,#E8237E 22%,#141824)"></i>
+            <i class="lv-pop" style="--i:2;background:color-mix(in srgb,#E8237E 28%,#141824)"></i>
+            <i class="lv-pop" style="--i:3;background:color-mix(in srgb,#E8237E 36%,#141824)"></i>
+            <i class="lv-pop" style="--i:4;background:color-mix(in srgb,#E8237E 62%,#141824)"></i>
+            <i class="lv-pop" style="--i:5;background:color-mix(in srgb,#E8237E 78%,#141824)"></i>
+            <i class="lv-pop" style="--i:6;background:color-mix(in srgb,#E8237E 92%,#141824)"></i>
+            <i class="lv-pop" style="--i:7;background:color-mix(in srgb,#E8237E 100%,#141824)"></i>
+            <i class="lv-pop" style="--i:8;background:color-mix(in srgb,#E8237E 94%,#141824)"></i>
+            <i class="lv-pop" style="--i:9;background:color-mix(in srgb,#E8237E 80%,#141824)"></i>
+            <i class="lv-pop" style="--i:10;background:color-mix(in srgb,#E8237E 68%,#141824)"></i>
+            <i class="lv-pop" style="--i:11;background:color-mix(in srgb,#E8237E 54%,#141824)"></i>
+            <i class="lv-pop" style="--i:12;background:color-mix(in srgb,#E8237E 42%,#141824)"></i>
+            <i class="lv-pop" style="--i:13;background:color-mix(in srgb,#E8237E 26%,#141824)"></i>
+            <i class="lv-pop" style="--i:14;background:color-mix(in srgb,#E8237E 20%,#141824)"></i>
+            <i class="lv-pop" style="--i:15;background:color-mix(in srgb,#E8237E 16%,#141824)"></i>
+            <i class="lv-pop" style="--i:16;background:color-mix(in srgb,#E8237E 14%,#141824)"></i>
+          </div>
+          <div class="lv-heat-k lv-pop" style="--i:19">mhc_importance</div>
+          <div class="lv-heat mhc">
+            <i class="lv-pop" style="--i:0;background:color-mix(in srgb,#E8237E 20%,#141824)"></i>
+            <i class="lv-pop" style="--i:1;background:color-mix(in srgb,#E8237E 26%,#141824)"></i>
+            <i class="lv-pop" style="--i:2;background:color-mix(in srgb,#E8237E 38%,#141824)"></i>
+            <i class="lv-pop" style="--i:3;background:color-mix(in srgb,#E8237E 52%,#141824)"></i>
+            <i class="lv-pop" style="--i:4;background:color-mix(in srgb,#E8237E 76%,#141824)"></i>
+            <i class="lv-pop" style="--i:5;background:color-mix(in srgb,#E8237E 90%,#141824)"></i>
+            <i class="lv-pop" style="--i:6;background:color-mix(in srgb,#E8237E 96%,#141824)"></i>
+            <i class="lv-pop" style="--i:7;background:color-mix(in srgb,#E8237E 82%,#141824)"></i>
+            <i class="lv-pop" style="--i:8;background:color-mix(in srgb,#E8237E 64%,#141824)"></i>
+            <i class="lv-pop" style="--i:9;background:color-mix(in srgb,#E8237E 44%,#141824)"></i>
+            <i class="lv-pop" style="--i:10;background:color-mix(in srgb,#E8237E 32%,#141824)"></i>
+            <i class="lv-pop" style="--i:11;background:color-mix(in srgb,#E8237E 24%,#141824)"></i>
+            <i class="lv-pop" style="--i:12;background:color-mix(in srgb,#E8237E 18%,#141824)"></i>
+            <i class="lv-pop" style="--i:13;background:color-mix(in srgb,#E8237E 16%,#141824)"></i>
+            <i class="lv-pop" style="--i:14;background:color-mix(in srgb,#E8237E 14%,#141824)"></i>
+            <i class="lv-pop" style="--i:15;background:color-mix(in srgb,#E8237E 12%,#141824)"></i>
+            <i class="lv-pop" style="--i:16;background:color-mix(in srgb,#E8237E 12%,#141824)"></i>
+          </div>
+        </div>
+      </div>
+      <div class="ls-out">→ 92 scored windows<br>per design</div>
+      <span class="ls-state built">built</span>
+    </div>
+
+    <div class="loop-step ours">
+      <div class="ls-num">05</div>
+      <div class="ls-tool">CHAO · steer</div>
+      <div class="ls-title">Derisk the ones that fail.</div>
+      <p class="ls-desc">Latent-guided mask-fill under hard constraints: ≤3 substitutions, protected interface residues, likelihood preservation, discrete re-verification.</p>
+      <div class="ls-viz">
+        <div class="lv-card">
+          <svg class="lv-latent lv-pop" style="--i:0" viewBox="0 0 120 44" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <circle cx="92" cy="14" r="2.2" fill="#E8237E" opacity=".55"/>
+            <circle cx="98" cy="18" r="1.6" fill="#E8237E" opacity=".4"/>
+            <circle cx="86" cy="16" r="1.5" fill="#E8237E" opacity=".35"/>
+            <circle cx="94" cy="10" r="1.4" fill="#E8237E" opacity=".3"/>
+            <circle cx="28" cy="34" r="2.0" fill="#35C48A" opacity=".55"/>
+            <circle cx="34" cy="38" r="1.5" fill="#5B616E" opacity=".45"/>
+            <circle cx="22" cy="32" r="1.4" fill="#5B616E" opacity=".4"/>
+            <path d="M90,16 C 72,22 48,28 32,34" fill="none" stroke="#E8237E" stroke-width="1.2"/>
+            <circle cx="90" cy="16" r="3" fill="#E8237E"/>
+            <circle cx="32" cy="34" r="3" fill="#35C48A"/>
+          </svg>
+          <div class="lv-mut lv-pop" style="--i:2">
+            <span class="lv-from">YLLPAIVHI</span>
+            <span class="lv-arrow">→</span>
+            <span class="lv-to">YQLPAIEHD</span>
+          </div>
+          <div class="lv-delta lv-pop" style="--i:3"><s>0.78</s>0.19</div>
+        </div>
+      </div>
+      <div class="ls-out">→ derisked variants<br>+ full JSON trace</div>
+      <span class="ls-state built">built</span>
+    </div>
+
+    <div class="loop-step wet">
+      <div class="ls-num">06</div>
+      <div class="ls-tool">Benchling ELN</div>
+      <div class="ls-title">Register the derisked library.</div>
+      <p class="ls-desc">Derisked sequences return to the ELN linked to their parent design, carrying the risk delta and mutation set — ready for wet-lab pickup.</p>
+      <div class="ls-viz">
+        <div class="lv-cap lv-pop" style="--i:0">linked constructs</div>
+        <div class="lv-reg dashed">
+          <div class="lv-row lv-pop" style="--i:1"><b>DN-0041</b> parent</div>
+          <div class="lv-link lv-pop" style="--i:2">↓  3 mut · Δ −0.59</div>
+          <div class="lv-row lv-pop ready" style="--i:3"><b>DN-0041-s3</b> ready</div>
+        </div>
+      </div>
+      <div class="ls-out">→ wet-lab-ready<br>constructs</div>
+      <span class="ls-state next">next</span>
+    </div>
+
+    <div class="loop-step">
+      <div class="ls-num">07</div>
+      <div class="ls-tool">Report</div>
+      <div class="ls-title">Justify the downselection.</div>
+      <p class="ls-desc">Every score, every rejected candidate and its reason, model version and dataset hash. The written basis for which designs get made.</p>
+      <div class="ls-viz">
+        <div class="lv-cap lv-pop" style="--i:0">inspectable trace</div>
+        <div class="lv-json">
+          <div class="lv-row lv-pop" style="--i:1"><b>model</b> chao · v0</div>
+          <div class="lv-row lv-pop" style="--i:2"><b>hash</b> dab57890</div>
+          <div class="lv-row lv-pop" style="--i:3"><b>reject</b> 14 · interface</div>
+          <div class="lv-row lv-pop ok" style="--i:4"><b>accept</b> 3 · Δ −0.59</div>
+        </div>
+      </div>
+      <div class="ls-out">→ downselection report<br>+ reproducible trace</div>
+      <span class="ls-state built">built</span>
+    </div>
+  </div>
+
+  <div class="loop-legend rv" style="animation-delay:.3s">
+    <span><b>The contribution is 04 → 05</b> — the rest is a real pipeline it has to survive inside</span>
+    <span><em>■</em> CHAO</span>
+    <span class="g">■ wet-lab handoff</span>
+    <span><b>solid</b> = built this weekend · <b>dashed</b> = next</span>
+  </div>
+
+  <div class="foot">Stages 03 and 06 are the Benchling integration we have specified but not yet implemented — the ELN is where a design library stops being a folder of PDBs and becomes something a bench scientist can act on, which is why the loop is drawn with them rather than around them. Everything marked "built" exists in this repository: RFD3 backbones in results/rfd3_binders/, scoring in score.py, steering with full candidate traces in steer.py.</div>
+</section>
+
+<!-- ═════════════ 09 · WHAT WE WILL NOT CLAIM ═════════════ -->
+<section class="slide s7" data-i="8">
+  <div class="slide-head">
+    <div>
+      <div class="eyebrow rv">The honest part</div>
+      <h2 class="h2 rv" style="animation-delay:.06s">A surrogate that says so.<br><em>The failure mode of this field is confident silence.</em></h2>
+    </div>
+  </div>
+
+  <div class="honest-grid">
+    <article class="honest-card rv" style="animation-delay:.16s">
+      <div class="honest-k">What this is not</div>
+      <div class="honest-t">Not immunogenicity.</div>
+      <div class="honest-rule"></div>
+      <ul class="honest-list">
+        <li>Labels are <b>teacher predictions</b> from Pepsickle and MHCflurry, not measured T-cell responses.</li>
+        <li>The composite treats three gates as <b>independent</b>. Biology does not.</li>
+        <li>One allele: <b>HLA-A*02:01</b>. A real population needs a panel.</li>
+        <li>MHC-II and CD4 help are <b>entirely absent</b>.</li>
+      </ul>
+      <div class="honest-tail">Every score we emit carries this disclaimer string in the JSON trace, not just on a slide.</div>
+    </article>
+
+    <article class="honest-card rv" style="animation-delay:.23s">
+      <div class="honest-k">What is actually load-bearing</div>
+      <div class="honest-t">The parts we can defend.</div>
+      <div class="honest-rule"></div>
+      <ul class="honest-list">
+        <li><b>Cluster-grouped splits</b> with a hard leakage gate — 0 clusters span two splits.</li>
+        <li><b>Isotonic calibration</b> on held-out data, stored as breakpoints, so a checkpoint is diffable.</li>
+        <li><b>Decomposed confidence</b>: bootstrap σ, decision margin, flank completeness, head agreement.</li>
+        <li><b>Discrete verification</b> — steering never accepts a sequence it has not re-scored.</li>
+      </ul>
+      <div class="honest-tail">No pickled sklearn or torch objects anywhere in a checkpoint. Plain arrays plus JSON.</div>
+    </article>
+
+    <article class="honest-card dark rv" style="animation-delay:.3s">
+      <div class="honest-k">Next</div>
+      <div class="honest-t">Where this goes.</div>
+      <div class="honest-rule"></div>
+      <ul class="honest-list">
+        <li>Swap teacher labels for <b>measured eluted-ligand MS</b> data and re-calibrate.</li>
+        <li>Extend the centroid bank across an <b>HLA supertype panel</b>; risk becomes population coverage.</li>
+        <li>Put the scorer <b>inside</b> the RFD3 → MPNN loop so de-immunization is a design constraint, not a filter.</li>
+        <li>Publish the dataset card and the 500,613-row build so someone can disagree with us precisely.</li>
+      </ul>
+      <div class="honest-tail">The geometry is the contribution. Better labels make it better without changing a line of it.</div>
+    </article>
+  </div>
+
+  <div class="ask-strip rv" style="animation-delay:.36s">
+    <div class="ask"><b>Built this weekend</b><span>Dataset, 3 heads, <em>steering loop</em></span></div>
+    <div class="ask"><b>Runs on</b><span>ESM-2 + <em>numpy</em>, no GPU to score</span></div>
+    <div class="ask"><b>Everything is</b><span>Inspectable <em>JSON</em></span></div>
+  </div>
+
+  <div class="foot">CHAO · re:AGENT hackathon, August 2026 · Track C — biological design to a spec, plus evidence it could hold up.</div>
+</section>
+
+<nav id="rail"></nav>
+<div id="hint">← → to move · R replays · F fullscreen</div>
+<div id="pager">
+  <button class="pager-b" id="prevB" aria-label="Previous slide">←</button>
+  <button class="pager-b" id="nextB" aria-label="Next slide">→</button>
+</div>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const svgNS = "http://www.w3.org/2000/svg";
+
+/* ── deterministic RNG so the deck looks the same every run ───── */
+function rng(seed){
+  let s = seed >>> 0;
+  return function(){
+    s ^= s << 13; s >>>= 0;
+    s ^= s >> 17;
+    s ^= s << 5;  s >>>= 0;
+    return s / 4294967296;
+  };
+}
+
+/* ── the latent ramp: continuous space gets a continuous colour ─ */
+const STOPS = [
+  [0.00,  14, 16, 24],
+  [0.30,  43, 42, 217],
+  [0.62, 138, 40, 200],
+  [0.86, 232, 35, 126],
+  [1.00, 255, 132, 184]
+];
+function ramp(v){
+  v = Math.max(0, Math.min(1, v));
+  for(let i = 1; i < STOPS.length; i++){
+    if(v <= STOPS[i][0]){
+      const a = STOPS[i-1], b = STOPS[i];
+      const span = (b[0] - a[0]) || 1;
+      const t = (v - a[0]) / span;
+      return [
+        Math.round(a[1] + (b[1]-a[1]) * t),
+        Math.round(a[2] + (b[2]-a[2]) * t),
+        Math.round(a[3] + (b[3]-a[3]) * t)
+      ];
+    }
+  }
+  const l = STOPS[STOPS.length-1];
+  return [l[1], l[2], l[3]];
+}
+function rampCss(v){ const c = ramp(v); return "rgb("+c[0]+","+c[1]+","+c[2]+")"; }
+
+/* ── timer bag: every slide can cancel its own schedule ───────── */
+function Timers(){
+  const ids = [];
+  return {
+    add: function(fn, ms){ ids.push(setTimeout(fn, ms)); },
+    clear: function(){ ids.forEach(clearTimeout); ids.length = 0; }
+  };
+}
+const t2 = Timers(), t3 = Timers(), t4 = Timers(), t5 = Timers();
+
+/* ── shared easing + tween ───────────────────────────────────── */
+const easeOut = function(t){ return 1 - Math.pow(1 - t, 3); };
+const rafs = [];
+function tween(dur, onStep, onDone){
+  if(REDUCED){ onStep(1); if(onDone) onDone(); return; }
+  const t0 = performance.now();
+  let id;
+  function step(now){
+    const p = Math.min(1, (now - t0) / dur);
+    onStep(easeOut(p));
+    if(p < 1){ id = requestAnimationFrame(step); rafs.push(id); }
+    else if(onDone) onDone();
+  }
+  id = requestAnimationFrame(step); rafs.push(id);
+}
+function stopTweens(){ rafs.forEach(cancelAnimationFrame); rafs.length = 0; }
+
+/* Step through n items on the animation clock rather than a chain of
+   setTimeouts — chained timers drift, so two strips started together
+   drift apart. One rAF per sweep keeps every index frame-aligned. */
+function sweep(dur, n, onIndex, onDone){
+  if(REDUCED){ for(let i = 0; i < n; i++) onIndex(i); if(onDone) onDone(); return; }
+  const t0 = performance.now();
+  let last = -1, id;
+  function step(now){
+    const p = Math.min(1, (now - t0) / dur);
+    const target = Math.min(n - 1, Math.floor(p * n));
+    while(last < target){ last++; onIndex(last); }
+    if(p < 1){ id = requestAnimationFrame(step); rafs.push(id); }
+    else if(onDone) onDone();
+  }
+  id = requestAnimationFrame(step); rafs.push(id);
+}
+
+function countUp(el, to, dur, fmt){
+  tween(dur, function(p){ el.textContent = fmt(to * p); });
+}
+const asInt = function(v){ return Math.round(v).toLocaleString(); };
+const as2 = function(v){ return v.toFixed(2); };
+
+/* ══════════════════════════════════════════════════════════════
+   01 · the mark — a latent field with a trajectory through it
+   ══════════════════════════════════════════════════════════════ */
+const markCanvas = document.getElementById("markCanvas");
+const mctx = markCanvas.getContext("2d");
+const FIELD = (function(){
+  const r = rng(20260816), pts = [];
+  for(let i = 0; i < 420; i++){
+    pts.push({ x: r(), y: r(), s: 0.4 + r() * 1.5, ph: r() * Math.PI * 2 });
+  }
+  return pts;
+})();
+/* three checkpoints the trajectory passes through */
+const WAY = [
+  { x:0.09, y:0.62, t:"seq" },
+  { x:0.34, y:0.30, t:"cleave" },
+  { x:0.60, y:0.66, t:"TAP" },
+  { x:0.86, y:0.26, t:"MHC" }
+];
+function trajAt(u){
+  /* Catmull-Rom-ish sampling through the waypoints */
+  const n = WAY.length - 1;
+  const f = Math.max(0, Math.min(0.9999, u)) * n;
+  const i = Math.floor(f), t = f - i;
+  const p0 = WAY[Math.max(0, i-1)], p1 = WAY[i], p2 = WAY[Math.min(n, i+1)], p3 = WAY[Math.min(n, i+2)];
+  const tt = t*t, ttt = tt*t;
+  return {
+    x: 0.5*((2*p1.x) + (-p0.x+p2.x)*t + (2*p0.x-5*p1.x+4*p2.x-p3.x)*tt + (-p0.x+3*p1.x-3*p2.x+p3.x)*ttt),
+    y: 0.5*((2*p1.y) + (-p0.y+p2.y)*t + (2*p0.y-5*p1.y+4*p2.y-p3.y)*tt + (-p0.y+3*p1.y-3*p2.y+p3.y)*ttt)
+  };
+}
+function drawMark(time){
+  const W = markCanvas.width, H = markCanvas.height;
+  if(!W || !H) return;
+  mctx.clearRect(0, 0, W, H);
+
+  /* the field: dots drifting, brighter near the trajectory */
+  for(let i = 0; i < FIELD.length; i++){
+    const p = FIELD[i];
+    const dx = Math.sin(time * 0.5 + p.ph) * 0.006;
+    const dy = Math.cos(time * 0.4 + p.ph * 1.7) * 0.006;
+    const x = (p.x + dx) * W, y = (p.y + dy) * H;
+    mctx.fillStyle = "rgba(139,144,155," + (0.16 + 0.2 * (0.5 + 0.5*Math.sin(time + p.ph))) + ")";
+    mctx.beginPath();
+    mctx.arc(x, y, p.s * (W / 960), 0, Math.PI * 2);
+    mctx.fill();
+  }
+
+  /* the path, drawn once then held */
+  const head = Math.min(1, time / 3.2);
+  mctx.lineWidth = Math.max(1.4, 2.2 * (W / 960));
+  for(let u = 0; u < head; u += 0.004){
+    const a = trajAt(u), b = trajAt(Math.min(head, u + 0.004));
+    mctx.strokeStyle = rampCss(u);
+    mctx.beginPath();
+    mctx.moveTo(a.x * W, a.y * H);
+    mctx.lineTo(b.x * W, b.y * H);
+    mctx.stroke();
+  }
+
+  /* the checkpoints */
+  const R = W / 960;
+  for(let i = 0; i < WAY.length; i++){
+    const reached = head >= i / (WAY.length - 1) - 0.001;
+    const p = WAY[i];
+    const x = p.x * W, y = p.y * H;
+    mctx.beginPath();
+    mctx.arc(x, y, 7 * R, 0, Math.PI * 2);
+    mctx.fillStyle = reached ? rampCss(i / (WAY.length - 1)) : "rgba(196,199,208,.9)";
+    mctx.fill();
+    if(reached){
+      const pulse = 7 + 9 * ((time * 0.9 + i * 0.4) % 1);
+      mctx.beginPath();
+      mctx.arc(x, y, pulse * R, 0, Math.PI * 2);
+      mctx.strokeStyle = "rgba(232,35,126," + (0.5 * (1 - ((time * 0.9 + i * 0.4) % 1))) + ")";
+      mctx.lineWidth = 1.4 * R;
+      mctx.stroke();
+    }
+    mctx.fillStyle = "rgba(91,97,110,.95)";
+    mctx.font = (11 * R) + "px 'IBM Plex Mono', monospace";
+    mctx.textAlign = "center";
+    mctx.fillText(p.t.toUpperCase(), x, y - 15 * R);
+  }
+
+  /* the travelling vector */
+  if(head >= 1){
+    const u = ((time - 3.2) * 0.16) % 1;
+    const p = trajAt(u);
+    mctx.beginPath();
+    mctx.arc(p.x * W, p.y * H, 6 * R, 0, Math.PI * 2);
+    mctx.fillStyle = "#0E1015";
+    mctx.fill();
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   02 · the last gate
+   ══════════════════════════════════════════════════════════════ */
+const N_TILES = 46;                    /* drawn tiles standing in for 92 windows */
+const tileStrip  = document.getElementById("tileStrip");
+const tileStripB = document.getElementById("tileStripB");
+(function buildTiles(){
+  const r = rng(7);
+  const AA = "ACDEFGHIKLMNPQRSTVWY";
+  for(let i = 0; i < N_TILES; i++){
+    const a = document.createElement("span");
+    a.textContent = AA[Math.floor(r() * 20)];
+    tileStrip.appendChild(a);
+    const b = document.createElement("span");
+    b.textContent = a.textContent;
+    tileStripB.appendChild(b);
+  }
+})();
+const tilesA = Array.prototype.slice.call(tileStrip.children);
+const tilesB = Array.prototype.slice.call(tileStripB.children);
+const tileCount = document.getElementById("tileCount");
+const ourCount = document.getElementById("ourCount");
+const gateA3 = document.getElementById("gateA3"), gateA3v = document.getElementById("gateA3v");
+const gateB1 = document.getElementById("gateB1"), gateB1v = document.getElementById("gateB1v");
+const gateB2 = document.getElementById("gateB2"), gateB2v = document.getElementById("gateB2v");
+const gateB3 = document.getElementById("gateB3"), gateB3v = document.getElementById("gateB3v");
+const bill = document.getElementById("bill");
+
+function s2clear(){
+  t2.clear();
+  tilesA.forEach(function(t){ t.className = ""; });
+  tilesB.forEach(function(t){ t.className = ""; });
+  tileCount.textContent = "0";
+  ourCount.textContent = "0";
+  gateA3.classList.remove("lit"); gateA3v.textContent = "—";
+  [gateB1, gateB2, gateB3].forEach(function(g){ g.classList.remove("lit"); });
+  gateB1v.textContent = "—"; gateB2v.textContent = "—"; gateB3v.textContent = "—";
+  bill.classList.remove("on");
+}
+const SWEEP_MS = 1900;   /* the left strip's serial scan, start to finish */
+
+function runS2(){
+  s2clear();
+
+  /* left: one predictor call per window, walked serially on the frame clock */
+  sweep(SWEEP_MS, N_TILES, function(i){
+    if(i > 0) tilesA[i-1].className = "";
+    tilesA[i].className = "on";
+    tileCount.textContent = Math.round((i + 1) * 92 / N_TILES);
+  }, function(){
+    tilesA.forEach(function(t){ t.className = ""; });
+    tilesA.slice(20, 29).forEach(function(t){ t.className = "hot"; });
+    tileCount.textContent = "92";
+    gateA3.classList.add("lit");
+    gateA3v.textContent = "binder · 0.4 %ile";
+  });
+
+  /* right: the whole window lights at once — the visual argument is that
+     this finishes while the left strip is still walking */
+  t2.add(function(){
+    sweep(320, N_TILES, function(i){ tilesB[i].className = "on"; }, function(){
+      ourCount.textContent = "1";
+    });
+  }, 260);
+  t2.add(function(){
+    tilesB.forEach(function(t, n){ t.className = (n >= 16 && n < 33) ? "on" : ""; });
+    tilesB.slice(20, 29).forEach(function(t){ t.className = "hot"; });
+  }, 900);
+  t2.add(function(){ gateB1.classList.add("lit"); gateB1v.textContent = "N 0.91 · C 0.88"; }, 1180);
+  t2.add(function(){ gateB2.classList.add("lit"); gateB2v.textContent = "−0.42 ± 0.31"; }, 1420);
+  t2.add(function(){ gateB3.classList.add("lit"); gateB3v.textContent = "cos 0.74 → 0.97"; }, 1660);
+  t2.add(function(){ bill.classList.add("on"); }, SWEEP_MS + 300);
+}
+document.getElementById("replay2").addEventListener("click", runS2);
+
+/* ══════════════════════════════════════════════════════════════
+   03 · three projections of one vector
+   ══════════════════════════════════════════════════════════════ */
+const PIPE_SEQ = "GTLR" + "YLLPAIVHI" + "KDSA";   /* 4 + 9 + 4 */
+const AAW = 13.0, AAX = 0, AAY = 180;             /* residue cell geometry · centered on ESM */
+const pipeAAs = [];
+
+(function buildPipeSeq(){
+  const pipeSeq = document.getElementById("pipeSeq");
+  for(let i = 0; i < PIPE_SEQ.length; i++){
+    const core = i >= 4 && i < 13;
+    const x = AAX + i * AAW;
+    const rect = document.createElementNS(svgNS, "rect");
+    rect.setAttribute("class", "p-aa");
+    rect.setAttribute("x", x); rect.setAttribute("y", core ? AAY - 4 : AAY);
+    rect.setAttribute("width", AAW - 1.4); rect.setAttribute("height", core ? 44 : 36);
+    rect.setAttribute("fill", core ? "#0E1015" : "#C4C7D0");
+    pipeSeq.appendChild(rect);
+    const t = document.createElementNS(svgNS, "text");
+    t.setAttribute("x", x + (AAW - 1.4) / 2);
+    t.setAttribute("y", core ? AAY + 24 : AAY + 24);
+    t.setAttribute("text-anchor", "middle");
+    t.setAttribute("font-family", "'IBM Plex Mono', monospace");
+    t.setAttribute("font-size", core ? "12" : "10");
+    t.setAttribute("fill", core ? "#F2F3F6" : "#5B616E");
+    t.textContent = PIPE_SEQ[i];
+    pipeSeq.appendChild(t);
+    pipeAAs.push(rect);
+  }
+  /* the three regions each recipe pools over */
+  const lab = document.createElementNS(svgNS, "text");
+  lab.setAttribute("class", "p-tx");
+  lab.setAttribute("x", AAX + (PIPE_SEQ.length * AAW) / 2);
+  lab.setAttribute("y", AAY + 58);
+  lab.setAttribute("text-anchor", "middle");
+  lab.setAttribute("font-size", "11");
+  lab.setAttribute("style", "fill:#8B909B");
+  lab.textContent = "4 aa flank · 9 aa core · 4 aa flank";
+  document.getElementById("pipeSeq").appendChild(lab);
+})();
+
+/* pooling recipes: [label, first residue index, last index (exclusive)] */
+const RECIPES = [
+  { name:"cleave_n", from:0,  to:8,  y:86,  lbl:"z", sub:"N-cut window · flank + first residues" },
+  { name:"cleave_c", from:9,  to:17, y:198, lbl:"z", sub:"C-cut window · last residues + flank" },
+  { name:"mean_9mer", from:4, to:13, y:310, lbl:"z", sub:"the 9-mer core, mean-pooled" }
+];
+const pipeBrackets = document.getElementById("pipeBrackets");
+const pipeVecs = document.getElementById("pipeVecs");
+const brkEls = [], vecEls = [];
+(function buildRecipes(){
+  RECIPES.forEach(function(r, i){
+    /* bracket over the sequence */
+    const x0 = AAX + r.from * AAW - 1.5, x1 = AAX + r.to * AAW - 1.5;
+    const yb = AAY - 12 - i * 0;
+    const p = document.createElementNS(svgNS, "path");
+    p.setAttribute("class", "p-brk");
+    p.setAttribute("d", "M" + x0 + "," + (yb + 6) + " L" + x0 + "," + yb + " L" + x1 + "," + yb + " L" + x1 + "," + (yb + 6));
+    pipeBrackets.appendChild(p);
+    const pl = document.createElementNS(svgNS, "text");
+    pl.setAttribute("class", "p-brk-lbl");
+    pl.setAttribute("x", (x0 + x1) / 2); pl.setAttribute("y", yb - 8);
+    pl.setAttribute("text-anchor", "middle");
+    pl.textContent = r.name;
+    pipeBrackets.appendChild(pl);
+    brkEls.push([p, pl]);
+
+    /* the pooled vector pill — recipe name lives inside it */
+    const g = document.createElementNS(svgNS, "g");
+    g.setAttribute("class", "p-vec");
+    const rect = document.createElementNS(svgNS, "rect");
+    rect.setAttribute("x", 430); rect.setAttribute("y", r.y - 17);
+    rect.setAttribute("width", 178); rect.setAttribute("height", 34); rect.setAttribute("rx", 17);
+    rect.setAttribute("fill", "url(#gVec)");
+    g.appendChild(rect);
+    const lb = document.createElementNS(svgNS, "text");
+    lb.setAttribute("class", "p-vec-lbl"); lb.setAttribute("x", 519); lb.setAttribute("y", r.y + 4);
+    lb.setAttribute("text-anchor", "middle");
+    lb.textContent = r.name + " · 1280-d";
+    g.appendChild(lb);
+    pipeVecs.appendChild(g);
+    vecEls.push(g);
+  });
+})();
+
+(function buildPipeLayers(){
+  const g = document.getElementById("pipeLayers");
+  for(let i = 0; i < 4; i++){
+    const r = document.createElementNS(svgNS, "rect");
+    r.setAttribute("x", 288); r.setAttribute("y", 182 + i * 11);
+    r.setAttribute("width", 100); r.setAttribute("height", 7);
+    r.setAttribute("rx", 1);
+    g.appendChild(r);
+  }
+})();
+
+/* the four confidence components, drawn as bars in the dark card */
+const CONF = [
+  { k:"σ TAP",         v:0.76, note:"bootstrap spread" },
+  { k:"decision margin", v:0.94, note:"distance from 0.5" },
+  { k:"flank context", v:1.00, note:"8 / 8 flank residues" },
+  { k:"head agreement", v:0.31, note:"heads disagree here" }
+];
+const confBars = [];
+(function buildConfBars(){
+  const g = document.getElementById("pipeConfBars");
+  CONF.forEach(function(c, i){
+    const y = 244 + i * 28;
+    const l = document.createElementNS(svgNS, "text");
+    l.setAttribute("class", "p-cf-lbl"); l.setAttribute("x", 1166); l.setAttribute("y", y);
+    l.textContent = c.k;
+    g.appendChild(l);
+    const v = document.createElementNS(svgNS, "text");
+    v.setAttribute("class", "p-cf-val"); v.setAttribute("x", 1398); v.setAttribute("y", y);
+    v.setAttribute("text-anchor", "end");
+    v.textContent = c.v.toFixed(2);
+    g.appendChild(v);
+    const track = document.createElementNS(svgNS, "rect");
+    track.setAttribute("x", 1166); track.setAttribute("y", y + 6);
+    track.setAttribute("width", 232); track.setAttribute("height", 5);
+    track.setAttribute("fill", "#1B2130");
+    g.appendChild(track);
+    const fill = document.createElementNS(svgNS, "rect");
+    fill.setAttribute("x", 1166); fill.setAttribute("y", y + 6);
+    fill.setAttribute("width", 0); fill.setAttribute("height", 5);
+    fill.setAttribute("fill", c.v < 0.5 ? "#E8237E" : "#4B5AE0");
+    g.appendChild(fill);
+    confBars.push({ fill: fill, w: 232 * c.v });
+  });
+})();
+
+const pipeIn = document.getElementById("pipeIn");
+const pipeEnc = document.getElementById("pipeEnc");
+const pipeEncFan = document.getElementById("pipeEncFan");
+const pipeVecLbl = document.getElementById("pipeVecLbl");
+const pipeFan = document.getElementById("pipeFan");
+const pipePulse = document.getElementById("pipePulse");
+const pipeDots = Array.prototype.slice.call(document.querySelectorAll("#pipeDots .pipe-dot"));
+const pipeRisk = document.getElementById("pipeRisk");
+const pipeConf = document.getElementById("pipeConf");
+const heads = [document.getElementById("head1"), document.getElementById("head2"), document.getElementById("head3")];
+const outs = [document.getElementById("out1"), document.getElementById("out2"), document.getElementById("out3")];
+const OUT_TEXT = ["0.91 / 0.88", "−0.42 ± 0.31", "0.97"];
+const TRACK_Y = [86, 198, 310];
+const DOT_X0 = 608, DOT_X1 = 676;
+const pipeOut = document.getElementById("pipeOut");
+const pipeWhy = document.getElementById("pipeWhy");
+
+function paintSeq(from, to){
+  pipeAAs.forEach(function(r, i){
+    const core = i >= 4 && i < 13;
+    const inWin = from !== null && i >= from && i < to;
+    r.setAttribute("fill", inWin ? "#E8237E" : (core ? "#0E1015" : "#C4C7D0"));
+  });
+}
+
+function s3clear(){
+  t3.clear(); stopTweens();
+  paintSeq(null, null);
+  brkEls.forEach(function(b){ b[0].classList.remove("on"); b[1].classList.remove("on"); });
+  vecEls.forEach(function(v){ v.classList.remove("on"); });
+  pipeIn.classList.remove("on");
+  pipeEnc.classList.remove("on");
+  pipeVecLbl.classList.remove("on");
+  pipeEncFan.setAttribute("opacity", 0);
+  pipeFan.setAttribute("opacity", 0);
+  pipePulse.setAttribute("opacity", 0);
+  pipeDots.forEach(function(dot){ dot.setAttribute("opacity", 0); });
+  heads.forEach(function(h){ h.classList.remove("on"); });
+  outs.forEach(function(o){ o.textContent = "—"; });
+  pipeRisk.textContent = "0.00";
+  pipeConf.textContent = "0.00";
+  confBars.forEach(function(b){ b.fill.setAttribute("width", 0); });
+  pipeOut.classList.remove("on");
+  pipeWhy.classList.remove("on");
+}
+
+function runS3(){
+  s3clear();
+
+  /* 1 · sequence column (left) */
+  t3.add(function(){ pipeIn.classList.add("on"); }, 80);
+
+  /* 2 · encoder */
+  t3.add(function(){ pipeEnc.classList.add("on"); }, 520);
+  t3.add(function(){
+    pipePulse.setAttribute("opacity", 1);
+    tween(560, function(p){ pipePulse.setAttribute("y", 226 - 48 * p); },
+      function(){ pipePulse.setAttribute("opacity", 0); });
+  }, 680);
+
+  /* 3 · pooling pills, one by one */
+  t3.add(function(){
+    pipeEncFan.setAttribute("opacity", 1);
+    pipeVecLbl.classList.add("on");
+  }, 1280);
+  RECIPES.forEach(function(r, i){
+    t3.add(function(){
+      paintSeq(r.from, r.to);
+      brkEls.forEach(function(b, n){
+        b[0].classList.toggle("on", n === i);
+        b[1].classList.toggle("on", n === i);
+      });
+      vecEls[i].classList.add("on");
+    }, 1400 + i * 280);
+  });
+  t3.add(function(){
+    paintSeq(null, null);
+    brkEls.forEach(function(b){ b[0].classList.remove("on"); b[1].classList.remove("on"); });
+    pipeFan.setAttribute("opacity", 1);
+  }, 1400 + RECIPES.length * 280 + 80);
+
+  /* 4 · dots travel, then heads pop one by one */
+  const dotsAt = 1400 + RECIPES.length * 280 + 200;
+  t3.add(function(){
+    pipeDots.forEach(function(dot, k){
+      dot.setAttribute("cx", DOT_X0);
+      dot.setAttribute("cy", TRACK_Y[k]);
+      dot.setAttribute("opacity", 1);
+    });
+    tween(420, function(p){
+      pipeDots.forEach(function(dot, k){
+        dot.setAttribute("cx", DOT_X0 + (DOT_X1 - DOT_X0) * p);
+        dot.setAttribute("cy", TRACK_Y[k]);
+      });
+    }, function(){
+      pipeDots.forEach(function(dot){ dot.setAttribute("opacity", 0); });
+    });
+  }, dotsAt);
+  heads.forEach(function(h, k){
+    t3.add(function(){
+      h.classList.add("on");
+      outs[k].textContent = OUT_TEXT[k];
+    }, dotsAt + 460 + k * 240);
+  });
+
+  /* 5 · composite risk card on the far right */
+  const outAt = dotsAt + 460 + heads.length * 240 + 80;
+  t3.add(function(){
+    pipeOut.classList.add("on");
+    countUp(pipeRisk, 0.78, 900, as2);
+    countUp(pipeConf, 0.61, 900, as2);
+  }, outAt);
+  confBars.forEach(function(b, i){
+    t3.add(function(){
+      tween(520, function(p){ b.fill.setAttribute("width", b.w * p); });
+    }, outAt + 300 + i * 150);
+  });
+  t3.add(function(){ pipeWhy.classList.add("on"); }, outAt + 1100);
+}
+document.getElementById("replay3").addEventListener("click", runS3);
+
+/* ══════════════════════════════════════════════════════════════
+   04 · what taught it
+   ══════════════════════════════════════════════════════════════ */
+const DOMAINS = [
+  { name:"natural human · 15,903 parents",     n:4047409, cls:"" },
+  { name:"natural bacterial · 6,890 parents",  n: 690689, cls:"" },
+  { name:"natural viral · 5,317 parents",      n: 229071, cls:"" },
+  { name:"de novo (RCSB) · 631 parents",       n:  33444, cls:"denovo" }
+];
+const dataRows = document.getElementById("dataRows");
+const dBars = [], dNums = [];
+(function buildData(){
+  const max = DOMAINS[0].n, W = 330, X = 272;
+  DOMAINS.forEach(function(d, i){
+    const y = 46 + i * 44;
+    const name = document.createElementNS(svgNS, "text");
+    name.setAttribute("class", "d-name");
+    name.setAttribute("x", 0); name.setAttribute("y", y + 15);
+    name.textContent = d.name;
+    dataRows.appendChild(name);
+
+    const track = document.createElementNS(svgNS, "rect");
+    track.setAttribute("x", X); track.setAttribute("y", y);
+    track.setAttribute("width", W); track.setAttribute("height", 20);
+    track.setAttribute("fill", "#D9DBE2");
+    dataRows.appendChild(track);
+
+    const bar = document.createElementNS(svgNS, "rect");
+    bar.setAttribute("class", "d-bar " + d.cls);
+    bar.setAttribute("x", X); bar.setAttribute("y", y);
+    bar.setAttribute("width", 0); bar.setAttribute("height", 20);
+    dataRows.appendChild(bar);
+    dBars.push({ el: bar, w: W * d.n / max });
+
+    const num = document.createElementNS(svgNS, "text");
+    num.setAttribute("class", "d-num");
+    num.setAttribute("x", 720); num.setAttribute("y", y + 16);
+    num.setAttribute("text-anchor", "end");
+    num.textContent = "0";
+    dataRows.appendChild(num);
+    dNums.push({ el: num, n: d.n });
+  });
+})();
+const dTotal = document.getElementById("dTotal");
+const dItems = [document.getElementById("dTotalLbl"), dTotal, document.getElementById("dTotalSub"),
+                document.getElementById("dSplit"), document.getElementById("dStamp")];
+
+function s4clear(){
+  t4.clear(); stopTweens();
+  dBars.forEach(function(b){ b.el.setAttribute("width", 0); });
+  dNums.forEach(function(n){ n.el.textContent = "0"; });
+  dTotal.textContent = "0";
+  dItems.forEach(function(i){ i.classList.remove("on"); });
+}
+function runS4(){
+  s4clear();
+  DOMAINS.forEach(function(d, i){
+    t4.add(function(){
+      tween(760, function(p){
+        dBars[i].el.setAttribute("width", dBars[i].w * p);
+        dNums[i].el.textContent = asInt(dNums[i].n * p);
+      });
+    }, 220 + i * 220);
+  });
+  t4.add(function(){
+    dItems[0].classList.add("on");
+    dItems[1].classList.add("on");
+    dItems[2].classList.add("on");
+    countUp(dTotal, 5000613, 1100, asInt);
+  }, 1350);
+  t4.add(function(){ dItems[3].classList.add("on"); }, 2500);
+  t4.add(function(){ dItems[4].classList.add("on"); }, 3100);
+}
+document.getElementById("replay4").addEventListener("click", runS4);
+
+/* ══════════════════════════════════════════════════════════════
+   05 · reading the score
+   ══════════════════════════════════════════════════════════════ */
+const GM = [0.91, 0.88, 0.97];
+const CF_V = [0.76, 0.94, 1.00, 0.31];
+
+/* the residue region we explain — the 44 aa around the worst window */
+const HEAT_SEQ = "AEKVFSRLGTLRYLLPAIVHIKDSAWNQEHMLGATRFPDVKE";
+const HOT_FROM = 12, HOT_TO = 21;   /* index of the worst 9-mer inside the strip */
+const HEAT = (function(){
+  const r = rng(9182), risk = [], mhc = [];
+  for(let i = 0; i < HEAT_SEQ.length; i++){
+    /* a smooth background with a hot shoulder around the worst window */
+    const d = Math.abs(i - (HOT_FROM + HOT_TO) / 2);
+    const peak = Math.exp(-(d * d) / 70);
+    risk.push(Math.min(0.98, 0.10 + 0.70 * peak + r() * 0.18));
+    mhc.push(Math.min(0.98, 0.16 + 0.60 * Math.exp(-(Math.abs(i - 13.5) ** 2) / 26) + r() * 0.2));
+  }
+  return { risk: risk, mhc: mhc };
+})();
+
+function heatColor(v){
+  /* dark navy → magenta, on the dark card */
+  const c = ramp(0.25 + 0.75 * v);
+  return "rgb(" + c[0] + "," + c[1] + "," + c[2] + ")";
+}
+
+const heatRisk = document.getElementById("heatRisk");
+const heatMhc = document.getElementById("heatMhc");
+const heatSeq = document.getElementById("heatSeq");
+const heatCells = { risk: [], mhc: [] };
+(function buildHeat(){
+  for(let i = 0; i < HEAT_SEQ.length; i++){
+    const a = document.createElement("i");
+    a.style.background = heatColor(HEAT.risk[i]);
+    heatRisk.appendChild(a); heatCells.risk.push(a);
+    const b = document.createElement("i");
+    b.style.background = heatColor(HEAT.mhc[i]);
+    heatMhc.appendChild(b); heatCells.mhc.push(b);
+    const s = document.createElement("i");
+    s.textContent = HEAT_SEQ[i];
+    if(i >= HOT_FROM && i < HOT_TO) s.className = "hot";
+    heatSeq.appendChild(s);
+  }
+})();
+
+const gmBars = [0,1,2].map(function(i){ return document.getElementById("gmb" + i); });
+const gmVals = [0,1,2].map(function(i){ return document.getElementById("gmv" + i); });
+const cfBars = [0,1,2,3].map(function(i){ return document.getElementById("cfb" + i); });
+const cfVals = [0,1,2,3].map(function(i){ return document.getElementById("cfv" + i); });
+const gmOut = document.getElementById("gmOut");
+const cfOut = document.getElementById("cfOut");
+const attrOut = document.getElementById("attrOut");
+const t6 = Timers();
+
+function s6clear(){
+  t6.clear(); stopTweens();
+  gmBars.forEach(function(b){ b.style.width = "0"; });
+  cfBars.forEach(function(b){ b.style.width = "0"; });
+  gmVals.forEach(function(v, i){ v.textContent = GM[i].toFixed(2); });
+  cfVals.forEach(function(v, i){ v.textContent = CF_V[i].toFixed(2); });
+  gmOut.textContent = "0.00";
+  cfOut.textContent = "0.00";
+  heatCells.risk.forEach(function(c){ c.style.opacity = "0"; });
+  heatCells.mhc.forEach(function(c){ c.style.opacity = "0"; });
+  attrOut.classList.remove("on");
+}
+
+function runS6(){
+  s6clear();
+  /* the three gates fill, then the geometric mean lands */
+  GM.forEach(function(v, i){
+    t6.add(function(){ tween(600, function(p){ gmBars[i].style.width = (v * 100 * p) + "%"; }); }, 200 + i * 180);
+  });
+  t6.add(function(){ countUp(gmOut, 0.92, 700, as2); }, 900);
+
+  /* the four confidence components — the low one lands last, on purpose */
+  CF_V.forEach(function(v, i){
+    t6.add(function(){ tween(600, function(p){ cfBars[i].style.width = (v * 100 * p) + "%"; }); }, 1300 + i * 200);
+  });
+  t6.add(function(){ countUp(cfOut, 0.61, 700, as2); }, 2350);
+
+  /* the residue tracks paint left to right, one sweep per track */
+  const PAINT_MS = HEAT_SEQ.length * 26;
+  t6.add(function(){
+    sweep(PAINT_MS, HEAT_SEQ.length, function(i){
+      heatCells.risk[i].style.opacity = "1";
+    });
+  }, 1000);
+  t6.add(function(){
+    sweep(PAINT_MS, HEAT_SEQ.length, function(i){
+      heatCells.mhc[i].style.opacity = "1";
+    });
+  }, 1900);
+  t6.add(function(){ attrOut.classList.add("on"); }, 3300);
+}
+document.getElementById("replay6").addEventListener("click", runS6);
+
+/* ══════════════════════════════════════════════════════════════
+   06 · steer to safety
+   ══════════════════════════════════════════════════════════════ */
+const lzCloud = document.getElementById("lzCloud");
+const lzGhosts = document.getElementById("lzGhosts");
+const lzTrail = document.getElementById("lzTrail");
+const lzDot = document.getElementById("lzDot");
+const lzHalo = document.getElementById("lzHalo");
+
+(function buildCloud(){
+  const r = rng(4242);
+  function gauss(){ return (r() + r() + r() + r() - 2) * 0.9; }
+  /* presented cluster (magenta) */
+  for(let i = 0; i < 150; i++){
+    const c = document.createElementNS(svgNS, "circle");
+    c.setAttribute("cx", 556 + gauss() * 74);
+    c.setAttribute("cy", 150 + gauss() * 58);
+    c.setAttribute("r", 2.1);
+    c.setAttribute("fill", "#E8237E");
+    c.setAttribute("opacity", 0.42);
+    c.setAttribute("class", "lz-pt");
+    lzCloud.appendChild(c);
+  }
+  /* the rest of proteome space */
+  for(let i = 0; i < 300; i++){
+    const c = document.createElementNS(svgNS, "circle");
+    c.setAttribute("cx", 250 + gauss() * 110);
+    c.setAttribute("cy", 285 + gauss() * 72);
+    c.setAttribute("r", 1.9);
+    c.setAttribute("fill", "#5B616E");
+    c.setAttribute("opacity", 0.5);
+    c.setAttribute("class", "lz-pt");
+    lzCloud.appendChild(c);
+  }
+  /* a thin haze between them so the space reads as continuous */
+  for(let i = 0; i < 90; i++){
+    const c = document.createElementNS(svgNS, "circle");
+    c.setAttribute("cx", 120 + r() * 600);
+    c.setAttribute("cy", 60 + r() * 320);
+    c.setAttribute("r", 1.5);
+    c.setAttribute("fill", "#39415A");
+    c.setAttribute("opacity", 0.6);
+    c.setAttribute("class", "lz-pt");
+    lzCloud.appendChild(c);
+  }
+})();
+
+/* the demo peptide: a canonical A*02:01-shaped 9-mer inside a binder */
+const PEP = "YLLPAIVHI".split("");
+const ROLE = ["anchor","anchor","","","locked","","","","anchor"];  /* P2 / P9 anchors; P5 at the interface */
+const MUTS = [
+  { i:1, to:"Q", risk:0.52, pos:{x:452,y:212} },
+  { i:6, to:"E", risk:0.34, pos:{x:352,y:262} },
+  { i:8, to:"D", risk:0.19, pos:{x:262,y:302} }
+];
+const START = { x:540, y:168 };
+
+const seqRow = document.getElementById("seqRow");
+const aaEls = [];
+(function buildSeq(){
+  PEP.forEach(function(a, i){
+    const d = document.createElement("div");
+    d.className = "aa" + (ROLE[i] ? " " + ROLE[i] : "");
+    d.innerHTML = a + "<i>P" + (i+1) + "</i>";
+    seqRow.appendChild(d);
+    aaEls.push(d);
+  });
+})();
+const riskVal = document.getElementById("riskVal");
+const riskNum = document.getElementById("riskNum");
+const riskFill = document.getElementById("riskFill");
+const riskDelta = document.getElementById("riskDelta");
+const riskPep = document.getElementById("riskPep");
+const clistItems = Array.prototype.slice.call(document.getElementById("clist").children);
+const verify = document.getElementById("verify");
+
+function s5clear(){
+  t5.clear(); stopTweens();
+  lzGhosts.innerHTML = "";
+  lzTrail.setAttribute("d", "");
+  lzDot.setAttribute("cx", START.x); lzDot.setAttribute("cy", START.y);
+  lzDot.setAttribute("fill", "#E8237E");
+  lzHalo.setAttribute("cx", START.x); lzHalo.setAttribute("cy", START.y);
+  lzHalo.setAttribute("r", 9); lzHalo.setAttribute("opacity", .7);
+  lzHalo.setAttribute("stroke", "#E8237E");
+  aaEls.forEach(function(d, i){
+    d.className = "aa" + (ROLE[i] ? " " + ROLE[i] : "");
+    d.innerHTML = PEP[i] + "<i>P" + (i+1) + "</i>";
+  });
+  riskVal.textContent = "0.78";
+  riskNum.classList.remove("safe");
+  riskFill.classList.remove("safe");
+  riskFill.style.width = "78%";
+  riskDelta.textContent = "before steering";
+  riskPep.textContent = "YLLPAIVHI";
+  clistItems.forEach(function(li){ li.classList.remove("on"); });
+  verify.classList.remove("on");
+}
+
+function haloPulse(){
+  const t0 = performance.now();
+  function step(now){
+    if(cur !== 5) return;
+    const p = ((now - t0) / 1400) % 1;
+    lzHalo.setAttribute("r", 9 + 16 * p);
+    lzHalo.setAttribute("opacity", 0.55 * (1 - p));
+    rafs.push(requestAnimationFrame(step));
+  }
+  rafs.push(requestAnimationFrame(step));
+}
+
+function runS5(){
+  s5clear();
+  haloPulse();
+  const trail = [[START.x, START.y]];
+  let from = { x: START.x, y: START.y };
+
+  MUTS.forEach(function(m, k){
+    const t = 900 + k * 1750;
+    /* 1. candidates fan out */
+    t5.add(function(){
+      lzGhosts.innerHTML = "";
+      const r = rng(101 + k * 7);
+      for(let i = 0; i < 8; i++){
+        const g = document.createElementNS(svgNS, "circle");
+        const ang = (i / 8) * Math.PI * 2;
+        g.setAttribute("cx", m.pos.x + Math.cos(ang) * (26 + r() * 26));
+        g.setAttribute("cy", m.pos.y + Math.sin(ang) * (20 + r() * 22));
+        g.setAttribute("r", 4.5);
+        g.setAttribute("fill", "#8B909B");
+        g.setAttribute("class", "lz-ghost");
+        lzGhosts.appendChild(g);
+        setTimeout(function(){ g.classList.add("on"); }, i * 45);
+      }
+      /* the masked position goes dark on the sequence strip */
+      aaEls[m.i].className = "aa locked";
+      aaEls[m.i].innerHTML = "&#95;<i>mask</i>";
+      clistItems[0].classList.add("on");
+    }, t);
+
+    /* 2. one candidate is accepted, the dot moves */
+    t5.add(function(){
+      const ghosts = Array.prototype.slice.call(lzGhosts.children);
+      ghosts.forEach(function(g, i){
+        if(i === 3){ g.setAttribute("fill", "#35C48A"); g.setAttribute("r", 6); }
+        else { g.setAttribute("opacity", .18); }
+      });
+      clistItems[1].classList.add("on");
+      clistItems[2].classList.add("on");
+    }, t + 620);
+
+    t5.add(function(){
+      const to = m.pos, f = { x: from.x, y: from.y };
+      tween(620, function(p){
+        const x = f.x + (to.x - f.x) * p, y = f.y + (to.y - f.y) * p;
+        lzDot.setAttribute("cx", x); lzDot.setAttribute("cy", y);
+        lzHalo.setAttribute("cx", x); lzHalo.setAttribute("cy", y);
+        const mix = (k + p) / 3;
+        const col = "rgb(" + Math.round(232 + (53-232)*mix) + "," + Math.round(35 + (196-35)*mix) + "," + Math.round(126 + (138-126)*mix) + ")";
+        lzDot.setAttribute("fill", col);
+        lzHalo.setAttribute("stroke", col);
+      }, function(){
+        trail.push([to.x, to.y]);
+        lzTrail.setAttribute("d", "M" + trail.map(function(p){ return p[0] + "," + p[1]; }).join(" L"));
+        lzGhosts.innerHTML = "";
+        from = { x: to.x, y: to.y };
+      });
+
+      /* sequence strip + risk readout */
+      aaEls[m.i].className = "aa mut";
+      aaEls[m.i].innerHTML = m.to + "<i>" + PEP[m.i] + "→" + m.to + "</i>";
+      const prev = k === 0 ? 0.78 : MUTS[k-1].risk;
+      tween(620, function(p){
+        const v = prev + (m.risk - prev) * p;
+        riskVal.textContent = as2(v);
+        riskFill.style.width = (v * 100) + "%";
+      });
+      riskDelta.textContent = "after " + (k+1) + " substitution" + (k ? "s" : "");
+      riskPep.textContent = aaEls.map(function(d){ return d.textContent[0]; }).join("");
+      clistItems[3].classList.add("on");
+      if(k === MUTS.length - 1){
+        riskNum.classList.add("safe");
+        riskFill.classList.add("safe");
+      }
+    }, t + 900);
+  });
+
+  t5.add(function(){
+    verify.classList.add("on");
+    riskDelta.textContent = "3 substitutions · interface intact";
+  }, 900 + MUTS.length * 1750 + 400);
+}
+document.getElementById("replay5").addEventListener("click", runS5);
+
+/* ══════════════════════════════════════════════════════════════
+   08 · the full loop
+   ══════════════════════════════════════════════════════════════ */
+const loopSteps = Array.prototype.slice.call(document.getElementById("loopGrid").children);
+const t8 = Timers();
+
+function s8clear(){
+  t8.clear();
+  loopSteps.forEach(function(s){ s.classList.remove("on"); });
+}
+function runS8(){
+  s8clear();
+  /* walk the pipeline once, left to right */
+  sweep(loopSteps.length * 340, loopSteps.length, function(i){
+    loopSteps[i].classList.add("on");
+  });
+}
+document.getElementById("replay8").addEventListener("click", runS8);
+
+/* ══════════════════════════════════════════════════════════════
+   canvases + frame loop
+   ══════════════════════════════════════════════════════════════ */
+function resizeCanvases(){
+  const q = Math.min(3, window.devicePixelRatio || 1);
+  const w = markCanvas.clientWidth, h = markCanvas.clientHeight;
+  if(!w || !h) return;
+  const nw = Math.round(w * q), nh = Math.round(h * q);
+  if(markCanvas.width !== nw || markCanvas.height !== nh){
+    markCanvas.width = nw; markCanvas.height = nh;
+  }
+}
+window.addEventListener("resize", resizeCanvases);
+
+let T0 = null;
+function frame(ts){
+  if(T0 === null) T0 = ts;
+  if(cur === 0) drawMark(REDUCED ? 5 : (ts - T0) / 1000 * 0.75);
+  requestAnimationFrame(frame);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   deck navigation
+   ══════════════════════════════════════════════════════════════ */
+const slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
+const TITLES = ["CHAO", "The blind spot", "Three projections", "What taught it", "Reading the score", "Steer to safety", "What it unlocks", "System architecture", "Honest limits"];
+const rail = document.getElementById("rail");
+rail.style.gridTemplateColumns = "repeat(" + TITLES.length + ",1fr)";
+TITLES.forEach(function(name, i){
+  const b = document.createElement("button");
+  b.className = "rail-i";
+  b.innerHTML = "<b>0" + (i+1) + "</b>" + name;
+  b.addEventListener("click", function(){ go(i); });
+  rail.appendChild(b);
+});
+const railItems = Array.prototype.slice.call(rail.children);
+const hint = document.getElementById("hint");
+const prevB = document.getElementById("prevB"), nextB = document.getElementById("nextB");
+
+let cur = -1, entryTimer = null;
+function go(i){
+  i = Math.max(0, Math.min(slides.length-1, i));
+  if(i === cur) return;
+  s2clear(); s3clear(); s4clear(); s5clear(); s6clear(); s8clear();
+  stopTweens();
+  clearTimeout(entryTimer);
+  cur = i;
+  slides.forEach(function(s, n){ s.classList.toggle("is-active", n === i); });
+  railItems.forEach(function(b, n){
+    b.classList.toggle("cur", n === i);
+    b.classList.toggle("done", n < i);
+  });
+  slides[i].querySelectorAll(".rv").forEach(function(el){
+    el.style.animation = "none"; el.offsetHeight; el.style.animation = "";
+  });
+  resizeCanvases();
+  if(i === 1) entryTimer = setTimeout(runS2, 560);
+  if(i === 2) entryTimer = setTimeout(runS3, 460);
+  if(i === 3) entryTimer = setTimeout(runS4, 420);
+  if(i === 4) entryTimer = setTimeout(runS6, 420);
+  if(i === 5) entryTimer = setTimeout(runS5, 520);
+  if(i === 7) entryTimer = setTimeout(runS8, 420);
+  hint.style.opacity = i === 0 ? "1" : "0";
+  prevB.disabled = i === 0;
+  nextB.disabled = i === slides.length - 1;
+  history.replaceState(null, "", "#" + (i+1));
+}
+prevB.addEventListener("click", function(){ go(cur-1); });
+nextB.addEventListener("click", function(){ go(cur+1); });
+
+window.addEventListener("keydown", function(e){
+  if(e.key === "ArrowRight" || e.key === "PageDown" || e.key === " "){ e.preventDefault(); go(cur+1); }
+  else if(e.key === "ArrowLeft" || e.key === "PageUp"){ e.preventDefault(); go(cur-1); }
+  else if(e.key === "Home"){ go(0); }
+  else if(e.key === "End"){ go(slides.length-1); }
+  else if(e.key === "r" || e.key === "R"){
+    if(cur === 1) runS2();
+    else if(cur === 2) runS3();
+    else if(cur === 3) runS4();
+    else if(cur === 4) runS6();
+    else if(cur === 5) runS5();
+    else if(cur === 7) runS8();
+  }
+  else if(e.key === "f" || e.key === "F"){
+    if(document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen();
+  }
+});
+
+resizeCanvases();
+go(Math.max(0, (parseInt(location.hash.slice(1), 10) || 1) - 1));
+requestAnimationFrame(frame);
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(resizeCanvases);
+})();
+</script>
+</body>
+</html>

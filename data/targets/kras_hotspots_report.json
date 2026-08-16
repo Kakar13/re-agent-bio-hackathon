@@ -1,0 +1,26 @@
+{
+  "name": "kras",
+  "pdb_id": "6VJJ",
+  "target_chain": "A",
+  "partner_chain": "B",
+  "residue_range": [
+    1,
+    167
+  ],
+  "select_hotspots": {
+    "A37": "OE1,OE2",
+    "A38": "OD1,OD2",
+    "A40": "CD2,OH"
+  },
+  "contigs": {
+    "len_55_85": "55-85,/0,A1-167",
+    "len_85_120": "85-120,/0,A1-167"
+  },
+  "caveats": [
+    "6VJJ is wild-type KRAS4b\u2013RAF1 RBD, not G12D; residue 12 is not part of the binder epitope"
+  ],
+  "notes": [
+    "literature residues present at interface: [37, 38, 40]"
+  ],
+  "why_undruggable": "Flat shallow effector surface; picomolar GTP affinity"
+}
