@@ -73,3 +73,6 @@ logs/
 
 # Isolated tool environments (pinned deps that conflict with the main venv)
 .tools/
+
+# Timestamped LangGraph state backups from local troubleshooting.
+.langgraph_api.bak-*/
