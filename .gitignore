@@ -49,3 +49,6 @@ results/*
 # Logs
 *.log
 logs/
+
+# Isolated tool environments (pinned deps that conflict with the main venv)
+.tools/
