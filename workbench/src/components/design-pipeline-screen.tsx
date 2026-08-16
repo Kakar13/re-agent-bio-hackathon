@@ -117,7 +117,7 @@ export function DesignPipelineScreen({
       icon: <Cpu size={16} />,
     },
     {
-      name: "Immunogenicity screen",
+      name: "MHC-I immunogenicity screen",
       detail: "Only structurally passing candidates",
       complete: phases.immunogenicity === "completed",
       active: phases.immunogenicity === "running",

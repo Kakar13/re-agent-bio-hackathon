@@ -640,11 +640,13 @@ def screen_candidate(
         ),
     )
     payload = {
-        "title": f"Immunogenicity screen: {candidate_id}",
+        "title": f"MHC-I immunogenicity screen: {candidate_id}",
         "schema_version": "1.0.0",
         "claim_boundary": (
-            "Computational candidate triage from separate response, MHC-II EL, "
-            "MHC-II BA, processing, tolerance, and optional MHC-I surrogate evidence."
+            "MHC-I-restricted presentation risk (HLA-A*02:01 9-mers) from the "
+            "chao2 processing and NetMHCpan-student binding lanes. Predicts "
+            "antigen presentation, not T-cell activation. MHC-II EL, MHC-II BA, "
+            "tolerance, and response lanes are reported separately as context."
         ),
         "source_metadata": source_metadata or {},
         "citations": [

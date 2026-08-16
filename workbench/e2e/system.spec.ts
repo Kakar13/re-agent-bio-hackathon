@@ -147,7 +147,7 @@ test("runs cached NetMHCIIpan EL and BA through the complete browser flow", asyn
 
   await expect(
     page.getByRole("heading", {
-      name: "Immunogenicity screen: keyless-workbench-candidate",
+      name: "MHC-I immunogenicity screen: keyless-workbench-candidate",
     }),
   ).toBeVisible({ timeout: 30_000 });
   await page.getByText("Agent notes & research tools").click();
@@ -181,7 +181,7 @@ test("projects a verified residue evidence track onto the candidate PDB", async 
 
   await expect(
     page.getByRole("heading", {
-      name: "Immunogenicity screen: keyless-workbench-candidate",
+      name: "MHC-I immunogenicity screen: keyless-workbench-candidate",
     }),
   ).toBeVisible({ timeout: 30_000 });
 
