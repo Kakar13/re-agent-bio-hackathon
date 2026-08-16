@@ -21,6 +21,7 @@ build/
 .ipynb_checkpoints/
 
 # Data and generated outputs (keep folder structure)
+data/
 data/raw/*
 data/processed/*
 results/*

@@ -14,7 +14,7 @@ dependencies = [
 [project.optional-dependencies]
 proto = [
     "proto-client>=0.1.0",
-    "proto-tools",
+    "proto-tools[mcp]",
     "proto-language",
     "modal",
 ]
