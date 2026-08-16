@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "re:AGENT Scientific Workbench",
-  description: "Inspectable protein design and immunogenicity screening",
+  title: "Chao Scientific Workbench",
+  description: "Inspectable protein design and MHC-I immunogenicity screening",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

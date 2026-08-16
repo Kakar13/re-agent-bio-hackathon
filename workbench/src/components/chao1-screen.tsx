@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { FormEvent, ReactNode, useState } from "react";
 
-import { MolstarViewer } from "@/components/molstar-viewer";
 import type { Assessment, ScientificArtifact } from "@/lib/types";
 
 const PDA_EXAMPLE_SEQUENCE =
@@ -35,18 +34,18 @@ export function Chao1Screen({
 }) {
   const [error, setError] = useState("");
   const cleaned = sequence.replace(/\s+/g, "").toUpperCase();
-  const surrogate = assessment?.mhc_i_surrogate_results.find(
-    (result) => result.adapter_id === "team-e2e-pls-chao1",
+  // The adapter id gains a suffix when the NetMHCpan student supplies the
+  // binding lane, so match the family rather than one exact build.
+  const surrogate = assessment?.mhc_i_surrogate_results.find((result) =>
+    result.adapter_id.startsWith("team-e2e-pls-chao1"),
   );
   const riskTrack = surrogate?.spatial_tracks.mhci_processing_risk_max ?? [];
   const summary = surrogate?.protein_summary;
   const maxRisk = summary?.max_risk ?? Math.max(0, ...riskTrack);
   const topMean = summary?.top_k_mean_risk ?? 0;
   const checkpointHash = surrogate?.provenance.parameters.checkpoint_sha256;
-  const structure = assessment?.structure;
-  const structureUrl = structure
-    ? `/api/structure?path=${encodeURIComponent(structure.path)}`
-    : undefined;
+  // Structure rendering lives in the artifact panel; this screen keeps the
+  // sequence input and the linear risk read-out only.
   const topWindows = [...(surrogate?.predictions ?? [])]
     .sort(
       (left, right) =>
@@ -78,7 +77,7 @@ export function Chao1Screen({
         </div>
         <span className="model-verified">
           <ShieldCheck size={14} />
-          Chao1
+          Chao2
         </span>
       </header>
 
@@ -117,12 +116,12 @@ export function Chao1Screen({
             ) : (
               <Play size={14} fill="currentColor" />
             )}
-            {isLoading ? (surrogate ? "Agent responding…" : "Running model…") : "Run chao1"}
+            {isLoading ? (surrogate ? "Agent responding…" : "Running model…") : "Run chao2"}
           </button>
         </div>
       </form>
 
-      <div className="model-flow" aria-label="Chao1 screening flow">
+      <div className="model-flow" aria-label="Chao2 screening flow">
         <FlowStep icon={<Dna size={15} />} label="Sequence" detail={`${cleaned.length || "—"} aa`} />
         <ArrowRight size={14} />
         <FlowStep
@@ -131,7 +130,7 @@ export function Chao1Screen({
               ? <LoaderCircle className="spin" size={15} />
               : <Fingerprint size={15} />
           }
-          label="Chao1 model"
+          label="Chao2 model"
           detail={surrogate?.status === "ok" ? "Verified" : isLoading ? "Running" : "Ready"}
           active={isLoading && !surrogate}
         />
@@ -159,7 +158,7 @@ export function Chao1Screen({
         <div className="visual-loading">
           <LoaderCircle className="spin" size={24} />
           <div>
-            <strong>Running the actual chao1 checkpoint</strong>
+            <strong>Running the actual chao2 checkpoint</strong>
             <span>ESM-2 encoding → cleavage/TAP/MHC-I heads → residue projection</span>
           </div>
         </div>
@@ -181,7 +180,7 @@ export function Chao1Screen({
             </div>
             <div className="risk-summary-copy">
               <span className="eyebrow">Highest 9-mer score</span>
-              <h3>Chao1 processing risk</h3>
+              <h3>Chao2 processing risk</h3>
               <div className="risk-mini-metrics">
                 <span>
                   <b>{(topMean * 100).toFixed(1)}</b>
@@ -207,31 +206,6 @@ export function Chao1Screen({
             </div>
           </div>
 
-          {structure && (
-            <section className="main-structure-card">
-              <div className="risk-section-heading">
-                <div>
-                  <span className="eyebrow">Experimental coordinates</span>
-                  <h3>3D structure · PDB 9S14</h3>
-                </div>
-                <span className="structure-resolution">
-                  {structure.residue_ids.length -
-                    structure.unresolved_sequence_positions.length}
-                  /{structure.residue_ids.length} residues resolved
-                </span>
-              </div>
-              <MolstarViewer
-                structureUrl={structureUrl}
-                structurePath={structure.path}
-                chainId={structure.chain_id}
-                residueIds={structure.residue_ids}
-                mappingStatus={structure.mapping_status}
-                unresolvedSequencePositions={structure.unresolved_sequence_positions}
-                spatialTracks={assessment.spatial_tracks}
-              />
-            </section>
-          )}
-
           <section className="residue-map-card">
             <div className="risk-section-heading">
               <div>
@@ -244,7 +218,7 @@ export function Chao1Screen({
                 <span>Higher</span>
               </div>
             </div>
-            <div className="residue-risk-map" aria-label="Chao1 residue risk heatmap">
+            <div className="residue-risk-map" aria-label="Chao2 residue risk heatmap">
               {assessment.sequence.split("").map((residue, index) => {
                 const risk = riskTrack[index] ?? 0;
                 return (
@@ -269,7 +243,7 @@ export function Chao1Screen({
             <div className="risk-section-heading">
               <div>
                 <span className="eyebrow">Highest scoring regions</span>
-                <h3>Top chao1 9-mers</h3>
+                <h3>Top chao2 9-mers</h3>
               </div>
               <span className="model-output-id">{artifact?.id}</span>
             </div>
