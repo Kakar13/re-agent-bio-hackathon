@@ -128,6 +128,21 @@ body{
   font-size:max(10px, calc(13 * var(--u))); letter-spacing:.14em;
   text-transform:uppercase; color:var(--sig);
 }
+
+/* ═══════════ close ═══════════════════════════════════════════ */
+.s-close{
+  align-items:center; justify-content:center; text-align:center;
+}
+.s-close .s1-name{
+  margin:0;
+  font-size:calc(140 * var(--u));
+}
+.s-close .s1-expand{
+  margin-top:calc(22 * var(--u));
+  font-size:max(12px, calc(18 * var(--u)));
+  letter-spacing:.18em;
+}
+
 #markWrap{
   position:relative; width:min(100%, calc(960 * var(--u)));
   aspect-ratio:960 / 210; margin:calc(22 * var(--u)) 0 0;
@@ -875,61 +890,31 @@ body{
 .lv-json .lv-row{ background:var(--paper-hi); }
 .lv-json .lv-row.ok{ border-color:var(--ok); }
 
-/* ═══════════ 09 · WHAT WE WILL NOT CLAIM ═════════════════════ */
-.honest-grid{
-  flex:1 1 auto; min-height:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:calc(22 * var(--u)); margin-top:calc(28 * var(--u));
+/* ═══════════ 09 · STUDENT · TEACHER ══════════════════════════ */
+#stsvg{ flex:1 1 auto; min-height:0; width:100%; height:100%; margin-top:calc(10 * var(--u)); }
+.st-lbl{ font-family:var(--mono); font-size:11.5px; letter-spacing:.16em; text-transform:uppercase; fill:var(--graphite-2); }
+.st-lbl-l{ font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; fill:#6A7183; }
+.st-chip{ fill:#EDEEF2; stroke:var(--hair); }
+.st-chip-t{ font-family:var(--mono); font-size:12.5px; fill:var(--ink); }
+.st-tx{ font-family:var(--mono); font-size:12.5px; fill:var(--graphite); }
+.st-wire{ stroke:var(--hair); stroke-width:1.5; fill:none; }
+.st-item{ opacity:0; transition:opacity .4s ease; }
+.st-item.on{ opacity:1; }
+.st-note{ font-family:var(--sans); font-size:16px; font-weight:500; fill:var(--ink); }
+.st-note.dim{ font-size:14px; font-weight:400; fill:var(--graphite); }
+.st-loss{ transition:opacity .4s ease; }
+.strip-cell{ transition:fill .25s ease; }
+.strip-tick{ stroke:#FF6FAE; stroke-width:1.3; opacity:0; transition:opacity .2s ease; }
+.strip-tick.on{ opacity:1; }
+#stLinkGroup line{ stroke:var(--sig); stroke-width:1.8; stroke-dasharray:5 5; }
+#stDistill, #stDistillNote, #stLinkGroup, #stStamp{ transition:opacity .5s ease; }
+.st-strip{
+  display:flex; flex-wrap:wrap; gap:calc(40 * var(--u)); align-items:baseline;
+  border-top:1px solid var(--hair); padding-top:calc(14 * var(--u)); margin-top:calc(10 * var(--u));
+  font-family:var(--mono); font-size:max(9.5px, calc(11.5 * var(--u)));
+  letter-spacing:.04em; color:var(--graphite-2);
 }
-.honest-card{
-  min-width:0; border:1px solid var(--hair); background:var(--paper-hi);
-  padding:calc(26 * var(--u)); display:flex; flex-direction:column;
-}
-.honest-card.dark{ background:var(--void); border-color:var(--void); color:#F2F3F6; }
-.honest-k{
-  font-family:var(--mono); font-size:max(8.5px,calc(10.5 * var(--u)));
-  letter-spacing:.18em; text-transform:uppercase; color:var(--graphite-2);
-}
-.honest-card.dark .honest-k{ color:#727B90; }
-.honest-t{
-  margin-top:calc(12 * var(--u)); font-family:var(--display); font-weight:600;
-  font-size:calc(29 * var(--u)); line-height:1.05; letter-spacing:-.025em;
-}
-.honest-rule{ height:1px; background:var(--hair); margin:calc(20 * var(--u)) 0; }
-.honest-card.dark .honest-rule{ background:var(--void-line); }
-.honest-list{ display:grid; gap:calc(12 * var(--u)); margin:0; padding:0; list-style:none; }
-.honest-list li{
-  font-family:var(--mono); font-size:max(9.5px,calc(11.5 * var(--u)));
-  line-height:1.55; color:var(--graphite); padding-left:calc(15 * var(--u));
-  position:relative;
-}
-.honest-list li::before{
-  content:""; position:absolute; left:0; top:calc(7 * var(--u));
-  width:calc(7 * var(--u)); height:1px; min-width:5px; background:var(--graphite-2);
-}
-.honest-card.dark .honest-list li{ color:#9AA3B5; }
-.honest-card.dark .honest-list li::before{ background:var(--sig); }
-.honest-list li b{ color:var(--ink); font-weight:600; }
-.honest-card.dark .honest-list li b{ color:var(--paper-hi); }
-.honest-tail{
-  margin-top:auto; padding-top:calc(18 * var(--u));
-  font-family:var(--mono); font-size:max(9px,calc(11 * var(--u)));
-  line-height:1.55; color:var(--graphite);
-  border-left:2px solid var(--sig-deep); padding-left:calc(13 * var(--u));
-}
-.honest-card.dark .honest-tail{ color:#CED3DE; border-color:var(--sig); }
-.ask-strip{
-  display:grid; grid-template-columns:repeat(3,1fr); margin-top:calc(20 * var(--u));
-  border-top:1px solid var(--hair); border-bottom:1px solid var(--hair);
-}
-.ask{ min-width:0; padding:calc(14 * var(--u)) calc(18 * var(--u)); border-right:1px solid var(--hair); }
-.ask:first-child{ padding-left:0; }
-.ask:last-child{ border-right:0; }
-.ask b{
-  display:block; font-family:var(--mono); font-size:max(8px,calc(9.5 * var(--u)));
-  letter-spacing:.16em; text-transform:uppercase; color:var(--graphite-2); margin-bottom:calc(5 * var(--u));
-}
-.ask span{ font-family:var(--display); font-size:calc(20 * var(--u)); font-weight:600; letter-spacing:-.015em; }
-.ask em{ font-style:normal; color:var(--sig); }
+.st-strip b{ color:var(--ink); font-weight:600; }
 
 /* ═══════════ navigation rail ═════════════════════════════════ */
 #rail{
@@ -983,7 +968,6 @@ body{
   .gate-div{ display:none; }
   .train-grid,.steer-grid,.unlock-grid{ grid-template-columns:1fr; }
   .teach-stack,.steer-side,.unlock-stack{ display:none; }
-  .honest-grid{ grid-template-columns:1fr; }
   .bill{ grid-template-columns:repeat(2,1fr); }
 }
 
@@ -1020,7 +1004,7 @@ body{
       </dl>
       <dl class="spec rv" style="animation-delay:.32s">
         <dt>What it's built on</dt>
-        <dd>5,000,613 9-mers<small>28,741 human, viral, bacterial and de novo parents, cluster-split, teacher-labelled, provenance on every row.</small></dd>
+        <dd>5M+ 9-mers<small>28,741 human, viral, bacterial and de novo parents, cluster-split, teacher-labelled, provenance on every row.</small></dd>
       </dl>
       <dl class="spec rv" style="animation-delay:.4s">
         <dt>What it does</dt>
@@ -1481,8 +1465,8 @@ body{
         <span>PD-L1 control designs contact all three foundry hotspots within 4.5 Å — the generator is aimed correctly before we score anything</span>
       </div>
       <div class="unlock-card">
-        <strong>1.7 h</strong>
-        <span>total GPU time for all 500 backbones · bars show wall-clock per target</span>
+        <strong>5.6 h</strong>
+        <span>GPU time to train all 500 backbones · bars show wall-clock per target</span>
       </div>
       <div class="unlock-card">
         <strong>92 ×</strong>
@@ -1491,7 +1475,7 @@ body{
     </div>
   </div>
 
-  <div class="foot">Backbones only: sequence design (ProteinMPNN) and AF2/ESMFold validation are out of scope for the weekend. Bar length is GPU wall-clock per target (847–2381 s), not a quality score. Hotspots and contigs follow the RosettaCommons foundry binder protocol; per-target caveats — including that 6VJJ is wild-type KRAS4b rather than G12D — are recorded in results/rfd3_binders/report.md.</div>
+  <div class="foot">Backbones only: sequence design (ProteinMPNN) and AF2/ESMFold validation are out of scope for the weekend. Bar length is GPU wall-clock per target, not a quality score — 5.6 hours on GPU for the full 500. Hotspots and contigs follow the RosettaCommons foundry binder protocol; per-target caveats — including that 6VJJ is wild-type KRAS4b rather than G12D — are recorded in results/rfd3_binders/report.md.</div>
 </section>
 
 <!-- ═════════════ 08 · THE FULL LOOP ═════════════ -->
@@ -1692,63 +1676,118 @@ body{
   <div class="foot">Stages 03 and 06 are the Benchling integration we have specified but not yet implemented — the ELN is where a design library stops being a folder of PDBs and becomes something a bench scientist can act on, which is why the loop is drawn with them rather than around them. Everything marked "built" exists in this repository: RFD3 backbones in results/rfd3_binders/, scoring in score.py, steering with full candidate traces in steer.py.</div>
 </section>
 
-<!-- ═════════════ 09 · WHAT WE WILL NOT CLAIM ═════════════ -->
+<!-- ═════════════ 09 · STUDENT · TEACHER ═════════════ -->
 <section class="slide s7" data-i="8">
   <div class="slide-head">
     <div>
-      <div class="eyebrow rv">The honest part</div>
+      <div class="eyebrow rv">How the surrogate learns</div>
       <h2 class="h2 rv" style="animation-delay:.06s">A surrogate that says so.<br><em>The failure mode of this field is confident silence.</em></h2>
     </div>
+    <button class="replay rv" id="replay7" style="animation-delay:.12s">Run again</button>
+  </div>
+  <p class="lede rv" style="animation-delay:.14s; max-width:52ch">De novo proteins have no eluted-ligand labels. Naturals do. Fit the teachers there, and an unlabeled abundance becomes something a student can still learn from.</p>
+
+  <svg id="stsvg" viewBox="0 0 1420 430" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <marker id="stah" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+        <path d="M0,0 L7,3.5 L0,7 z" fill="#C4C7D0"/>
+      </marker>
+    </defs>
+
+    <!-- fit on naturals -->
+    <g class="st-item" id="stFit">
+      <text class="st-lbl" x="0" y="188">Fit on naturals</text>
+      <text class="st-lbl" x="0" y="208" style="fill:#B4B9C4">the labelled world</text>
+      <rect x="0" y="226" width="168" height="100" rx="3" fill="#07080D"/>
+      <g id="stLayers" fill="#1E2536"></g>
+      <text class="st-lbl-l" x="84" y="256" text-anchor="middle">human</text>
+      <text class="st-lbl-l" x="84" y="274" text-anchor="middle">viral</text>
+      <text class="st-lbl-l" x="84" y="292" text-anchor="middle">bacterial</text>
+      <text class="st-chip-t" x="84" y="312" text-anchor="middle" style="fill:#F2F3F6" font-size="13">28,741 parents</text>
+      <rect id="stPulse" x="12" y="318" width="144" height="4" fill="#E8237E" opacity="0"/>
+    </g>
+    <g id="stWires" opacity="0">
+      <path class="st-wire" d="M174,256 C 218,256 218,118 262,118" marker-end="url(#stah)"/>
+      <path class="st-wire" d="M174,296 C 218,296 218,348 262,348" marker-end="url(#stah)"/>
+    </g>
+
+    <!-- teacher branch -->
+    <g id="stTeacher">
+      <text class="st-lbl st-item" x="272" y="86">Teacher · frozen tools</text>
+      <g transform="translate(272,102)">
+        <g class="st-item"><rect class="st-chip" x="0" y="0" width="108" height="36" rx="2"/><text class="st-chip-t" x="54" y="23" text-anchor="middle">naturals</text></g>
+        <g class="st-item"><rect class="st-chip" x="120" y="0" width="118" height="36" rx="2"/><text class="st-chip-t" x="179" y="23" text-anchor="middle">Pepsickle</text></g>
+        <g class="st-item"><rect class="st-chip" x="250" y="0" width="126" height="36" rx="2"/><text class="st-chip-t" x="313" y="23" text-anchor="middle">MHCflurry</text></g>
+        <g class="st-item"><rect class="st-chip" x="388" y="0" width="110" height="36" rx="2"/><text class="st-chip-t" x="443" y="23" text-anchor="middle">TAP ridge</text></g>
+        <g class="st-item"><rect x="510" y="0" width="72" height="36" rx="2" fill="#FFFFFF" stroke="#E8237E" stroke-width="1.8"/><text class="st-chip-t" x="546" y="23" text-anchor="middle">ŷ</text></g>
+      </g>
+      <text class="st-tx st-item" x="272" y="168" font-size="11.5" style="fill:#8B909B">fit once on measured natural peptides · then they only emit scores</text>
+    </g>
+
+    <!-- student branch -->
+    <g id="stStudent">
+      <text class="st-lbl st-item" x="272" y="316" style="fill:#E8237E">Student · CHAO heads</text>
+      <g transform="translate(272,332)">
+        <g class="st-item"><rect class="st-chip" x="0" y="0" width="108" height="36" rx="2"/><text class="st-chip-t" x="54" y="23" text-anchor="middle">de novo</text></g>
+        <g class="st-item">
+          <rect x="120" y="0" width="238" height="36" rx="2" fill="#07080D"/>
+          <g id="stAAs"></g>
+        </g>
+        <g class="st-item"><rect class="st-chip" x="370" y="0" width="128" height="36" rx="2"/><text class="st-chip-t" x="434" y="23" text-anchor="middle">ESM-2 650M</text></g>
+        <g class="st-item"><rect x="510" y="0" width="72" height="36" rx="2" fill="#FFFFFF" stroke="#E8237E" stroke-width="1.8"/><text class="st-chip-t" x="546" y="23" text-anchor="middle">ŷ</text></g>
+      </g>
+      <text class="st-tx st-item" x="272" y="398" font-size="11.5" style="fill:#8B909B">no ground-truth label</text>
+      <text class="st-tx st-item" x="272" y="416" font-size="11.5" style="fill:#8B909B">the teacher score is the only supervision</text>
+    </g>
+
+    <!-- distillation: teacher scores are the target the student has to match -->
+    <g id="stLinkGroup" opacity="0">
+      <line x1="818" y1="138" x2="818" y2="178"/>
+      <line x1="818" y1="292" x2="818" y2="332"/>
+    </g>
+    <g id="stDistill" opacity="0">
+      <rect x="620" y="178" width="396" height="114" rx="3" fill="#07080D"/>
+      <text class="st-lbl-l" x="636" y="198">Teacher scores · the target</text>
+      <g id="stStripT"></g>
+      <g id="stStripTicks"></g>
+      <g id="stStripS"></g>
+      <text class="st-lbl-l" x="636" y="276">Student</text>
+      <text class="st-lbl-l" x="996" y="276" text-anchor="end">cleave · TAP · MHC</text>
+    </g>
+    <g id="stDistillNote" opacity="0">
+      <text class="st-lbl" x="1044" y="198" style="fill:#E8237E">Stop-gradient on the teacher</text>
+      <text class="st-note dim" x="1044" y="226">The student copies the scores, not the</text>
+      <text class="st-note dim" x="1044" y="248">biology. De novo never needed a T-cell</text>
+      <text class="st-note dim" x="1044" y="270">assay to enter the training set.</text>
+      <text class="st-lbl" x="1044" y="304">virtually limitless windows</text>
+    </g>
+
+    <!-- objective -->
+    <g transform="translate(0,340)">
+      <text class="st-lbl st-item" id="stObjLbl" x="0" y="0">Objective</text>
+      <g class="st-tx" font-size="12.5">
+        <text class="st-loss" id="stLoss1" x="0" y="26" opacity=".18">ℒ<tspan font-size="10" dy="3">teacher</tspan><tspan dy="-3" style="fill:#8B909B">  fit on naturals</tspan></text>
+        <g class="st-loss" id="stLoss2" opacity=".18">
+          <text x="0" y="50">ℒ<tspan font-size="10" dy="3">student</tspan><tspan dy="-3" style="fill:#8B909B">  match ŷ on 5M windows</tspan></text>
+          <text x="18" y="68" style="fill:#8B909B">including de novo</text>
+        </g>
+      </g>
+    </g>
+  </svg>
+
+  <div class="st-strip rv" style="animation-delay:.2s">
+    <span>Teachers <b>Pepsickle · MHCflurry · TAP ridge</b> fit on naturals</span>
+    <span>Student trained on <b>5M+</b> teacher-labelled 9-mers</span>
+    <span>De novo in the mix: <b>33,444</b> windows · 631 parents · 0 measured labels</span>
   </div>
 
-  <div class="honest-grid">
-    <article class="honest-card rv" style="animation-delay:.16s">
-      <div class="honest-k">What this is not</div>
-      <div class="honest-t">Not immunogenicity.</div>
-      <div class="honest-rule"></div>
-      <ul class="honest-list">
-        <li>Labels are <b>teacher predictions</b> from Pepsickle and MHCflurry, not measured T-cell responses.</li>
-        <li>The composite treats three gates as <b>independent</b>. Biology does not.</li>
-        <li>One allele: <b>HLA-A*02:01</b>. A real population needs a panel.</li>
-        <li>MHC-II and CD4 help are <b>entirely absent</b>.</li>
-      </ul>
-      <div class="honest-tail">Every score we emit carries this disclaimer string in the JSON trace, not just on a slide.</div>
-    </article>
+  <div class="foot">This is a processing surrogate, not immunogenicity. Teacher labels are Pepsickle and MHCflurry predictions plus a TAP ridge on 613 measured peptides — not T-cell assays. The honest move is to say that, then still use the unlabeled de novo abundance as a training signal instead of throwing it away.</div>
+</section>
 
-    <article class="honest-card rv" style="animation-delay:.23s">
-      <div class="honest-k">What is actually load-bearing</div>
-      <div class="honest-t">The parts we can defend.</div>
-      <div class="honest-rule"></div>
-      <ul class="honest-list">
-        <li><b>Cluster-grouped splits</b> with a hard leakage gate — 0 clusters span two splits.</li>
-        <li><b>Isotonic calibration</b> on held-out data, stored as breakpoints, so a checkpoint is diffable.</li>
-        <li><b>Decomposed confidence</b>: bootstrap σ, decision margin, flank completeness, head agreement.</li>
-        <li><b>Discrete verification</b> — steering never accepts a sequence it has not re-scored.</li>
-      </ul>
-      <div class="honest-tail">No pickled sklearn or torch objects anywhere in a checkpoint. Plain arrays plus JSON.</div>
-    </article>
-
-    <article class="honest-card dark rv" style="animation-delay:.3s">
-      <div class="honest-k">Next</div>
-      <div class="honest-t">Where this goes.</div>
-      <div class="honest-rule"></div>
-      <ul class="honest-list">
-        <li>Swap teacher labels for <b>measured eluted-ligand MS</b> data and re-calibrate.</li>
-        <li>Extend the centroid bank across an <b>HLA supertype panel</b>; risk becomes population coverage.</li>
-        <li>Put the scorer <b>inside</b> the RFD3 → MPNN loop so de-immunization is a design constraint, not a filter.</li>
-        <li>Publish the dataset card and the 500,613-row build so someone can disagree with us precisely.</li>
-      </ul>
-      <div class="honest-tail">The geometry is the contribution. Better labels make it better without changing a line of it.</div>
-    </article>
-  </div>
-
-  <div class="ask-strip rv" style="animation-delay:.36s">
-    <div class="ask"><b>Built this weekend</b><span>Dataset, 3 heads, <em>steering loop</em></span></div>
-    <div class="ask"><b>Runs on</b><span>ESM-2 + <em>numpy</em>, no GPU to score</span></div>
-    <div class="ask"><b>Everything is</b><span>Inspectable <em>JSON</em></span></div>
-  </div>
-
-  <div class="foot">CHAO · re:AGENT hackathon, August 2026 · Track C — biological design to a spec, plus evidence it could hold up.</div>
+<!-- ═════════════ 10 · NAME ═════════════ -->
+<section class="slide s-close" data-i="9">
+  <h1 class="s1-name rv">CHAO</h1>
+  <div class="s1-expand rv" style="animation-delay:.1s">Continuous Hidden Antigen Optimizer</div>
 </section>
 
 <nav id="rail"></nav>
@@ -2345,7 +2384,7 @@ function runS4(){
     dItems[0].classList.add("on");
     dItems[1].classList.add("on");
     dItems[2].classList.add("on");
-    countUp(dTotal, 5000613, 1100, asInt);
+    countUp(dTotal, 5, 1100, function(v){ return Math.round(v) + "M+"; });
   }, 1350);
   t4.add(function(){ dItems[3].classList.add("on"); }, 2500);
   t4.add(function(){ dItems[4].classList.add("on"); }, 3100);
@@ -2664,6 +2703,144 @@ function runS8(){
 document.getElementById("replay8").addEventListener("click", runS8);
 
 /* ══════════════════════════════════════════════════════════════
+   09 · student · teacher
+   ══════════════════════════════════════════════════════════════ */
+const ST_SEQ = "GTLR" + "YLLPAIVHI" + "KDSA";
+(function buildStudentTeacher(){
+  const layers = document.getElementById("stLayers");
+  /* decorative bars sit above the stacked domain labels */
+  for(let i = 0; i < 2; i++){
+    const r = document.createElementNS(svgNS, "rect");
+    r.setAttribute("x", 16); r.setAttribute("y", 234 + i * 7);
+    r.setAttribute("width", 136); r.setAttribute("height", 2);
+    layers.appendChild(r);
+  }
+  const aas = document.getElementById("stAAs");
+  const w = 12.2, x0 = 128;
+  for(let i = 0; i < ST_SEQ.length; i++){
+    const core = i >= 4 && i < 13;
+    const t = document.createElementNS(svgNS, "text");
+    t.setAttribute("x", x0 + i * w);
+    t.setAttribute("y", 23);
+    t.setAttribute("text-anchor", "middle");
+    t.setAttribute("font-family", "'IBM Plex Mono', monospace");
+    t.setAttribute("font-size", core ? "11" : "9");
+    t.setAttribute("fill", core ? "#F2F3F6" : "#6A7183");
+    t.textContent = ST_SEQ[i];
+    aas.appendChild(t);
+  }
+  const L = 24, SX = 636, SW = 360, GAP = 2;
+  const CW = (SW - GAP * (L - 1)) / L;
+  const stripT = document.getElementById("stStripT");
+  const stripS = document.getElementById("stStripS");
+  const ticks = document.getElementById("stStripTicks");
+  for(let i = 0; i < L; i++){
+    const x = SX + i * (CW + GAP);
+    const v = 0.22 + 0.62 * (Math.sin(i * 0.55) * 0.35 + Math.sin(i * 0.22 + 1.1) * 0.4 + 0.5);
+    const t = document.createElementNS(svgNS, "rect");
+    t.setAttribute("x", x); t.setAttribute("y", 208);
+    t.setAttribute("width", CW); t.setAttribute("height", 22);
+    t.setAttribute("class", "strip-cell"); t.setAttribute("fill", "#12151F");
+    t.dataset.lit = "rgb(" + ramp(v).join(",") + ")";
+    stripT.appendChild(t);
+    const s = document.createElementNS(svgNS, "rect");
+    s.setAttribute("x", x); s.setAttribute("y", 238);
+    s.setAttribute("width", CW); s.setAttribute("height", 22);
+    s.setAttribute("class", "strip-cell"); s.setAttribute("fill", "#12151F");
+    s.dataset.lit = "rgb(" + ramp(v).join(",") + ")";
+    stripS.appendChild(s);
+    const k = document.createElementNS(svgNS, "line");
+    k.setAttribute("x1", x + CW / 2); k.setAttribute("y1", 230);
+    k.setAttribute("x2", x + CW / 2); k.setAttribute("y2", 238);
+    k.setAttribute("class", "strip-tick");
+    ticks.appendChild(k);
+  }
+})();
+
+const stFit = document.getElementById("stFit");
+const stWires = document.getElementById("stWires");
+const stPulse = document.getElementById("stPulse");
+const stTeacher = document.getElementById("stTeacher");
+const stLinkGroup = document.getElementById("stLinkGroup");
+const stDistill = document.getElementById("stDistill");
+const stDistillNote = document.getElementById("stDistillNote");
+const stCellsT = Array.prototype.slice.call(document.querySelectorAll("#stStripT rect"));
+const stCellsS = Array.prototype.slice.call(document.querySelectorAll("#stStripS rect"));
+const stTicks = Array.prototype.slice.call(document.querySelectorAll("#stStripTicks line"));
+const stLosses = [document.getElementById("stLoss1"), document.getElementById("stLoss2")];
+const stTeacherItems = Array.prototype.slice.call(document.querySelectorAll("#stTeacher .st-item"));
+const stStudentItems = Array.prototype.slice.call(document.querySelectorAll("#stStudent .st-item"));
+const t7 = Timers();
+
+function s7clear(){
+  t7.clear();
+  stFit.classList.remove("on");
+  stWires.setAttribute("opacity", 0);
+  stPulse.setAttribute("opacity", 0);
+  stPulse.setAttribute("y", 318);
+  stTeacher.style.opacity = "1";
+  stTeacherItems.concat(stStudentItems).forEach(function(el){ el.classList.remove("on"); });
+  stLosses.forEach(function(l){ l.setAttribute("opacity", ".18"); });
+  document.getElementById("stObjLbl").classList.remove("on");
+  stCellsT.concat(stCellsS).forEach(function(c){ c.setAttribute("fill", "#12151F"); });
+  stTicks.forEach(function(k){ k.classList.remove("on"); });
+  stLinkGroup.setAttribute("opacity", 0);
+  stDistill.setAttribute("opacity", 0);
+  stDistillNote.setAttribute("opacity", 0);
+}
+
+function runS7(){
+  s7clear();
+  if(REDUCED){
+    stFit.classList.add("on");
+    stWires.setAttribute("opacity", 1);
+    stTeacherItems.concat(stStudentItems).forEach(function(el){ el.classList.add("on"); });
+    stLosses.forEach(function(l){ l.setAttribute("opacity", "1"); });
+    document.getElementById("stObjLbl").classList.add("on");
+    stCellsT.concat(stCellsS).forEach(function(c){ c.setAttribute("fill", c.dataset.lit); });
+    stTicks.forEach(function(k){ k.classList.add("on"); });
+    stLinkGroup.setAttribute("opacity", 1);
+    stDistill.setAttribute("opacity", 1);
+    stDistillNote.setAttribute("opacity", 1);
+    return;
+  }
+
+  t7.add(function(){ stFit.classList.add("on"); }, 80);
+  t7.add(function(){
+    stPulse.setAttribute("opacity", 1);
+    tween(560, function(p){ stPulse.setAttribute("y", 318 - 52 * p); },
+      function(){ stPulse.setAttribute("opacity", 0); });
+  }, 220);
+  t7.add(function(){ stWires.setAttribute("opacity", 1); }, 700);
+
+  stTeacherItems.forEach(function(el, i){
+    t7.add(function(){ el.classList.add("on"); }, 820 + i * 110);
+  });
+  stStudentItems.forEach(function(el, i){
+    t7.add(function(){ el.classList.add("on"); }, 1680 + i * 110);
+  });
+
+  t7.add(function(){
+    stLinkGroup.setAttribute("opacity", 1);
+    stDistill.setAttribute("opacity", 1);
+    document.getElementById("stObjLbl").classList.add("on");
+  }, 2500);
+  stCellsT.forEach(function(c, i){
+    t7.add(function(){ c.setAttribute("fill", c.dataset.lit); }, 2680 + i * 28);
+  });
+  t7.add(function(){ stDistillNote.setAttribute("opacity", 1); }, 3100);
+  stCellsS.forEach(function(c, i){
+    t7.add(function(){
+      stTicks[i].classList.add("on");
+      c.setAttribute("fill", c.dataset.lit);
+    }, 3480 + i * 36);
+  });
+  t7.add(function(){ stLosses[0].setAttribute("opacity", "1"); }, 2700);
+  t7.add(function(){ stLosses[1].setAttribute("opacity", "1"); }, 3200);
+}
+document.getElementById("replay7").addEventListener("click", runS7);
+
+/* ══════════════════════════════════════════════════════════════
    canvases + frame loop
    ══════════════════════════════════════════════════════════════ */
 function resizeCanvases(){
@@ -2688,13 +2865,14 @@ function frame(ts){
    deck navigation
    ══════════════════════════════════════════════════════════════ */
 const slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
-const TITLES = ["CHAO", "The blind spot", "Three projections", "What taught it", "Reading the score", "Steer to safety", "What it unlocks", "System architecture", "Honest limits"];
+const TITLES = ["CHAO", "The blind spot", "Three projections", "What taught it", "Reading the score", "Steer to safety", "What it unlocks", "System architecture", "Student · teacher", "CHAO"];
 const rail = document.getElementById("rail");
 rail.style.gridTemplateColumns = "repeat(" + TITLES.length + ",1fr)";
 TITLES.forEach(function(name, i){
   const b = document.createElement("button");
   b.className = "rail-i";
-  b.innerHTML = "<b>0" + (i+1) + "</b>" + name;
+  const n = i + 1;
+  b.innerHTML = "<b>" + (n < 10 ? "0" + n : String(n)) + "</b>" + name;
   b.addEventListener("click", function(){ go(i); });
   rail.appendChild(b);
 });
@@ -2706,7 +2884,7 @@ let cur = -1, entryTimer = null;
 function go(i){
   i = Math.max(0, Math.min(slides.length-1, i));
   if(i === cur) return;
-  s2clear(); s3clear(); s4clear(); s5clear(); s6clear(); s8clear();
+  s2clear(); s3clear(); s4clear(); s5clear(); s6clear(); s8clear(); s7clear();
   stopTweens();
   clearTimeout(entryTimer);
   cur = i;
@@ -2725,6 +2903,7 @@ function go(i){
   if(i === 4) entryTimer = setTimeout(runS6, 420);
   if(i === 5) entryTimer = setTimeout(runS5, 520);
   if(i === 7) entryTimer = setTimeout(runS8, 420);
+  if(i === 8) entryTimer = setTimeout(runS7, 420);
   hint.style.opacity = i === 0 ? "1" : "0";
   prevB.disabled = i === 0;
   nextB.disabled = i === slides.length - 1;
@@ -2745,6 +2924,7 @@ window.addEventListener("keydown", function(e){
     else if(cur === 4) runS6();
     else if(cur === 5) runS5();
     else if(cur === 7) runS8();
+    else if(cur === 8) runS7();
   }
   else if(e.key === "f" || e.key === "F"){
     if(document.fullscreenElement) document.exitFullscreen();
