@@ -32,7 +32,7 @@
   --void:       #07080D;
   --void-2:     #0F131C;
   --void-line:  #1B2130;
-  --sig:        #E8237E;   /* immunogenic / presented */
+  --sig:        #E8237E;   /* MHC-I liability / presented */
   --sig-deep:   #2B2AD9;   /* latent operations */
   --ok:         #1F7A55;   /* steered to safety */
   --ok-hi:      #35C48A;
@@ -243,11 +243,17 @@ body{
   overflow:hidden; clip-path:inset(50%); white-space:nowrap;
 }
 .s1-tag{
-  font-family:var(--display); font-weight:400; font-size:calc(31 * var(--u));
-  letter-spacing:-.018em; color:var(--ink); margin:calc(26 * var(--u)) 0 0;
-  max-width:36ch; line-height:1.16;
+  font-family:var(--display); font-weight:600; font-size:calc(34 * var(--u));
+  letter-spacing:-.025em; color:var(--ink); margin:calc(22 * var(--u)) 0 0;
+  max-width:28ch; line-height:1.08;
 }
-.s1-tag b{ font-weight:600; }
+.s1-sub{
+  margin:calc(14 * var(--u)) 0 0; max-width:42ch;
+  font-family:var(--sans); font-weight:400;
+  font-size:max(13px, calc(15 * var(--u)));
+  line-height:1.45; color:var(--graphite); letter-spacing:0;
+}
+.s1-sub b{ color:var(--ink); font-weight:600; }
 
 .s1-right{
   min-width:0; border-left:1px solid var(--hair);
@@ -428,24 +434,12 @@ body{
 /* ═══════════ 04 · WHAT TAUGHT IT ═════════════════════════════ */
 .train-grid{
   flex:1 1 auto; min-height:0; display:grid;
-  grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);
-  gap:calc(34 * var(--u)); margin-top:calc(24 * var(--u));
+  align-content:center; margin-top:calc(28 * var(--u));
 }
-#datasvg{ width:100%; height:100%; min-height:0; }
-.d-lbl{ font-family:var(--mono); font-size:12px; letter-spacing:.16em; text-transform:uppercase; fill:var(--graphite-2); }
-.d-name{ font-family:var(--mono); font-size:13px; fill:var(--graphite); letter-spacing:.04em; }
-.d-num{ font-family:var(--display); font-size:19px; font-weight:600; fill:var(--ink); font-variant-numeric:tabular-nums; }
-.d-bar{ fill:var(--graphite-2); }
-.d-bar.denovo{ fill:var(--sig-deep); }
-.d-total{ font-family:var(--display); font-size:62px; font-weight:600; letter-spacing:-.04em; fill:var(--ink); font-variant-numeric:tabular-nums; }
-.d-flow{ stroke:var(--hair); stroke-width:1.4; fill:none; }
-.d-pill{ fill:#EDEEF2; stroke:var(--hair); }
-.d-pill-t{ font-family:var(--mono); font-size:12px; fill:var(--ink); }
-.d-item{ opacity:0; transition:opacity .45s ease; }
-.d-item.on{ opacity:1; }
-.d-stamp{ font-family:var(--mono); font-size:12px; letter-spacing:.16em; text-transform:uppercase; fill:var(--ok); }
-
-.teach-stack{ display:grid; grid-template-rows:repeat(3,1fr); gap:calc(12 * var(--u)); min-height:0; }
+.teach-stack{
+  display:grid; grid-template-columns:repeat(3, minmax(0,1fr));
+  gap:calc(18 * var(--u)); min-height:0;
+}
 .teach{
   border:1px solid var(--hair); background:var(--paper-hi);
   padding:calc(18 * var(--u)) calc(20 * var(--u));
@@ -521,6 +515,8 @@ body{
   padding:calc(22 * var(--u)); display:flex; flex-direction:column;
 }
 .score-card.dark{ background:var(--void); border-color:var(--void); }
+.score-card.wide{ grid-column:span 1; }
+@media (min-width:900px){ .score-grid{ grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.25fr); } .score-card.wide{ grid-column:auto; } }
 .score-k{
   font-family:var(--mono); font-size:max(8.5px, calc(10.5 * var(--u)));
   letter-spacing:.18em; text-transform:uppercase; color:var(--graphite-2);
@@ -806,7 +802,7 @@ body{
 /* ═══════════ 08 · THE FULL LOOP ══════════════════════════════ */
 .loop-grid{
   flex:1 1 auto; min-height:0; display:grid;
-  grid-template-columns:repeat(7, minmax(0,1fr));
+  grid-template-columns:repeat(6, minmax(0,1fr));
   gap:calc(14 * var(--u)); margin-top:calc(24 * var(--u));
 }
 .loop-step{
@@ -1124,7 +1120,7 @@ body{
 
 /* ═══════════ navigation rail ═════════════════════════════════ */
 #rail{
-  position:absolute; left:var(--pad-x); right:var(--pad-x); bottom:calc(46 * var(--u)); z-index:50;
+  position:absolute; left:var(--pad-x); right:var(--pad-x); bottom:calc(62 * var(--u)); z-index:50;
   display:grid; gap:0;
   border-top:1px solid var(--hair);
 }
@@ -1144,6 +1140,15 @@ body{
 .rail-i.cur{ color:var(--ink); }
 .rail-i b{ font-weight:500; margin-right:calc(9 * var(--u)); color:inherit; }
 .rail-i:focus-visible{ outline:2px solid var(--sig); outline-offset:2px; }
+#claim-bound{
+  position:absolute; left:50%; bottom:calc(34 * var(--u)); z-index:50;
+  transform:translateX(-50%);
+  max-width:min(92%, 72ch);
+  text-align:center;
+  font-family:var(--mono); font-size:max(8px, calc(9.5 * var(--u)));
+  letter-spacing:.12em; text-transform:uppercase; color:var(--graphite-2);
+  pointer-events:none;
+}
 #hint{
   position:absolute; left:var(--pad-x); bottom:calc(12 * var(--u)); z-index:50;
   font-family:var(--mono); font-size:max(8.5px, calc(10 * var(--u)));
@@ -1173,7 +1178,8 @@ body{
   .gate-grid{ grid-template-columns:minmax(0,1fr); }
   .gate-div{ display:none; }
   .train-grid,.steer-grid,.unlock-grid{ grid-template-columns:1fr; }
-  .teach-stack,.steer-side,.unlock-stack{ display:none; }
+  .teach-stack{ grid-template-columns:1fr; }
+  .steer-side,.unlock-stack{ display:none; }
   .bill{ grid-template-columns:repeat(2,1fr); }
 }
 
@@ -1200,29 +1206,30 @@ body{
         <p class="sr-only">A protein's latent vector travelling through three antigen-processing checkpoints.</p>
       </div>
 
-      <p class="s1-tag rv" style="animation-delay:.55s">Novel proteins that must work in vivo have to account for immunogenicity, not only fold and bind.<br><b>CHAO makes one MHC-I framework (pseudo-de novo distillation) an enabling design step toward in vivo manufacture and development.</b></p>
+      <p class="s1-tag rv" style="animation-delay:.55s">MHC-I framework for de novo proteins to bridge the <em>in vitro → in vivo</em> gap.</p>
+      <p class="s1-sub rv" style="animation-delay:.62s">Not only fold and bind — <b>pseudo-de novo distillation</b> makes HLA-A*02:01 liability checks an enabling design step, not a late surprise.</p>
     </div>
 
     <div class="s1-right">
       <dl class="spec rv" style="animation-delay:.24s">
         <dt>What it is</dt>
-        <dd>One immunogenicity framework<small>Cytosolic MHC-I processing and HLA-A*02:01 presentation on nucleated cells — including immune cells. Danger, TCR, and MHC-II/ADA are not scored.</small></dd>
+        <dd>Hybrid MHC-I liability profile<small>Inherited Chao1 cleavage + TAP; frozen-ESM student for NetMHCpan-like EL, BA, and affinity. Danger, TCR, MHC-II, and ADA are not scored.</small></dd>
       </dl>
       <dl class="spec rv" style="animation-delay:.32s">
         <dt>What it's built on</dt>
-        <dd>160,012 PDA 9-mers<small>Almost no measured MHC labels exist on designed proteins. We distill NetMHCpan onto ESM embeddings of PDA — pseudo-de novo teacher labels, not the PDB.</small></dd>
+        <dd>160,012 PDA 9-mers<small>From 1,602 designed parents in 608 connected components. Teacher labels are NetMHCpan 4.1 — not measured de novo HLA outcomes, and not the PDB.</small></dd>
       </dl>
       <dl class="spec rv" style="animation-delay:.4s">
         <dt>What it does</dt>
-        <dd>Downselects in-cell payloads<small>Primary when a binder, biosensor, or other de novo protein is expressed from a plasmid or vector inside the cell. Injected protein drugs still need MHC-II.</small></dd>
+        <dd>Flags HLA-A*02:01 liabilities<small>For review and resampling on in-cell / genetic-payload designs. It does not predict clinical immunogenicity.</small></dd>
       </dl>
     </div>
   </div>
 
   <div class="s1-strip rv" style="animation-delay:.58s">
-    <span>encoder <b>ESM-2 650M</b> · 1280-d</span>
+    <span>encoder <b>ESM-2 650M</b> · frozen · 1280-d</span>
     <span><b>1,602</b> PDA designed parents</span>
-    <span><b>608</b> component-grouped folds · no shared 9-mer leak</span>
+    <span><b>608</b> components · exact 9-mers never cross folds</span>
     <span><b>500</b> RFD3 backbones generated, not screened</span>
   </div>
 </section>
@@ -1272,10 +1279,10 @@ body{
       <div class="gates" id="gatesB">
         <div class="gate" id="gateB1"><span class="dot"></span><span class="lbl">f<sub>cleave</sub> · calibrated MLP</span><span class="val" id="gateB1v">—</span></div>
         <div class="gate" id="gateB2"><span class="dot"></span><span class="lbl">f<sub>TAP</sub> · ridge + bootstrap σ</span><span class="val" id="gateB2v">—</span></div>
-        <div class="gate warn" id="gateB3"><span class="dot"></span><span class="lbl">f<sub>MHC</sub> · centroid cosine</span><span class="val" id="gateB3v">—</span></div>
+        <div class="gate warn" id="gateB3"><span class="dot"></span><span class="lbl">f<sub>MHC</sub> · NetMHCpan student (EL / BA)</span><span class="val" id="gateB3v">—</span></div>
       </div>
 
-      <div class="blind">Three gates, <b>one shared geometry</b>. The journey from ribosome to T-cell receptor becomes a sequence of operations on the same 1280-dimensional vector.</div>
+      <div class="blind">Three gates on one frozen ESM-2 pass. Cleavage and TAP stay as inherited Chao1 heads; EL/BA come from the PDA NetMHCpan student — still <b>teacher-like liabilities</b>, not a T-cell outcome.</div>
     </div>
   </div>
 
@@ -1286,7 +1293,7 @@ body{
     <div class="cell big"><dt>Runs inside the design loop</dt><dd>yes</dd></div>
   </dl>
 
-  <div class="foot">Illustrative single protein at 100 aa → 92 windows of length 9. MHC-I is on nucleated cells, not only non-immune cells. This lane is the primary match when the protein is made inside the cell from a plasmid or vector — including intracellular binders and biosensors. Injected extracellular drugs can still cross-present on MHC-I; MHC-II remains the larger gap for that class.</div>
+  <div class="foot">Illustrative single protein at 100 aa → 92 windows of length 9. MHC-I is on nucleated cells, including immune cells. Primary match for in-cell / genetic-payload designs. For extracellular therapeutics, MHC-II/CD4 and B-cell biology remain primary gaps — this completed local model is one MHC-I evidence lane.</div>
 </section>
 
 <!-- ═════════════ 03 · THE THREE OPERATIONS ═════════════ -->
@@ -1294,7 +1301,7 @@ body{
   <div class="slide-head">
     <div>
       <div class="eyebrow rv">The idea</div>
-      <h2 class="h2 rv" style="animation-delay:.06s">Antigen processing, rewritten as<br><em>three projections of one vector.</em></h2>
+      <h2 class="h2 rv" style="animation-delay:.06s">Antigen processing, rewritten as<br><em>inspectable heads on one frozen encoder.</em></h2>
     </div>
     <button class="replay rv" id="replay3" style="animation-delay:.12s">Run again</button>
   </div>
@@ -1348,25 +1355,25 @@ body{
     <!-- ── D · the three heads ── -->
     <g class="p-head" id="head1">
       <rect class="p-headbox" x="676" y="38" width="418" height="96" rx="3"/>
-      <text class="p-lbl" x="694" y="64" style="fill:#8B909B">Step 1 · Proteasome</text>
+      <text class="p-lbl" x="694" y="64" style="fill:#8B909B">Inherited · Proteasome (Chao1)</text>
       <text class="p-title" x="694" y="94">Can it be cut out?</text>
-      <text class="p-tx" x="694" y="118" font-size="11.5">2-layer MLP on [N-cut ‖ C-cut] · isotonic-calibrated</text>
+      <text class="p-tx" x="694" y="118" font-size="11.5">N/C cleavage heads · isotonic-calibrated · separate from MHC</text>
       <text class="p-out" id="out1" x="1078" y="92" text-anchor="end">—</text>
     </g>
 
     <g class="p-head" id="head2">
       <rect class="p-headbox" x="676" y="150" width="418" height="96" rx="3"/>
-      <text class="p-lbl" x="694" y="176" style="fill:#8B909B">Step 2 · TAP transporter</text>
+      <text class="p-lbl" x="694" y="176" style="fill:#8B909B">Inherited · TAP transporter (Chao1)</text>
       <text class="p-title" x="694" y="206">Does it reach the ER?</text>
-      <text class="p-tx" x="694" y="230" font-size="11.5">ridge on z · 50 bootstrap refits carry σ</text>
+      <text class="p-tx" x="694" y="230" font-size="11.5">ridge on z · bootstrap σ · reported beside risk, never multiplied in</text>
       <text class="p-out" id="out2" x="1078" y="204" text-anchor="end">—</text>
     </g>
 
     <g class="p-head risky" id="head3">
       <rect class="p-headbox" x="676" y="262" width="418" height="96" rx="3"/>
-      <text class="p-lbl" x="694" y="288" style="fill:#8B909B">Step 3 · MHC-I groove · HLA-A*02:01</text>
-      <text class="p-title" x="694" y="318">Does it fit the groove?</text>
-      <text class="p-tx" x="694" y="342" font-size="11.5">64-d projection · cosine to the binder centroid</text>
+      <text class="p-lbl" x="694" y="288" style="fill:#8B909B">Student · NetMHCpan 4.1 · HLA-A*02:01</text>
+      <text class="p-title" x="694" y="318">EL · BA · affinity</text>
+      <text class="p-tx" x="694" y="342" font-size="11.5">mean-pool 9 · LN · 256 GELU · 5-fold ensemble</text>
       <text class="p-out" id="out3" x="1078" y="316" text-anchor="end">—</text>
     </g>
 
@@ -1383,10 +1390,10 @@ body{
       <path class="p-wire" d="M1098,198 C 1116,198 1116,198 1134,198"/>
       <path class="p-wire" d="M1098,310 C 1116,310 1116,198 1134,198"/>
       <rect x="1144" y="38" width="276" height="320" rx="3" fill="#07080D"/>
-      <text class="p-lbl-l" x="1166" y="70">Composite risk</text>
+      <text class="p-lbl-l" x="1166" y="70">Processing composite Rᵢ</text>
       <text class="p-final" id="pipeRisk" x="1166" y="126">0.00</text>
-      <text class="p-tx" x="1166" y="152" font-size="11" style="fill:#7C8496">geometric mean of the three</text>
-      <text class="p-tx" x="1166" y="169" font-size="11" style="fill:#7C8496">gates · protein = mean top-5 Sᵢ</text>
+      <text class="p-tx" x="1166" y="152" font-size="11" style="fill:#7C8496">geom. mean of N · C · BA</text>
+      <text class="p-tx" x="1166" y="169" font-size="11" style="fill:#7C8496">protein = mean top-5 Sᵢ</text>
       <line x1="1166" y1="192" x2="1398" y2="192" stroke="#1B2130"/>
       <text class="p-lbl-l" x="1166" y="216">Confidence</text>
       <text class="p-conf" id="pipeConf" x="1398" y="218" text-anchor="end">0.00</text>
@@ -1396,99 +1403,50 @@ body{
     <!-- why it matters strip -->
     <g class="p-item" id="pipeWhy">
       <line x1="0" y1="400" x2="1420" y2="400" stroke="#C4C7D0" stroke-width="1"/>
-      <text class="p-note" x="0" y="430">A checkpoint stops being a tool call. It becomes a <tspan font-weight="600" fill="#0E1015">direction in one shared space</tspan> — which is the only reason the steering on slide 06 is possible.</text>
+      <text class="p-note" x="0" y="430">A checkpoint stops being a tool call. It becomes an <tspan font-weight="600" fill="#0E1015">inspectable MHC-I liability profile</tspan> — EL, BA, cleavage, and TAP stay separate fields a scientist can challenge.</text>
     </g>
   </svg>
 
   <div class="pipe-strip rv" style="animation-delay:.2s">
-    <span>cleavage <b>2560→128→64→2</b>, BCE + isotonic</span>
-    <span>TAP <b>ridge α=10</b>, 50-sample bootstrap σ</span>
-    <span>MHC <b>PCA-64</b> + per-allele binder centroid</span>
-    <span>risk = <b>geometric mean</b>, TAP reported beside it</span>
+    <span>cleavage + TAP <b>inherited Chao1</b> · separate evidence</span>
+    <span>MHC student <b>EL · BA · affinity</b> · 5-fold mean</span>
+    <span>Rᵢ = geom mean(N,C,BA) · Sᵢ ranks campaigns</span>
+    <span>protein summary = <b>mean top-5 Sᵢ</b></span>
   </div>
 
-  <div class="foot">Scores shown are an illustrative window. Window composite is the geometric mean of the three calibrated gates; campaign pathway score is S<sub>i</sub> = EL<sup>0.70</sup> · (√(N·C))<sup>0.30</sup>; protein summary is the mean of the top-5 S<sub>i</sub>. TAP is reported beside the risk, never multiplied into it. Confidence is a decomposed 0–1 diagnostic, not a coverage probability.</div>
+  <div class="foot">Illustrative window. Rᵢ and Sᵢ are unitless triage heuristics and teacher-like propensities — not immune-response probabilities. TAP stays beside the profile. Direct human HLA-A*02:01 affinity and immunopeptidomics validation remain required.</div>
 </section>
 
 <!-- ═════════════ 04 · WHAT TAUGHT IT ═════════════ -->
 <section class="slide s4" data-i="3">
   <div class="slide-head">
     <div>
-      <div class="eyebrow rv">What taught it · and what it already shows</div>
-      <h2 class="h2 rv" style="animation-delay:.06s">Five million labelled windows —<br><em>and de novo proteins already stand out.</em></h2>
+      <div class="eyebrow rv">What taught it · PDA → NetMHCpan student</div>
+      <h2 class="h2 rv" style="animation-delay:.06s">Designed-protein space.<br><em>Teacher imitation — not measured HLA.</em></h2>
     </div>
-    <button class="replay rv" id="replay4" style="animation-delay:.12s">Run again</button>
   </div>
 
   <div class="train-grid">
-    <svg id="datasvg" viewBox="0 0 720 470" preserveAspectRatio="xMidYMid meet">
-      <text class="d-lbl" x="0" y="16">9-mer windows sampled per domain</text>
-
-      <g id="dataRows"></g>
-
-      <line x1="0" y1="250" x2="720" y2="250" stroke="#C4C7D0"/>
-      <text class="d-lbl d-item" id="dTotalLbl" x="0" y="278">Aligned rows in the build</text>
-      <text class="d-total d-item" id="dTotal" x="0" y="336">0</text>
-      <text class="d-name d-item" id="dTotalSub" x="0" y="362">28,741 parent proteins · stratified across 10 percentile bins · HLA-A*02:01</text>
-
-      <!-- split bar -->
-      <g class="d-item" id="dSplit">
-        <text class="d-lbl" x="0" y="404">Cluster-grouped split</text>
-        <rect x="0" y="416" width="575" height="22" fill="#8B909B"/>
-        <rect x="575" y="416" width="72" height="22" fill="#5B616E"/>
-        <rect x="647" y="416" width="73" height="22" fill="#0E1015"/>
-        <text class="d-name" x="0" y="458" font-size="11">train 3,993,079</text>
-        <text class="d-name" x="720" y="458" font-size="11" text-anchor="end">val 497,364 · test 510,170</text>
-      </g>
-
-      <g class="d-item" id="dStamp">
-        <text class="d-stamp" x="720" y="404" text-anchor="end">✓ 0 of 29,353 protein clusters span two splits</text>
-      </g>
-    </svg>
-
     <div class="teach-stack">
-      <div class="teach rv" style="animation-delay:.18s">
-        <div class="teach-k">Cleavage labels</div>
-        <div class="teach-t">Pepsickle</div>
-        <p class="teach-c">Run once per <b>parent protein</b>, not per peptide — it predicts a cleavage probability at every residue, and we slice per window. Pinned to torch 1.13, so it lives in its own venv and is called as a subprocess.</p>
+      <div class="teach rv" style="animation-delay:.14s">
+        <div class="teach-k">Teacher labels</div>
+        <div class="teach-t">NetMHCpan 4.1</div>
+        <p class="teach-c">Every overlapping PDA 9-mer labeled for <b>EL rank</b>, <b>BA rank</b>, and <b>BA affinity</b>. The student imitates the teacher in designed-protein space — it does not beat NetMHCpan on NetMHCpan’s own target.</p>
       </div>
-      <div class="teach rv" style="animation-delay:.24s">
-        <div class="teach-k">Presentation labels</div>
-        <div class="teach-t">MHCflurry 2</div>
-        <p class="teach-c">Affinity in nM and allele percentile for all <b>5,000,000</b> teacher rows. Binders (≤2nd percentile) define the centroid the MHC head measures cosine distance to.</p>
+      <div class="teach rv" style="animation-delay:.2s">
+        <div class="teach-k">Representation</div>
+        <div class="teach-t">Frozen ESM-2 650M</div>
+        <p class="teach-c">Mean of nine residue vectors. Compact head: layer-norm → GELU + dropout → three sigmoid outputs. Deployment averages the fold heads.</p>
       </div>
-      <div class="teach dark rv" style="animation-delay:.3s">
-        <div class="teach-k">Transport labels</div>
-        <div class="teach-t"><em>613</em> measured peptides</div>
-        <p class="teach-c">DS613 is the whole world of public TAP measurements. We impute the rest with a ridge on one-hot 9-mers <b>and flag every imputed row</b> — the TAP head is only ever fit on the 613 real ones.</p>
+      <div class="teach dark rv" style="animation-delay:.26s">
+        <div class="teach-k">Inherited separately</div>
+        <div class="teach-t">Chao1 cleavage · TAP</div>
+        <p class="teach-c">Processing heads stay as separate evidence. They are <b>not</b> jointly trained with the PDA MHC student and have not been revalidated as the MHC headline result.</p>
       </div>
     </div>
   </div>
 
-  <div class="finding rv" style="animation-delay:.36s">
-    <div class="finding-k">Mean proteasomal cleavage probability · uncorrelated with the sampling variable (r = −0.003)</div>
-    <div class="finding-cols">
-      <div class="fcol hot">
-        <b>0.345</b><span>de novo</span>
-        <i class="ftrack"><em style="--w:100%"></em></i>
-      </div>
-      <div class="fcol">
-        <b>0.336</b><span>bacterial</span>
-        <i class="ftrack"><em style="--w:74%"></em></i>
-      </div>
-      <div class="fcol">
-        <b>0.325</b><span>human</span>
-        <i class="ftrack"><em style="--w:41%"></em></i>
-      </div>
-      <div class="fcol">
-        <b>0.312</b><span>viral</span>
-        <i class="ftrack"><em style="--w:6%"></em></i>
-      </div>
-      <p class="finding-note">De novo designs are the <b>most cleavable class in the build</b>, ahead of the human proteome with non-overlapping bootstrap intervals — and they are <b>1.33× over-represented among predicted binders</b> where human sits at 0.99× and viral at 0.78×. On both gates, the class we are learning to design is the class most likely to be read.</p>
-    </div>
-  </div>
-
-  <div class="foot">Sources: UniProt Swiss-Prot (CC BY 4.0) for human / viral / bacterial parents, RCSB PDB de novo design entities (public domain), DS613 (Diez-Rivero et al. 2010, unverified mirror, downloaded locally and never redistributed). Windows are quantile-stratified on mhc_percentile, so the corpus deliberately over-represents binders (7.5% at ≤2nd percentile against ~2% for a representative set) and no absolute binder frequency here is a natural rate — the 1.33× figure is within-corpus enrichment, and cleavage is quoted instead because it is uncorrelated with that sampling variable. Cleavage values are Pepsickle teacher predictions, not measured proteasome assays. De novo is the smallest domain (631 parents, 33,444 rows). Split groups are protein and peptide clusters, so a near-duplicate cannot sit on both sides of the wall.</div>
+  <div class="foot">Corpus: Protein Design Archive designed parents — not the PDB. Labels are NetMHCpan 4.1 for HLA-A*02:01. Agreement with the teacher is not experimental presentation accuracy; a separate non-PDA cohort is required for biological validation.</div>
 </section>
 
 <!-- ═════════════ 05 · READING THE SCORE ═════════════ -->
@@ -1496,7 +1454,7 @@ body{
   <div class="slide-head">
     <div>
       <div class="eyebrow rv">Reading the score</div>
-      <h2 class="h2 rv" style="animation-delay:.06s">One number is a rumour.<br><em>Three decompositions are an argument.</em></h2>
+      <h2 class="h2 rv" style="animation-delay:.06s">Named fields, not one score.<br><em>Three decompositions you can challenge.</em></h2>
     </div>
     <button class="replay rv" id="replay6" style="animation-delay:.12s">Run again</button>
   </div>
@@ -1504,16 +1462,16 @@ body{
   <div class="score-grid">
     <!-- ── risk ── -->
     <div class="score-card rv" style="animation-delay:.14s">
-      <div class="score-k">1 · The risk score</div>
-      <div class="score-t">Why a product, not an average.</div>
-      <p class="score-c">Presentation needs <b>every</b> gate to open. An average forgives a closed one; a geometric mean does not — one near-zero gate drags the whole score to zero, which is what biology does. Campaign ranking uses pathway score <b>S<sub>i</sub></b>; the protein summary is the <b>mean of the top-5 S<sub>i</sub></b> values — a prioritization heuristic, not an immune-response probability.</p>
+      <div class="score-k">1 · Named outputs</div>
+      <div class="score-t">Separate fields — not one immunogenicity score.</div>
+      <p class="score-c"><b>overall_mhci_risk</b> is EL presentation propensity. <b>composite_processing_risk</b> (R<sub>i</sub>) is the geometric mean of N-cleavage, C-cleavage, and BA. Campaign ranking uses pathway score S<sub>i</sub> = EL<sup>0.70</sup>·(√(N·C))<sup>0.30</sup>; the protein summary is the <b>mean of the top-5 S<sub>i</sub></b>. Unitless triage heuristics — not immune-response probabilities.</p>
       <div class="gm" id="gmRows">
         <div class="gm-row"><span class="gm-n">cleave N</span><i class="gm-track"><em id="gmb0"></em></i><b id="gmv0">0.91</b></div>
         <div class="gm-row"><span class="gm-n">cleave C</span><i class="gm-track"><em id="gmb1"></em></i><b id="gmv1">0.88</b></div>
-        <div class="gm-row"><span class="gm-n">presentation</span><i class="gm-track"><em id="gmb2"></em></i><b id="gmv2">0.97</b></div>
+        <div class="gm-row"><span class="gm-n">BA bind</span><i class="gm-track"><em id="gmb2"></em></i><b id="gmv2">0.97</b></div>
       </div>
       <div class="gm-eq">
-        <span class="gm-eq-l">³√( 0.91 × 0.88 × 0.97 )</span>
+        <span class="gm-eq-l">Rᵢ = ³√( 0.91 × 0.88 × 0.97 )</span>
         <span class="gm-eq-r" id="gmOut">0.92</span>
       </div>
       <div class="gm-tap">
@@ -1543,30 +1501,30 @@ body{
     <div class="score-card wide dark rv" style="animation-delay:.26s">
       <div class="score-k">3 · Explainability</div>
       <div class="score-t">We do not show you attention.</div>
-      <p class="score-c">The heads are an MLP, a ridge, and a cosine — <b>there are no attention maps to show</b>, and borrowing ESM's would explain the encoder, not the prediction. So we decompose the prediction itself onto residues.</p>
+      <p class="score-c">The MHC student is an MLP over mean-pooled ESM-2 — <b>there are no attention maps to show</b>, and borrowing ESM's would explain the encoder, not the prediction. Residue tracks decompose window risk and student outputs onto the sequence.</p>
 
       <div class="track-block">
-        <div class="track-k">risk_max · worst 9-mer covering each residue</div>
+        <div class="track-k">risk_max · worst window covering each residue</div>
         <div class="heat" id="heatRisk"></div>
       </div>
       <div class="track-block">
-        <div class="track-k">mhc_importance · residue cosine to the binder centroid</div>
+        <div class="track-k">mhc_importance · residue contribution to the MHC student call</div>
         <div class="heat" id="heatMhc"></div>
       </div>
       <div class="heat-seq" id="heatSeq"></div>
 
       <div class="attr-out" id="attrOut">
         <span class="attr-flag">Worst window · <b>34–43</b></span>
-        <span class="attr-note">Nine windows cover each residue; each is painted by the worst one. The second track is the same cosine that <b>Steer to Safety picks its mutation site from</b> — so the picture and the decision are the same quantity.</span>
+        <span class="attr-note">Nine windows cover each residue; each is painted by the worst one. The second track is the same quantity <b>Steer to Safety</b> uses to pick a mutation site — so the picture and the decision are the same signal.</span>
       </div>
     </div>
   </div>
 
-  <div class="foot">Both tracks come from <span style="letter-spacing:0">score.compute_residue_heatmap</span> and <span style="letter-spacing:0">score.attach_mhc_residue_importance</span>; values shown are illustrative for one binder region. risk_max is the maximum composite risk over the ≤9 windows covering a residue, carrying the confidence of that window. mhc_importance maps residue-level cosine from [−1,1] to [0,1] so it shares the risk colour scale — it is an alignment score, not an attribution with a conservation guarantee.</div>
+  <div class="foot">Illustrative binder region. Fields stay separate: EL, BA, R<sub>i</sub>, S<sub>i</sub>, TAP, and confidence. Teacher-like propensities for HLA-A*02:01 triage — not calibrated human immunogenicity or ADA.</div>
 </section>
 
-<!-- ═════════════ 06 · STEER TO SAFETY (hidden for now) ═════════════ -->
-<section class="slide s5" data-i="5" hidden aria-hidden="true">
+<!-- ═════════════ 06 · STEER TO SAFETY ═════════════ -->
+<section class="slide s5" data-i="5">
   <div class="slide-head">
     <div>
       <div class="eyebrow rv">The point of a shared space</div>
@@ -1626,66 +1584,8 @@ body{
   <div class="foot">Animated illustration of the objective implemented in <span style="letter-spacing:0">src/re_agent/e2e_pls/steer.py</span>, not a recorded run. The latent plane is a 2-D sketch of the 64-d MHC projection. Every accepted mutation in the real loop is re-encoded and re-scored on the discrete sequence before acceptance, and the trace is written to JSON with the model version, dataset hash, and every rejected candidate and its reason.</div>
 </section>
 
-<!-- ═════════════ 06 · WHAT IT UNLOCKS ═════════════ -->
-<section class="slide s6" data-i="6">
-  <div class="slide-head">
-    <div>
-      <div class="eyebrow rv">Why we built it this weekend</div>
-      <h2 class="h2 rv" style="animation-delay:.06s">500 fresh binder backbones against<br><em>five targets nobody can drug.</em></h2>
-    </div>
-    <p class="lede rv" style="animation-delay:.12s; max-width:36ch">Generated here with RFdiffusion3 on Modal. Binders are not only extracellular drugs — the same stack designs intracellular tools and biosensors that a cell would express from a vector. MHC-I is the presentation framework for that in-cell use.</p>
-  </div>
-
-  <div class="unlock-grid">
-    <div class="target-board rv" style="animation-delay:.16s">
-      <div class="target-row control">
-        <span class="target-name"><b>PD-L1</b><small>5O45 · positive control</small></span>
-        <span class="target-track"><i class="target-fill" style="--w:36%"></i></span>
-        <span class="target-val">100<small>backbones</small></span>
-      </div>
-      <div class="target-row">
-        <span class="target-name"><b>KRAS4b</b><small>6VJJ · effector face</small></span>
-        <span class="target-track"><i class="target-fill" style="--w:43%"></i></span>
-        <span class="target-val">100<small>backbones</small></span>
-      </div>
-      <div class="target-row">
-        <span class="target-name"><b>MYC · MAX</b><small>1NKP · leucine zipper</small></span>
-        <span class="target-track"><i class="target-fill" style="--w:31%"></i></span>
-        <span class="target-val">100<small>backbones</small></span>
-      </div>
-      <div class="target-row">
-        <span class="target-name"><b>STAT3</b><small>1BG1 · SH2 dimer interface</small></span>
-        <span class="target-track"><i class="target-fill" style="--w:49%"></i></span>
-        <span class="target-val">100<small>backbones</small></span>
-      </div>
-      <div class="target-row">
-        <span class="target-name"><b>β-catenin</b><small>1JDH · ARM groove, TCF site</small></span>
-        <span class="target-track"><i class="target-fill" style="--w:100%"></i></span>
-        <span class="target-val">100<small>backbones</small></span>
-      </div>
-    </div>
-
-    <div class="unlock-stack rv" style="animation-delay:.24s">
-      <div class="unlock-card signal">
-        <strong>15 / 16</strong>
-        <span>PD-L1 RFdiffusion3 backbones contacted all three foundry hotspots within 4.5 Å; all 16 did so within 6 Å. Heavy-atom geometry on generated complexes — not AlphaFold or ESMFold.</span>
-      </div>
-      <div class="unlock-card">
-        <strong>5.6 h</strong>
-        <span>GPU time to train all 500 backbones · bars show wall-clock per target</span>
-      </div>
-      <div class="unlock-card">
-        <strong>92 ×</strong>
-        <span>windows per design that a binding-only screen would score without context — and that CHAO scores with it</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="foot">Backbones only: sequence design (ProteinMPNN) and AF2/ESMFold validation were not run. The PD-L1 gate is min heavy-atom distance on RFdiffusion3 complexes (Y56 / M115 / Y123): 15 of 16 at 4.5 Å, 16 of 16 at 6 Å. Bar length is GPU wall-clock per target, not a quality score — 5.6 hours on GPU for the full 500. Hotspots and contigs follow the RosettaCommons foundry binder protocol; per-target caveats — including that 6VJJ is wild-type KRAS4b rather than G12D — are recorded in results/rfd3_binders/report.md.</div>
-</section>
-
 <!-- ═════════════ 08 · THE FULL LOOP ═════════════ -->
-<section class="slide s8" data-i="7">
+<section class="slide s8" data-i="6">
   <div class="slide-head">
     <div>
       <div class="eyebrow rv">System architecture</div>
@@ -1734,7 +1634,7 @@ body{
     <div class="loop-step wet">
       <div class="ls-num">03</div>
       <div class="ls-tool">Benchling ELN</div>
-      <div class="ls-title">Register the design library.</div>
+      <div class="ls-title">Capture the design library.</div>
       <p class="ls-desc">Every de novo sequence lands in the ELN with its target, contig, hotspots and generation parameters — one entry per design, before any filtering.</p>
       <div class="ls-viz">
         <div class="lv-cap lv-pop" style="--i:0">unfiltered library</div>
@@ -1744,15 +1644,15 @@ body{
           <div class="lv-row lv-pop dim" style="--i:3">… 498 still raw</div>
         </div>
       </div>
-      <div class="ls-out">→ versioned<br>design registry</div>
+      <div class="ls-out">→ versioned<br>design library</div>
       <span class="ls-state next">next</span>
     </div>
 
     <div class="loop-step ours">
       <div class="ls-num">04</div>
       <div class="ls-tool">CHAO</div>
-      <div class="ls-title">Score the immune journey.</div>
-      <p class="ls-desc">Three latent projections per 9-mer: cleavage, TAP, MHC-I. Composite risk, decomposed confidence, per-residue attribution.</p>
+      <div class="ls-title">Score HLA-A*02:01 liabilities.</div>
+      <p class="ls-desc">Per 9-mer: cleavage, TAP, EL, and BA as separate fields — teacher-like MHC-I triage, not a probability of an immune response.</p>
       <div class="ls-viz">
         <div class="lv-card">
           <div class="lv-seq">
@@ -1805,48 +1705,17 @@ body{
       <span class="ls-state built">built</span>
     </div>
 
-    <div class="loop-step ours">
-      <div class="ls-num">05</div>
-      <div class="ls-tool">CHAO · steer</div>
-      <div class="ls-title">Derisk the ones that fail.</div>
-      <p class="ls-desc">Latent-guided mask-fill under hard constraints: ≤3 substitutions, protected interface residues, likelihood preservation, discrete re-verification.</p>
-      <div class="ls-viz">
-        <div class="lv-card">
-          <svg class="lv-latent lv-pop" style="--i:0" viewBox="0 0 120 44" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-            <circle cx="92" cy="14" r="2.2" fill="#E8237E" opacity=".55"/>
-            <circle cx="98" cy="18" r="1.6" fill="#E8237E" opacity=".4"/>
-            <circle cx="86" cy="16" r="1.5" fill="#E8237E" opacity=".35"/>
-            <circle cx="94" cy="10" r="1.4" fill="#E8237E" opacity=".3"/>
-            <circle cx="28" cy="34" r="2.0" fill="#35C48A" opacity=".55"/>
-            <circle cx="34" cy="38" r="1.5" fill="#5B616E" opacity=".45"/>
-            <circle cx="22" cy="32" r="1.4" fill="#5B616E" opacity=".4"/>
-            <path d="M90,16 C 72,22 48,28 32,34" fill="none" stroke="#E8237E" stroke-width="1.2"/>
-            <circle cx="90" cy="16" r="3" fill="#E8237E"/>
-            <circle cx="32" cy="34" r="3" fill="#35C48A"/>
-          </svg>
-          <div class="lv-mut lv-pop" style="--i:2">
-            <span class="lv-from">YLLPAIVHI</span>
-            <span class="lv-arrow">→</span>
-            <span class="lv-to">YQLPAIEHD</span>
-          </div>
-          <div class="lv-delta lv-pop" style="--i:3"><s>0.78</s>0.19</div>
-        </div>
-      </div>
-      <div class="ls-out">→ derisked variants<br>+ full JSON trace</div>
-      <span class="ls-state built">built</span>
-    </div>
-
     <div class="loop-step wet">
-      <div class="ls-num">06</div>
+      <div class="ls-num">05</div>
       <div class="ls-tool">Benchling ELN</div>
-      <div class="ls-title">Register the derisked library.</div>
-      <p class="ls-desc">Derisked sequences return to the ELN linked to their parent design, carrying the risk delta and mutation set — ready for wet-lab pickup.</p>
+      <div class="ls-title">Hand off shortlisted constructs.</div>
+      <p class="ls-desc">Shortlisted sequences return to the ELN linked to their parent design, carrying scores and provenance — ready for wet-lab pickup.</p>
       <div class="ls-viz">
         <div class="lv-cap lv-pop" style="--i:0">linked constructs</div>
         <div class="lv-reg dashed">
           <div class="lv-row lv-pop" style="--i:1"><b>DN-0041</b> parent</div>
-          <div class="lv-link lv-pop" style="--i:2">↓  3 mut · Δ −0.59</div>
-          <div class="lv-row lv-pop ready" style="--i:3"><b>DN-0041-s3</b> ready</div>
+          <div class="lv-link lv-pop" style="--i:2">↓  scored · keep</div>
+          <div class="lv-row lv-pop ready" style="--i:3"><b>DN-0041</b> ready</div>
         </div>
       </div>
       <div class="ls-out">→ wet-lab-ready<br>constructs</div>
@@ -1854,7 +1723,7 @@ body{
     </div>
 
     <div class="loop-step">
-      <div class="ls-num">07</div>
+      <div class="ls-num">06</div>
       <div class="ls-tool">Report</div>
       <div class="ls-title">Justify the downselection.</div>
       <p class="ls-desc">Every score, every rejected candidate and its reason, model version and dataset hash. The written basis for which designs get made.</p>
@@ -1864,7 +1733,7 @@ body{
           <div class="lv-row lv-pop" style="--i:1"><b>model</b> chao · v0</div>
           <div class="lv-row lv-pop" style="--i:2"><b>hash</b> dab57890</div>
           <div class="lv-row lv-pop" style="--i:3"><b>reject</b> 14 · interface</div>
-          <div class="lv-row lv-pop ok" style="--i:4"><b>accept</b> 3 · Δ −0.59</div>
+          <div class="lv-row lv-pop ok" style="--i:4"><b>accept</b> 3 · keep</div>
         </div>
       </div>
       <div class="ls-out">→ downselection report<br>+ reproducible trace</div>
@@ -1873,17 +1742,17 @@ body{
   </div>
 
   <div class="loop-legend rv" style="animation-delay:.3s">
-    <span><b>The contribution is 04 → 05</b> — the rest is a real pipeline it has to survive inside</span>
+    <span><b>The contribution is 04</b> — MHC-I liability scoring inside a real design loop</span>
     <span><em>■</em> CHAO</span>
     <span class="g">■ wet-lab handoff</span>
     <span><b>solid</b> = built this weekend · <b>dashed</b> = next</span>
   </div>
 
-  <div class="foot">Stages 03 and 06 are the Benchling integration we have specified but not yet implemented — the ELN is where a design library stops being a folder of PDBs and becomes something a bench scientist can act on, which is why the loop is drawn with them rather than around them. Everything marked "built" exists in this repository: RFD3 backbones in results/rfd3_binders/, scoring in score.py, steering with full candidate traces in steer.py.</div>
+  <div class="foot">Stages 03 and 05 are the Benchling handoff we have specified but not yet implemented — the ELN is where a design library stops being a folder of PDBs and becomes something a bench scientist can act on. Everything marked "built" exists in this repository: RFD3 backbones in results/rfd3_binders/, scoring in score.py. CHAO scores teacher-like HLA-A*02:01 liabilities; it does not estimate the probability of a full immune response.</div>
 </section>
 
-<!-- ═════════════ 09 · LIVE DEMO ═════════════ -->
-<section class="slide s-demo" data-i="8">
+<!-- ═════════════ 10 · LIVE DEMO ═════════════ -->
+<section class="slide s-demo" data-i="7">
   <div class="slide-head">
     <div>
       <div class="eyebrow rv">Live capture</div>
@@ -1924,119 +1793,12 @@ body{
   </div>
 </section>
 
-<!-- ═════════════ 10 · STUDENT · TEACHER ═════════════ -->
-<section class="slide s7" data-i="9">
-  <div class="slide-head">
-    <div>
-      <div class="eyebrow rv">How the surrogate learns</div>
-      <h2 class="h2 rv" style="animation-delay:.06s">A surrogate that says so.<br><em>The failure mode of this field is confident silence.</em></h2>
-    </div>
-    <button class="replay rv" id="replay7" style="animation-delay:.12s">Run again</button>
-  </div>
-  <p class="lede rv" style="animation-delay:.14s; max-width:52ch">De novo proteins have no eluted-ligand labels. Naturals do. Fit the teachers there, and an unlabeled abundance becomes something a student can still learn from.</p>
-
-  <svg id="stsvg" viewBox="0 0 1420 430" preserveAspectRatio="xMidYMid meet">
-    <defs>
-      <marker id="stah" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-        <path d="M0,0 L7,3.5 L0,7 z" fill="#C4C7D0"/>
-      </marker>
-    </defs>
-
-    <!-- fit on naturals -->
-    <g class="st-item" id="stFit">
-      <text class="st-lbl" x="0" y="188">Fit on naturals</text>
-      <text class="st-lbl" x="0" y="208" style="fill:#B4B9C4">the labelled world</text>
-      <rect x="0" y="226" width="168" height="100" rx="3" fill="#07080D"/>
-      <g id="stLayers" fill="#1E2536"></g>
-      <text class="st-lbl-l" x="84" y="256" text-anchor="middle">human</text>
-      <text class="st-lbl-l" x="84" y="274" text-anchor="middle">viral</text>
-      <text class="st-lbl-l" x="84" y="292" text-anchor="middle">bacterial</text>
-      <text class="st-chip-t" x="84" y="312" text-anchor="middle" style="fill:#F2F3F6" font-size="13">28,741 parents</text>
-      <rect id="stPulse" x="12" y="318" width="144" height="4" fill="#E8237E" opacity="0"/>
-    </g>
-    <g id="stWires" opacity="0">
-      <path class="st-wire" d="M174,256 C 218,256 218,118 262,118" marker-end="url(#stah)"/>
-      <path class="st-wire" d="M174,296 C 218,296 218,348 262,348" marker-end="url(#stah)"/>
-    </g>
-
-    <!-- teacher branch -->
-    <g id="stTeacher">
-      <text class="st-lbl st-item" x="272" y="86">Teacher · frozen tools</text>
-      <g transform="translate(272,102)">
-        <g class="st-item"><rect class="st-chip" x="0" y="0" width="108" height="36" rx="2"/><text class="st-chip-t" x="54" y="23" text-anchor="middle">naturals</text></g>
-        <g class="st-item"><rect class="st-chip" x="120" y="0" width="118" height="36" rx="2"/><text class="st-chip-t" x="179" y="23" text-anchor="middle">Pepsickle</text></g>
-        <g class="st-item"><rect class="st-chip" x="250" y="0" width="126" height="36" rx="2"/><text class="st-chip-t" x="313" y="23" text-anchor="middle">MHCflurry</text></g>
-        <g class="st-item"><rect class="st-chip" x="388" y="0" width="110" height="36" rx="2"/><text class="st-chip-t" x="443" y="23" text-anchor="middle">TAP ridge</text></g>
-        <g class="st-item"><rect x="510" y="0" width="72" height="36" rx="2" fill="#FFFFFF" stroke="#E8237E" stroke-width="1.8"/><text class="st-chip-t" x="546" y="23" text-anchor="middle">ŷ</text></g>
-      </g>
-      <text class="st-tx st-item" x="272" y="168" font-size="11.5" style="fill:#8B909B">fit once on measured natural peptides · then they only emit scores</text>
-    </g>
-
-    <!-- student branch -->
-    <g id="stStudent">
-      <text class="st-lbl st-item" x="272" y="316" style="fill:#E8237E">Student · CHAO heads</text>
-      <g transform="translate(272,332)">
-        <g class="st-item"><rect class="st-chip" x="0" y="0" width="108" height="36" rx="2"/><text class="st-chip-t" x="54" y="23" text-anchor="middle">de novo</text></g>
-        <g class="st-item">
-          <rect x="120" y="0" width="238" height="36" rx="2" fill="#07080D"/>
-          <g id="stAAs"></g>
-        </g>
-        <g class="st-item"><rect class="st-chip" x="370" y="0" width="128" height="36" rx="2"/><text class="st-chip-t" x="434" y="23" text-anchor="middle">ESM-2 650M</text></g>
-        <g class="st-item"><rect x="510" y="0" width="72" height="36" rx="2" fill="#FFFFFF" stroke="#E8237E" stroke-width="1.8"/><text class="st-chip-t" x="546" y="23" text-anchor="middle">ŷ</text></g>
-      </g>
-      <text class="st-tx st-item" x="272" y="398" font-size="11.5" style="fill:#8B909B">no ground-truth label</text>
-      <text class="st-tx st-item" x="272" y="416" font-size="11.5" style="fill:#8B909B">the teacher score is the only supervision</text>
-    </g>
-
-    <!-- distillation: teacher scores are the target the student has to match -->
-    <g id="stLinkGroup" opacity="0">
-      <line x1="818" y1="138" x2="818" y2="178"/>
-      <line x1="818" y1="292" x2="818" y2="332"/>
-    </g>
-    <g id="stDistill" opacity="0">
-      <rect x="620" y="178" width="396" height="114" rx="3" fill="#07080D"/>
-      <text class="st-lbl-l" x="636" y="198">Teacher scores · the target</text>
-      <g id="stStripT"></g>
-      <g id="stStripTicks"></g>
-      <g id="stStripS"></g>
-      <text class="st-lbl-l" x="636" y="276">Student</text>
-      <text class="st-lbl-l" x="996" y="276" text-anchor="end">cleave · TAP · MHC</text>
-    </g>
-    <g id="stDistillNote" opacity="0">
-      <text class="st-lbl" x="1044" y="198" style="fill:#E8237E">Stop-gradient on the teacher</text>
-      <text class="st-note dim" x="1044" y="226">The student copies the scores, not the</text>
-      <text class="st-note dim" x="1044" y="248">biology. De novo never needed a T-cell</text>
-      <text class="st-note dim" x="1044" y="270">assay to enter the training set.</text>
-      <text class="st-lbl" x="1044" y="304">virtually limitless windows</text>
-    </g>
-
-    <!-- objective -->
-    <g transform="translate(0,340)">
-      <text class="st-lbl st-item" id="stObjLbl" x="0" y="0">Objective</text>
-      <g class="st-tx" font-size="12.5">
-        <text class="st-loss" id="stLoss1" x="0" y="26" opacity=".18">ℒ<tspan font-size="10" dy="3">teacher</tspan><tspan dy="-3" style="fill:#8B909B">  fit on naturals</tspan></text>
-        <g class="st-loss" id="stLoss2" opacity=".18">
-          <text x="0" y="50">ℒ<tspan font-size="10" dy="3">student</tspan><tspan dy="-3" style="fill:#8B909B">  match ŷ on 5M windows</tspan></text>
-          <text x="18" y="68" style="fill:#8B909B">including de novo</text>
-        </g>
-      </g>
-    </g>
-  </svg>
-
-  <div class="st-strip rv" style="animation-delay:.2s">
-    <span>Teachers <b>Pepsickle · MHCflurry · TAP ridge</b> fit on naturals</span>
-    <span>Student trained on <b>5M+</b> teacher-labelled 9-mers</span>
-    <span>De novo in the mix: <b>33,444</b> windows · 631 parents · 0 measured labels</span>
-  </div>
-
-  <div class="foot">This is a processing surrogate, not immunogenicity. Teacher labels are Pepsickle and MHCflurry predictions plus a TAP ridge on 613 measured peptides — not T-cell assays. The honest move is to say that, then still use the unlabeled de novo abundance as a training signal instead of throwing it away.</div>
-</section>
-
 <!-- ═════════════ 10 · NAME ═════════════ -->
-<section class="slide s-close" data-i="10">
+<section class="slide s-close" data-i="8">
   <h1 class="s1-name rv">CHAO</h1>
   <div class="s1-expand rv" style="animation-delay:.08s">Continuous Hidden Antigen Optimizer</div>
-  <div class="paper-cue rv" style="animation-delay:.14s">
+  <p class="s1-tag rv" style="animation-delay:.12s; max-width:42ch; margin:calc(18 * var(--u)) auto 0;">CHAO makes one early MHC-I evidence lane fast, local, and inspectable so scientists can spend wet-lab time on the most defensible designs.</p>
+  <div class="paper-cue rv" style="animation-delay:.16s">
     The manuscript
     <span>Click the preview to open the full PDF</span>
   </div>
@@ -2047,11 +1809,12 @@ body{
         <span class="paper-cta">Open paper</span>
       </div>
     </div>
-    <div class="paper-meta">PDF · opens in a new tab</div>
+    <div class="paper-meta">PDF · opens in a new tab · teacher imitation, not clinical immunogenicity</div>
   </a>
 </section>
 
 <nav id="rail"></nav>
+<div id="claim-bound">HLA-A*02:01 MHC-I triage only · teacher-distilled · not validated for human immunogenicity or ADA</div>
 <div id="hint">← → to move · R replays · F fullscreen</div>
 <div id="pager">
   <button class="pager-b" id="prevB" aria-label="Previous slide">←</button>
@@ -2580,77 +2343,9 @@ document.getElementById("replay3").addEventListener("click", runS3);
 /* ══════════════════════════════════════════════════════════════
    04 · what taught it
    ══════════════════════════════════════════════════════════════ */
-const DOMAINS = [
-  { name:"natural human · 15,903 parents",     n:4047409, cls:"" },
-  { name:"natural bacterial · 6,890 parents",  n: 690689, cls:"" },
-  { name:"natural viral · 5,317 parents",      n: 229071, cls:"" },
-  { name:"de novo (RCSB) · 631 parents",       n:  33444, cls:"denovo" }
-];
-const dataRows = document.getElementById("dataRows");
-const dBars = [], dNums = [];
-(function buildData(){
-  const max = DOMAINS[0].n, W = 330, X = 272;
-  DOMAINS.forEach(function(d, i){
-    const y = 46 + i * 44;
-    const name = document.createElementNS(svgNS, "text");
-    name.setAttribute("class", "d-name");
-    name.setAttribute("x", 0); name.setAttribute("y", y + 15);
-    name.textContent = d.name;
-    dataRows.appendChild(name);
+function s4clear(){ /* no animated counters on this slide */ }
+function runS4(){ /* conceptual slide — enter animations only */ }
 
-    const track = document.createElementNS(svgNS, "rect");
-    track.setAttribute("x", X); track.setAttribute("y", y);
-    track.setAttribute("width", W); track.setAttribute("height", 20);
-    track.setAttribute("fill", "#D9DBE2");
-    dataRows.appendChild(track);
-
-    const bar = document.createElementNS(svgNS, "rect");
-    bar.setAttribute("class", "d-bar " + d.cls);
-    bar.setAttribute("x", X); bar.setAttribute("y", y);
-    bar.setAttribute("width", 0); bar.setAttribute("height", 20);
-    dataRows.appendChild(bar);
-    dBars.push({ el: bar, w: W * d.n / max });
-
-    const num = document.createElementNS(svgNS, "text");
-    num.setAttribute("class", "d-num");
-    num.setAttribute("x", 720); num.setAttribute("y", y + 16);
-    num.setAttribute("text-anchor", "end");
-    num.textContent = "0";
-    dataRows.appendChild(num);
-    dNums.push({ el: num, n: d.n });
-  });
-})();
-const dTotal = document.getElementById("dTotal");
-const dItems = [document.getElementById("dTotalLbl"), dTotal, document.getElementById("dTotalSub"),
-                document.getElementById("dSplit"), document.getElementById("dStamp")];
-
-function s4clear(){
-  t4.clear(); stopTweens();
-  dBars.forEach(function(b){ b.el.setAttribute("width", 0); });
-  dNums.forEach(function(n){ n.el.textContent = "0"; });
-  dTotal.textContent = "0";
-  dItems.forEach(function(i){ i.classList.remove("on"); });
-}
-function runS4(){
-  s4clear();
-  DOMAINS.forEach(function(d, i){
-    t4.add(function(){
-      tween(760, function(p){
-        dBars[i].el.setAttribute("width", dBars[i].w * p);
-        dNums[i].el.textContent = asInt(dNums[i].n * p);
-      });
-    }, 220 + i * 220);
-  });
-  t4.add(function(){
-    dItems[0].classList.add("on");
-    dItems[1].classList.add("on");
-    dItems[2].classList.add("on");
-    countUp(dTotal, 5, 1100, function(v){ return Math.round(v) + "M+"; });
-  }, 1350);
-  t4.add(function(){ dItems[3].classList.add("on"); }, 2500);
-  t4.add(function(){ dItems[4].classList.add("on"); }, 3100);
-}
-document.getElementById("replay4").addEventListener("click", runS4);
 
 /* ══════════════════════════════════════════════════════════════
    05 · reading the score
@@ -2687,9 +2382,11 @@ const heatCells = { risk: [], mhc: [] };
   for(let i = 0; i < HEAT_SEQ.length; i++){
     const a = document.createElement("i");
     a.style.background = heatColor(HEAT.risk[i]);
+    a.style.opacity = "0";
     heatRisk.appendChild(a); heatCells.risk.push(a);
     const b = document.createElement("i");
     b.style.background = heatColor(HEAT.mhc[i]);
+    b.style.opacity = "0";
     heatMhc.appendChild(b); heatCells.mhc.push(b);
     const s = document.createElement("i");
     s.textContent = HEAT_SEQ[i];
@@ -2722,19 +2419,14 @@ function s6clear(){
 
 function runS6(){
   s6clear();
-  /* the three gates fill, then the geometric mean lands */
   GM.forEach(function(v, i){
     t6.add(function(){ tween(600, function(p){ gmBars[i].style.width = (v * 100 * p) + "%"; }); }, 200 + i * 180);
   });
   t6.add(function(){ countUp(gmOut, 0.92, 700, as2); }, 900);
-
-  /* the four confidence components — the low one lands last, on purpose */
   CF_V.forEach(function(v, i){
     t6.add(function(){ tween(600, function(p){ cfBars[i].style.width = (v * 100 * p) + "%"; }); }, 1300 + i * 200);
   });
   t6.add(function(){ countUp(cfOut, 0.61, 700, as2); }, 2350);
-
-  /* the residue tracks paint left to right, one sweep per track */
   const PAINT_MS = HEAT_SEQ.length * 26;
   t6.add(function(){
     sweep(PAINT_MS, HEAT_SEQ.length, function(i){
@@ -2964,144 +2656,6 @@ function runS8(){
 document.getElementById("replay8").addEventListener("click", runS8);
 
 /* ══════════════════════════════════════════════════════════════
-   09 · student · teacher
-   ══════════════════════════════════════════════════════════════ */
-const ST_SEQ = "GTLR" + "YLLPAIVHI" + "KDSA";
-(function buildStudentTeacher(){
-  const layers = document.getElementById("stLayers");
-  /* decorative bars sit above the stacked domain labels */
-  for(let i = 0; i < 2; i++){
-    const r = document.createElementNS(svgNS, "rect");
-    r.setAttribute("x", 16); r.setAttribute("y", 234 + i * 7);
-    r.setAttribute("width", 136); r.setAttribute("height", 2);
-    layers.appendChild(r);
-  }
-  const aas = document.getElementById("stAAs");
-  const w = 12.2, x0 = 128;
-  for(let i = 0; i < ST_SEQ.length; i++){
-    const core = i >= 4 && i < 13;
-    const t = document.createElementNS(svgNS, "text");
-    t.setAttribute("x", x0 + i * w);
-    t.setAttribute("y", 23);
-    t.setAttribute("text-anchor", "middle");
-    t.setAttribute("font-family", "'IBM Plex Mono', monospace");
-    t.setAttribute("font-size", core ? "11" : "9");
-    t.setAttribute("fill", core ? "#F2F3F6" : "#6A7183");
-    t.textContent = ST_SEQ[i];
-    aas.appendChild(t);
-  }
-  const L = 24, SX = 636, SW = 360, GAP = 2;
-  const CW = (SW - GAP * (L - 1)) / L;
-  const stripT = document.getElementById("stStripT");
-  const stripS = document.getElementById("stStripS");
-  const ticks = document.getElementById("stStripTicks");
-  for(let i = 0; i < L; i++){
-    const x = SX + i * (CW + GAP);
-    const v = 0.22 + 0.62 * (Math.sin(i * 0.55) * 0.35 + Math.sin(i * 0.22 + 1.1) * 0.4 + 0.5);
-    const t = document.createElementNS(svgNS, "rect");
-    t.setAttribute("x", x); t.setAttribute("y", 208);
-    t.setAttribute("width", CW); t.setAttribute("height", 22);
-    t.setAttribute("class", "strip-cell"); t.setAttribute("fill", "#12151F");
-    t.dataset.lit = "rgb(" + ramp(v).join(",") + ")";
-    stripT.appendChild(t);
-    const s = document.createElementNS(svgNS, "rect");
-    s.setAttribute("x", x); s.setAttribute("y", 238);
-    s.setAttribute("width", CW); s.setAttribute("height", 22);
-    s.setAttribute("class", "strip-cell"); s.setAttribute("fill", "#12151F");
-    s.dataset.lit = "rgb(" + ramp(v).join(",") + ")";
-    stripS.appendChild(s);
-    const k = document.createElementNS(svgNS, "line");
-    k.setAttribute("x1", x + CW / 2); k.setAttribute("y1", 230);
-    k.setAttribute("x2", x + CW / 2); k.setAttribute("y2", 238);
-    k.setAttribute("class", "strip-tick");
-    ticks.appendChild(k);
-  }
-})();
-
-const stFit = document.getElementById("stFit");
-const stWires = document.getElementById("stWires");
-const stPulse = document.getElementById("stPulse");
-const stTeacher = document.getElementById("stTeacher");
-const stLinkGroup = document.getElementById("stLinkGroup");
-const stDistill = document.getElementById("stDistill");
-const stDistillNote = document.getElementById("stDistillNote");
-const stCellsT = Array.prototype.slice.call(document.querySelectorAll("#stStripT rect"));
-const stCellsS = Array.prototype.slice.call(document.querySelectorAll("#stStripS rect"));
-const stTicks = Array.prototype.slice.call(document.querySelectorAll("#stStripTicks line"));
-const stLosses = [document.getElementById("stLoss1"), document.getElementById("stLoss2")];
-const stTeacherItems = Array.prototype.slice.call(document.querySelectorAll("#stTeacher .st-item"));
-const stStudentItems = Array.prototype.slice.call(document.querySelectorAll("#stStudent .st-item"));
-const t7 = Timers();
-
-function s7clear(){
-  t7.clear();
-  stFit.classList.remove("on");
-  stWires.setAttribute("opacity", 0);
-  stPulse.setAttribute("opacity", 0);
-  stPulse.setAttribute("y", 318);
-  stTeacher.style.opacity = "1";
-  stTeacherItems.concat(stStudentItems).forEach(function(el){ el.classList.remove("on"); });
-  stLosses.forEach(function(l){ l.setAttribute("opacity", ".18"); });
-  document.getElementById("stObjLbl").classList.remove("on");
-  stCellsT.concat(stCellsS).forEach(function(c){ c.setAttribute("fill", "#12151F"); });
-  stTicks.forEach(function(k){ k.classList.remove("on"); });
-  stLinkGroup.setAttribute("opacity", 0);
-  stDistill.setAttribute("opacity", 0);
-  stDistillNote.setAttribute("opacity", 0);
-}
-
-function runS7(){
-  s7clear();
-  if(REDUCED){
-    stFit.classList.add("on");
-    stWires.setAttribute("opacity", 1);
-    stTeacherItems.concat(stStudentItems).forEach(function(el){ el.classList.add("on"); });
-    stLosses.forEach(function(l){ l.setAttribute("opacity", "1"); });
-    document.getElementById("stObjLbl").classList.add("on");
-    stCellsT.concat(stCellsS).forEach(function(c){ c.setAttribute("fill", c.dataset.lit); });
-    stTicks.forEach(function(k){ k.classList.add("on"); });
-    stLinkGroup.setAttribute("opacity", 1);
-    stDistill.setAttribute("opacity", 1);
-    stDistillNote.setAttribute("opacity", 1);
-    return;
-  }
-
-  t7.add(function(){ stFit.classList.add("on"); }, 80);
-  t7.add(function(){
-    stPulse.setAttribute("opacity", 1);
-    tween(560, function(p){ stPulse.setAttribute("y", 318 - 52 * p); },
-      function(){ stPulse.setAttribute("opacity", 0); });
-  }, 220);
-  t7.add(function(){ stWires.setAttribute("opacity", 1); }, 700);
-
-  stTeacherItems.forEach(function(el, i){
-    t7.add(function(){ el.classList.add("on"); }, 820 + i * 110);
-  });
-  stStudentItems.forEach(function(el, i){
-    t7.add(function(){ el.classList.add("on"); }, 1680 + i * 110);
-  });
-
-  t7.add(function(){
-    stLinkGroup.setAttribute("opacity", 1);
-    stDistill.setAttribute("opacity", 1);
-    document.getElementById("stObjLbl").classList.add("on");
-  }, 2500);
-  stCellsT.forEach(function(c, i){
-    t7.add(function(){ c.setAttribute("fill", c.dataset.lit); }, 2680 + i * 28);
-  });
-  t7.add(function(){ stDistillNote.setAttribute("opacity", 1); }, 3100);
-  stCellsS.forEach(function(c, i){
-    t7.add(function(){
-      stTicks[i].classList.add("on");
-      c.setAttribute("fill", c.dataset.lit);
-    }, 3480 + i * 36);
-  });
-  t7.add(function(){ stLosses[0].setAttribute("opacity", "1"); }, 2700);
-  t7.add(function(){ stLosses[1].setAttribute("opacity", "1"); }, 3200);
-}
-document.getElementById("replay7").addEventListener("click", runS7);
-
-/* ══════════════════════════════════════════════════════════════
    canvases + frame loop
    ══════════════════════════════════════════════════════════════ */
 function resizeCanvases(){
@@ -3189,7 +2743,7 @@ if(demoVideo){
   demoVideo.addEventListener("ended", function(){ setDemoPlaying(false); });
 }
 
-const TITLES = ["CHAO", "The blind spot", "Three projections", "What taught it", "Reading the score", "What it unlocks", "System architecture", "Live demo", "Student · teacher", "CHAO"];
+const TITLES = ["CHAO", "The blind spot", "Inspectable heads", "What taught it", "Reading the score", "Steer to safety", "System architecture", "Live demo", "CHAO"];
 const rail = document.getElementById("rail");
 rail.style.gridTemplateColumns = "repeat(" + TITLES.length + ",1fr)";
 TITLES.forEach(function(name, i){
@@ -3208,7 +2762,7 @@ let cur = -1, entryTimer = null;
 function go(i){
   i = Math.max(0, Math.min(slides.length-1, i));
   if(i === cur) return;
-  s2clear(); s3clear(); s4clear(); s5clear(); s6clear(); s8clear(); s7clear();
+  s2clear(); s3clear(); s4clear(); s5clear(); s6clear(); s8clear();
   stopTweens();
   clearTimeout(entryTimer);
   cur = i;
@@ -3225,9 +2779,9 @@ function go(i){
   if(i === 2) entryTimer = setTimeout(runS3, 460);
   if(i === 3) entryTimer = setTimeout(runS4, 420);
   if(i === 4) entryTimer = setTimeout(runS6, 420);
+  if(i === 5) entryTimer = setTimeout(runS5, 420);
   if(i === 6) entryTimer = setTimeout(runS8, 420);
   if(i === 7) entryTimer = setTimeout(onDemoEnter, 200);
-  if(i === 8) entryTimer = setTimeout(runS7, 420);
   if(i !== 7) pauseDemo();
   hint.style.opacity = i === 0 ? "1" : "0";
   prevB.disabled = i === 0;
@@ -3247,8 +2801,8 @@ window.addEventListener("keydown", function(e){
     else if(cur === 2) runS3();
     else if(cur === 3) runS4();
     else if(cur === 4) runS6();
+    else if(cur === 5) runS5();
     else if(cur === 6) runS8();
-    else if(cur === 8) runS7();
   }
   else if(e.key === "f" || e.key === "F"){
     if(document.fullscreenElement) document.exitFullscreen();
