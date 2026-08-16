@@ -8,23 +8,25 @@ This is the single source of truth for the project narrative, current evidence, 
 
 ## 1. The project in 30 seconds
 
-De novo protein design can now generate hundreds of plausible candidates faster than teams can experimentally test them. Most design pipelines optimize folding and binding first, then discover immune liabilities late, when redesign is expensive.
+A standard RFdiffusion → ProteinMPNN → AlphaFold campaign can leave thousands of structurally plausible candidates. Folding and target contact do not say whether the protein will be processed into peptides that human MHC molecules present. Those presentation events are one immunogenicity framework: cytosolic MHC-I processing and HLA-A*02:01 presentation on the nucleated cell that made the protein, including immune cells. TCR recognition, danger sensing, and animal or human outcomes are later steps — they are why a construct that must function in a human still has to be tested in mice, and they are not what this model scores.
 
-We built an inspectable design-to-screen agent that adds an early MHC-I processing and presentation screen to a de novo protein campaign. The agent grounds a target in literature, prepares typed design calls, gates GPU execution behind explicit approval, validates generated structures, and then scores every 9-mer in passing candidates. The output is a per-window liability profile that helps a scientist decide what to inspect, resample, or deprioritize before wet-lab work.
+This MHC-I-only filter is the primary match when the designed protein is expressed inside the cell from a plasmid, mRNA, or viral vector. That includes intracellular binders and biosensors, not only secreted drugs. An injected extracellular protein can still reach MHC-I by cross-presentation; MHC-II, CD4 help, and antibodies remain the larger gap for that product class.
 
-The current model is not a predictor of clinical immunogenicity. It is an HLA-A*02:01 MHC-I processing and presentation surrogate for campaign triage. Its intended value is speed, local availability, inspectable provenance, and integration into a high-throughput design loop.
+We built an inspectable design-to-screen agent that adds an early HLA-A*02:01 processing and presentation filter after structural triage. The agent grounds a target in literature, prepares typed design calls, gates GPU execution behind explicit approval, validates generated structures, and then scores every 9-mer in passing candidates. The output is a per-window liability profile used to remove the bulk of high-presentation candidates before wet-lab and animal work.
+
+The current model is not a predictor of clinical immunogenicity. It asks three narrower questions: how the protein can be proteolytically processed into peptides, how likely those peptides are to bind HLA-A*02:01, and how likely they are to be presented to CD8 T cells. Danger recognition is the biological reason those questions matter. It is not a model output.
 
 ### One-sentence claim
 
-> A frozen ESM-2 student can reproduce NetMHCpan's HLA-A*02:01 rankings well enough to provide sub-second, per-residue liability triage inside a de novo protein design loop, while preserving the scientific boundary between predicted presentation and observed immunogenicity.
+> A frozen ESM-2 student reproduces NetMHCpan HLA-A*02:01 rankings well enough to downselect a de novo campaign for cytosolic MHC-I processing and presentation liabilities — the framework that matters most when a designed protein is expressed from a genetic payload inside a nucleated cell — while remaining separate from TCR recognition, danger, MHC-II/ADA, and animal or clinical immunogenicity.
 
 ## 2. Why this matters
 
-The bottleneck is moving. Protein generation is becoming cheap, but experimental characterization remains slow and expensive. A scientist may be able to generate 200 candidates and express only 8. Existing structure and binding scores help answer whether a design is likely to fold or contact its target. They do not answer whether degradation of the protein may produce strongly presented human MHC peptides.
+The bottleneck is moving. Protein generation is becoming cheap, but experimental characterization remains slow and expensive. A scientist may generate 10,000 structurally gated candidates and express only a handful. Those proteins still need animal testing before human use. Existing structure and binding scores help answer whether a design is likely to fold or contact its target. They do not answer whether degradation of the protein may produce strongly presented human MHC peptides.
 
-Our product decision is therefore down-selection, not diagnosis. A candidate with a flagged window is not declared immunogenic. It is moved into a higher-priority review bucket, where a scientist can consider mutation tolerance, direct binding assays, immunopeptidomics, MAPPs, or donor-cell experiments.
+Our product decision is therefore down-selection, not diagnosis. A candidate with a flagged window is not declared immunogenic. It is removed from the bulk or moved into a higher-priority review bucket, where a scientist can consider mutation tolerance, direct binding assays, immunopeptidomics, MAPPs, or donor-cell experiments.
 
-This framing bridges the in silico to in vivo gap without claiming that sequence-only computation can replace biological validation.
+This framing sits between in silico generation and in vivo testing. It does not claim that sequence-only computation can replace mice or humans.
 
 ## 3. What the system does
 
@@ -76,7 +78,7 @@ A separate design run produced 500 RFdiffusion3 binder backbones across five tar
 
 ### 4.1 Corpus construction
 
-The Protein Design Archive supplied 1,602 de novo parent proteins. Every parent was tiled into all overlapping 9-mers before any sampling. NetMHCpan 4.1 then labeled each peptide for HLA-A*02:01 using separate EL presentation and BA binding channels.
+The Protein Design Archive supplied 1,602 de novo parent proteins. PDA is a recent curated archive of synthetic designed proteins, mostly from the last several years. It is not the Protein Data Bank, and the Chronowska et al. "40 years" title refers to the protein-design field, not the age of the database. Every parent was tiled into all overlapping 9-mers before any sampling. NetMHCpan 4.1 then labeled each peptide for HLA-A*02:01 using separate EL presentation and BA binding channels.
 
 - 290,937 peptide occurrences before deduplication
 - 160,012 unique 9-mers
@@ -86,7 +88,7 @@ The Protein Design Archive supplied 1,602 de novo parent proteins. Every parent 
 
 Parents sharing any exact 9-mer were connected, and each whole connected component stayed in one fold. This prevents motif reuse across related designs from creating train-test leakage.
 
-PDA is training data in the final model. It must not be described as an external or out-of-distribution benchmark. External teacher-fidelity evidence comes from the independent NY-ESO-1 design cohort. Direct human HLA-A*02:01 affinity and ligand-presentation validation remains outstanding.
+PDA is training data in the final model. It must not be described as an external or out-of-distribution benchmark. The OOD statement that is allowed is narrower: designed proteins are out of distribution for NetMHCpan's original natural-peptide training data, and measured MHC labels on de novo proteins are almost unavailable. Distilling NetMHCpan onto PDA ESM embeddings is how we generalize that teacher for de novo campaign scoring. After training, held-out PDA folds measure teacher imitation, not biological OOD. External teacher-fidelity evidence comes from the independent NY-ESO-1 design cohort. Direct human HLA-A*02:01 affinity and ligand-presentation validation remains outstanding.
 
 ### 4.2 Student model
 
@@ -113,15 +115,21 @@ Each 9-mer receives separate fields:
 - a separate recall-calibrated screening flag
 - optional residue accessibility from a matched deposited structure
 
-The geometric processing score for window `i` is:
+The inspectable processing composite for window `i` is:
 
 ```text
 R_i = (p_N,i * p_C,i * p_BA,i)^(1/3)
 ```
 
-EL is reported separately because NetMHCpan EL already incorporates presentation-related information. Including it inside the geometric score would double-count evidence. TAP is also reported separately rather than silently fused.
+Campaign ranking uses a separate pathway score. EL, BA, and affinity are not averaged: affinity is a monotone transform of BA, and EL already includes presentation information.
 
-At protein level, the current summary reports the mean of the five highest window-level processing scores. This is a prioritization heuristic, not an immune-response probability.
+```text
+S_i = EL^0.70 * (sqrt(p_N,i * p_C,i))^0.30
+```
+
+EL is the presentation endpoint. Proteasomal generation is a soft gate. The 0.70/0.30 split is a biological prior, not a fitted coefficient. TAP remains separately reported.
+
+At protein level, the displayed summary is the mean of the five highest window-level pathway scores `S_i`. This is a prioritization heuristic, not an immune-response probability.
 
 ## 5. Results that can be defended
 
@@ -317,7 +325,7 @@ Not on the task it was distilled to imitate. NetMHCpan is the teacher, so the st
 
 ### Why train on PDA and then call this out-of-distribution?
 
-We do not call PDA OOD in the final evaluation because PDA is training data. Out-of-corpus teacher-fidelity evidence comes from the independent NY-ESO design cohort. The ESM-2 encoder was pretrained on natural sequence, but that fact alone does not make the final PDA evaluation OOD.
+We do not call PDA OOD in the final evaluation because PDA is training data. The allowed OOD claim is about the teacher, not the student test set: NetMHCpan was trained mainly on natural peptides, measured MHC data on designed proteins are almost unavailable, and designed 9-mers are therefore out of distribution for that original corpus. Distilling NetMHCpan onto PDA ESM embeddings is a pseudo-de novo adaptation so a local student can score new campaign sequences in designed-protein representation space. Out-of-corpus teacher-fidelity evidence comes from the independent NY-ESO design cohort. The ESM-2 encoder was pretrained on natural sequence, but that fact alone does not make the final PDA evaluation OOD.
 
 ### How did you prevent leakage?
 
@@ -325,11 +333,11 @@ We connected any parents sharing an exact 9-mer and assigned whole connected com
 
 ### What exactly is the risk score?
 
-For each 9-mer, it is the geometric mean of N-cleavage probability, C-cleavage probability, and BA binding propensity. The protein summary is the mean of the top five window scores. EL presentation, TAP, binder class, screening flag, confidence, and accessibility remain separate.
+There are two numbers. The inspectable processing composite is the geometric mean of N-cleavage, C-cleavage, and BA. Campaign ranking uses the pathway score `S = EL^0.70 * (sqrt(N * C))^0.30`. The protein summary is the mean of the top five pathway scores. BA, TAP, binder class, screening flag, confidence, and accessibility remain separate.
 
 ### Why is BA inside the composite instead of EL?
 
-NetMHCpan EL already contains presentation-related information, including upstream effects. Combining EL with explicit cleavage would count related evidence twice. BA is the binding-only lane, so it is the cleaner third factor.
+NetMHCpan EL already contains presentation-related information, including upstream effects. Combining EL with BA in one average would count the same MHC event twice. BA is the binding-only lane, so it is the cleaner third factor in the inspectable composite. Ranking instead uses EL as the presentation endpoint and cleavage as a soft gate.
 
 ### Does MHC binding affinity measure peptide generation or immune recognition?
 
@@ -341,7 +349,7 @@ It gave us one coherent allele and enough teacher labels to finish a defensible 
 
 ### Why MHC-I for therapeutic proteins when ADA often depends on MHC-II?
 
-That is the largest biological scope limitation. The current lane is most directly relevant to intracellular expression, gene delivery, and CD8-facing risks. Protein-therapeutic ADA requires MHC-II/CD4 and B-cell modeling. The orchestration preserves MHC-I and MHC-II as separate lanes so a future class-II model can be added without relabeling this output.
+That is the largest biological scope limitation, and it depends on the product. MHC-I is on nearly all nucleated cells, not only non-immune cells. The current lane is the primary match for intracellular expression from a genetic payload — plasmid, mRNA, or viral vector — including intracellular binders and biosensors that the cell manufactures. An injected extracellular protein drug can still reach MHC-I by cross-presentation, but protein-therapeutic ADA requires MHC-II/CD4 and B-cell modeling, which we do not score. The orchestration preserves MHC-I and MHC-II as separate lanes so a future class-II model can be added without relabeling this output.
 
 ### Is the speedup fair?
 
@@ -444,7 +452,7 @@ The project is scientifically presentable now if the claim remains narrow. The t
 - [ ] Confirm the final workbench loads on desktop and mobile.
 - [ ] Confirm `main.pdf` compiles with the mechanistic validation section.
 - [ ] Use only deployed v4 metrics in the video and rubric.
-- [ ] Keep composite score wording consistent: N-cleavage, C-cleavage, BA.
+- [ ] Keep score wording consistent: inspectable composite is N-cleavage, C-cleavage, BA; campaign rank is EL^0.70 times generation^0.30.
 - [ ] Put "not validated for immunogenicity prediction" in the spoken demo.
 - [ ] Show at least one citation and one provenance record on screen.
 - [ ] Show how a candidate is down-selected, not merely scored.

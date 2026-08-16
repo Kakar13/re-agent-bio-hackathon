@@ -62,6 +62,7 @@ class PeptideScore:
     mhc_cosine_similarity: float
     mhc_presentation_propensity: float
     composite_risk: float
+    pathway_rank_score: float
     confidence: float
     confidence_tap: float
     confidence_mhc: float
@@ -75,17 +76,56 @@ class PeptideScore:
 def compute_peptide_risk(
     cleave_n_prob: float, cleave_c_prob: float, mhc_presentation_propensity: float
 ) -> float:
-    """Geometric mean of the three calibrated-probability components.
+    """Equal-weight geometric mean of N-cleavage, C-cleavage, and MHC.
 
-    TAP is reported alongside but excluded here: the TAP head is a
-    regularized ridge regressor with bootstrap uncertainty, not a
-    calibrated probability (see plan: "no deep TAP head claim is
-    supportable at this size"). This treats N-cleavage, C-cleavage, and
-    presentation as independent gates -- an approximation, not a
-    measured joint probability.
+    Kept as an inspectable processing heuristic. Campaign ranking should use
+    :func:`compute_pathway_rank_score` instead of averaging EL, BA, and
+    affinity, which are not three independent biological events.
     """
     components = np.clip([cleave_n_prob, cleave_c_prob, mhc_presentation_propensity], 1e-6, 1.0)
     return float(np.exp(np.mean(np.log(components))))
+
+
+# Presentation dominates because MHC-I binding/display is the selective step
+# (NetMHCpan EL is the ligand-presentation endpoint). Proteasomal generation
+# is necessary but more promiscuous, so it is a soft gate, not an equal vote.
+# BA and affinity are omitted: affinity is a monotone transform of BA, and BA
+# plus EL would count the same MHC event twice.
+PATHWAY_EL_WEIGHT = 0.70
+PATHWAY_GENERATION_WEIGHT = 0.30
+
+
+def compute_generation_factor(cleave_n_prob: float, cleave_c_prob: float) -> float:
+    """Both termini must be cut. Geometric mean of the two cleavage heads."""
+
+    n_prob, c_prob = np.clip([cleave_n_prob, cleave_c_prob], 1e-6, 1.0)
+    return float(np.sqrt(n_prob * c_prob))
+
+
+def compute_pathway_rank_score(
+    el_presentation_propensity: float,
+    cleave_n_prob: float,
+    cleave_c_prob: float,
+    *,
+    el_weight: float = PATHWAY_EL_WEIGHT,
+    generation_weight: float = PATHWAY_GENERATION_WEIGHT,
+) -> float:
+    """Campaign rank for one 9-mer.
+
+    .. math::
+
+        R = p_{EL}^{0.70}\\,\\bigl(\\sqrt{p_N\\,p_C}\\bigr)^{0.30}
+
+    EL is the presentation endpoint. Generation is a soft gate: a window that
+    looks uncuttable is discounted even if EL is high. This is a monotonic
+    triage heuristic, not a measured pathway probability.
+    """
+
+    if abs(el_weight + generation_weight - 1.0) > 1e-9:
+        raise ValueError("pathway weights must sum to 1")
+    el = float(np.clip(el_presentation_propensity, 1e-6, 1.0))
+    generation = compute_generation_factor(cleave_n_prob, cleave_c_prob)
+    return float((el**el_weight) * (generation**generation_weight))
 
 
 def compute_confidence(
@@ -140,6 +180,11 @@ def score_window(
     risk = compute_peptide_risk(
         float(cleave_n[0]), float(cleave_c[0]), mhc["presentation_propensity"]
     )
+    pathway_rank = compute_pathway_rank_score(
+        mhc["presentation_propensity"],
+        float(cleave_n[0]),
+        float(cleave_c[0]),
+    )
     conf = compute_confidence(
         tap_uncertainty=float(tap_std[0]),
         mhc_presentation_propensity=mhc["presentation_propensity"],
@@ -159,6 +204,7 @@ def score_window(
         mhc_cosine_similarity=mhc["cosine_similarity"],
         mhc_presentation_propensity=mhc["presentation_propensity"],
         composite_risk=risk,
+        pathway_rank_score=pathway_rank,
         **conf,
     )
 
@@ -198,7 +244,7 @@ def aggregate_protein_risk(
 ) -> ProteinRisk:
     if not scores:
         return ProteinRisk(0, top_k, threshold, 0.0, 0.0, None, 0, 0.0, 0.0)
-    risks = np.array([s.composite_risk for s in scores])
+    risks = np.array([s.pathway_rank_score for s in scores])
     order = np.argsort(-risks)
     top_k_risks = risks[order[:top_k]]
     max_window = scores[order[0]]

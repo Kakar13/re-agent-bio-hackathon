@@ -5,14 +5,39 @@ evidence it could hold up.
 
 ## The problem
 
-De novo binder design is now fast, but experimental peptide-HLA binding and
-presentation measurements remain expensive. A designer can generate hundreds of
-backbones in an afternoon without a fast way to identify candidate HLA-A*02:01
-binding and presentation liabilities while redesign is still cheap.
+A standard campaign — RFdiffusion, ProteinMPNN, then AlphaFold — can leave
+thousands of structurally plausible candidates. Folding and target contact do
+not say whether the protein will later be processed into peptides that human
+MHC molecules present. Those presentation events are one framework through
+which immunogenicity can begin: cytosolic MHC-I processing and HLA-A*02:01
+presentation on the nucleated cell that made the protein, including immune
+cells. TCR recognition, danger sensing, and animal or human outcomes are
+later steps. They are why a construct that must function in a human still
+has to be tested in mice. They are not what this model scores.
 
-We built a per-residue MHC-I processing profile fast enough to score every 9-mer of
-every design as it is generated, with explicit separation between BA binding, EL
-presentation, cleavage, TAP, and downstream recognition.
+This MHC-I-only filter is the primary match when the designed protein is
+expressed inside the cell from a plasmid, mRNA, or viral vector. That is
+not limited to secreted drugs. An RFdiffusion binder can be an
+intracellular tool — a biosensor, or a binder to a phosphorylation site —
+in which case the payload is delivered so the cell manufactures the
+protein. Extracellular protein can still reach MHC-I by cross-presentation,
+so an injected binder is not MHC-I-invisible. For that product class,
+MHC-II, CD4 help, and antibodies remain the larger unmodeled gap.
+
+The job is downselection. Remove the bulk of campaign-scale HLA-A*02:01
+processing and presentation liabilities so wet-lab and animal capacity is
+spent on a smaller, inspectable set. A flagged window is not a clinical
+immunogenicity diagnosis. A clean window is not deimmunization.
+
+We built a per-residue MHC-I processing profile fast enough to score every
+9-mer of every design, with explicit separation between cleavage, TAP, BA
+binding, EL presentation, and downstream recognition that we do not model.
+
+The training corpus is the Protein Design Archive (PDA): a recent curated
+collection of synthetic designed proteins, mostly from the last several
+years. It is not the Protein Data Bank. The Chronowska et al. paper title
+refers to 40 years of the protein-design field, not to the age of the
+archive.
 
 ## System
 
@@ -23,11 +48,15 @@ presentation, cleavage, TAP, and downstream recognition.
 | HLA profiling | our trained model | 289,335-row MHC-I profile over the PDA corpus |
 | Evaluation | held-out CV + an external teacher-fidelity cohort | evaluations below |
 
-The design lane is reported in `results/rfd3_binders/report.md`; the PD-L1 positive
-control passed its gate, with all 16 checked designs contacting all three foundry
-hotspots within 4.5 Å. ProteinMPNN sequence design and AlphaFold validation were
-scoped out of the weekend. Everything below concerns the HLA-A*02:01 binding and
-presentation lane, which is where our own modeling work went.
+The design lane is reported in `results/rfd3_binders/report.md`. The PD-L1
+positive control is a geometric check on RFdiffusion3 complexes, not a
+refolded AlphaFold or ESMFold model: 15 of the first 16 backbones contacted
+all three foundry hotspots (Y56, M115, Y123) within 4.5 Å, and all 16 did so
+within 6 Å. The one miss, `pdl1_bb_0015.pdb`, is 5.87 Å from Y56 and still
+contacts the other two hotspots inside 4.5 Å. ProteinMPNN sequence design and
+AlphaFold/ESMFold validation were scoped out of the weekend. Everything below
+concerns the HLA-A*02:01 binding and presentation lane, which is where our own
+modeling work went.
 
 ## How to read the benchmark
 
@@ -70,15 +99,30 @@ published comparisons we surveyed with Paperclip.
 Rather than patch the existing corpus, we rebuilt it from raw parent proteins under a
 teacher we could defend, and measured the difference.
 
+The deeper rationale is a missing-label problem. NetMHCpan 4.1 is the field-standard
+HLA-A\*02:01 model, trained mainly on natural peptide binding and eluted-ligand
+evidence. Measured MHC data on de novo designed proteins are almost unavailable,
+with only sparse exceptions, so we cannot supervise a campaign filter on
+experimental designed-protein HLA labels. Designed 9-mers are out of distribution
+for that original natural-peptide teacher corpus. We generalize NetMHCpan for de
+novo use by a pseudo-de novo distillation: label every PDA 9-mer with the teacher,
+embed it with frozen ESM-2, and train a compact student to reproduce those scores
+in designed-protein representation space. After that training, PDA is not an
+out-of-distribution test for the student. Held-out PDA folds measure teacher
+imitation on designed peptides. A newly generated non-PDA sequence is the
+remaining shift, and the labels themselves are still teacher scores, not measured
+de novo HLA outcomes.
+
 ## Methods
 
 ### Corpus
 
-Every parent in the Protein Design Archive de novo set — 1,602 proteins — was tiled
-into all 9-mer windows with 4-residue flanks and labelled by NetMHCpan 4.1 through the
-IEDB Tools API, on both the EL (presentation) and BA (binding affinity) channels, for
-HLA-A\*02:01. Labelling happened *before* any sampling, so no model's opinion selected
-the training distribution. 290,937 windows collapsed to 160,012 unique peptides.
+Every parent in the Protein Design Archive de novo set — 1,602 recent synthetic
+proteins, not PDB naturals — was tiled into all 9-mer windows with 4-residue
+flanks and labelled by NetMHCpan 4.1 through the IEDB Tools API, on both the EL
+(presentation) and BA (binding affinity) channels, for HLA-A\*02:01. Labelling
+happened *before* any sampling, so no model's opinion selected the training
+distribution. 290,937 windows collapsed to 160,012 unique peptides.
 
 Parents sharing any exact 9-mer were joined into connected components (608 of them),
 and whole components were assigned to folds. This matters more than it sounds: de novo
@@ -137,9 +181,20 @@ presentation. What burial decides is whether the designer can act on a flag: a r
 9-mer on a surface loop can be resampled freely, while one packed into the core cannot
 be changed without risking the fold.
 
-EL is deliberately excluded from the composite processing score, which combines
-N-cleavage, C-cleavage, and BA only. EL already encodes cleavage and transport
-information, so averaging it in would count the same evidence twice.
+EL is deliberately excluded from the inspectable composite processing score, which
+combines N-cleavage, C-cleavage, and BA only. EL already encodes cleavage and
+transport information, so averaging it with BA would count the same MHC event twice.
+Affinity is also excluded: it is a monotone transform of the BA score
+(`IC50 = 50000^(1 - score)`), not a third independent measurement.
+
+Campaign ranking does not use that equal-weight composite. It uses a pathway score
+
+`S = EL^0.70 * (sqrt(N * C))^0.30`
+
+because peptide–MHC binding/display is the selective step (NetMHCpan EL is the
+presentation endpoint) and proteasomal generation is a necessary but more
+promiscuous soft gate. The 0.70/0.30 split is a biological prior, not a fitted
+weight. Protein-level rank is the mean of the top-5 window `S` values.
 
 The materialized dataset carries one row per 9-mer occurrence rather than per unique
 peptide, because cleavage depends on flanking context: the same 9-mer in two different

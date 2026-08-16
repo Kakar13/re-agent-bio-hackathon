@@ -1,8 +1,11 @@
 """MHCflurry-independent HLA-A*02:01 corpus construction.
 
-Parent proteins are selected and tiled before NetMHCpan is called. The resulting
-training rows retain separate EL and BA channels; BA is also projected into the
-legacy E2E-PLS MHC columns so the existing schema and embedding code can inspect
+Parents come from the Protein Design Archive (PDA): a recent curated set of
+synthetic designed proteins, not the Protein Data Bank. The Chronowska et al.
+"40 years" title refers to the protein-design field, not the age of this
+archive. Parents are tiled into overlapping 9-mers before NetMHCpan is called.
+The resulting rows keep separate EL and BA channels; BA is also projected into
+the legacy E2E-PLS MHC columns so existing schema and embedding code can inspect
 the dataset without treating EL as a second binding score.
 """
 

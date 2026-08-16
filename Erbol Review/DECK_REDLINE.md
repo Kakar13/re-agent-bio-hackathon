@@ -110,7 +110,7 @@ Show three named outputs:
 1. `overall_mhci_risk`: EL presentation propensity.
 2. `composite_processing_risk`: geometric mean of N-cleavage, C-cleavage, and
    BA binding propensity.
-3. Protein summary: mean of the five highest composite-processing windows.
+3. Protein summary: mean of the five highest pathway scores `S_i`.
 
 Add:
 

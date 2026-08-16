@@ -25,6 +25,7 @@ from re_agent.e2e_pls.netmhcpan_student import (
     load_student_ensemble,
     predict_student_ensemble,
 )
+from re_agent.e2e_pls.score import compute_pathway_rank_score
 from re_agent.immuno.adapters import sequence_sha256
 from re_agent.immuno.contracts import (
     MHCISurrogatePrediction,
@@ -438,6 +439,16 @@ class TeamE2EPLSAdapter:
                     )
                 )
             )
+            el_propensity = (
+                float(profile["el_presentation_propensity"])
+                if profile is not None
+                else float(mhc_propensity[index])
+            )
+            pathway_rank = compute_pathway_rank_score(
+                el_propensity,
+                float(cleavage_n[index]),
+                float(cleavage_c[index]),
+            )
             prediction_rows.append(
                 MHCISurrogatePrediction(
                     start=start,
@@ -471,6 +482,7 @@ class TeamE2EPLSAdapter:
                         profile["overall_mhci_risk"] if profile is not None else None
                     ),
                     composite_processing_risk=composite,
+                    pathway_rank_score=pathway_rank,
                     confidence=_confidence(
                         float(tap_uncertainty[index]),
                         binding_propensity,
@@ -483,14 +495,21 @@ class TeamE2EPLSAdapter:
             )
 
         tracks = self._spatial_tracks(len(sequence), prediction_rows)
-        risks = np.asarray([row.composite_processing_risk for row in prediction_rows])
-        order = np.argsort(-risks)
-        top_count = min(5, len(risks))
+        ranks = np.asarray(
+            [
+                row.pathway_rank_score
+                if row.pathway_rank_score is not None
+                else row.composite_processing_risk
+                for row in prediction_rows
+            ]
+        )
+        order = np.argsort(-ranks)
+        top_count = min(5, len(ranks))
         summary = {
             "n_windows": len(prediction_rows),
             "top_k": top_count,
-            "top_k_mean_risk": float(risks[order[:top_count]].mean()),
-            "max_risk": float(risks[order[0]]),
+            "top_k_mean_risk": float(ranks[order[:top_count]].mean()),
+            "max_risk": float(ranks[order[0]]),
             "max_risk_window_start": int(prediction_rows[int(order[0])].start),
             "mean_confidence": float(
                 np.mean([row.confidence for row in prediction_rows])

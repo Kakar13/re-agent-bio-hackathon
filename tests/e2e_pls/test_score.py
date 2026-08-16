@@ -1,10 +1,12 @@
 import numpy as np
+import pytest
 
 from re_agent.e2e_pls import score as score_mod
 from re_agent.e2e_pls.score import (
     PeptideScore,
     aggregate_protein_risk,
     compute_confidence,
+    compute_pathway_rank_score,
     compute_peptide_risk,
     score_sequence,
     tile_sequence,
@@ -45,6 +47,29 @@ def test_compute_peptide_risk_zero_component_pulls_down():
     assert with_zero < without_zero
 
 
+def test_pathway_rank_matches_weighted_geometric_mean():
+    el, n_prob, c_prob = 0.80, 0.40, 0.10
+    expected = (el**0.70) * ((n_prob * c_prob) ** 0.15)
+    assert compute_pathway_rank_score(el, n_prob, c_prob) == pytest.approx(expected)
+
+
+def test_pathway_rank_weights_presentation_over_cleavage():
+    presentable = compute_pathway_rank_score(0.90, 0.20, 0.20)
+    unpresentable = compute_pathway_rank_score(0.20, 0.90, 0.90)
+    assert presentable > unpresentable
+
+
+def test_pathway_rank_uncuttable_window_is_discounted():
+    cuttable = compute_pathway_rank_score(0.80, 0.80, 0.80)
+    uncuttable = compute_pathway_rank_score(0.80, 0.01, 0.01)
+    assert uncuttable < cuttable
+
+
+def test_pathway_rank_rejects_weights_that_do_not_sum_to_one():
+    with pytest.raises(ValueError, match="sum to 1"):
+        compute_pathway_rank_score(0.5, 0.5, 0.5, el_weight=0.8, generation_weight=0.1)
+
+
 def test_compute_confidence_bounds_and_monotone_tap():
     low_unc = compute_confidence(0.0, 0.9, 0.8, 0.8, "AAAA", "AAAA")
     high_unc = compute_confidence(2.0, 0.9, 0.8, 0.8, "AAAA", "AAAA")
@@ -75,13 +100,14 @@ def test_score_sequence_and_aggregate(trained_heads, mock_client):
     for s in scores:
         assert isinstance(s, PeptideScore)
         assert 0 <= s.composite_risk <= 1
+        assert 0 <= s.pathway_rank_score <= 1
         assert 0 <= s.confidence <= 1
 
     risk = aggregate_protein_risk(scores, top_k=5, threshold=0.5)
-    risks = np.array([s.composite_risk for s in scores])
-    assert risk.max_risk == risks.max()
-    assert risk.max_risk_window.composite_risk == risks.max()
-    assert risk.count_above_threshold == int((risks >= 0.5).sum())
+    ranks = np.array([s.pathway_rank_score for s in scores])
+    assert risk.max_risk == ranks.max()
+    assert risk.max_risk_window.pathway_rank_score == ranks.max()
+    assert risk.count_above_threshold == int((ranks >= 0.5).sum())
     assert risk.n_windows == len(scores)
     assert 0 <= risk.mean_confidence <= 1
     assert risk.max_risk_confidence == risk.max_risk_window.confidence
@@ -108,6 +134,7 @@ def test_residue_heatmap_rolls_window_risk_onto_covering_positions():
             mhc_cosine_similarity=0.5,
             mhc_presentation_propensity=0.8,
             composite_risk=0.7,
+            pathway_rank_score=0.7,
             confidence=0.6,
             confidence_tap=0.6,
             confidence_mhc=0.6,
@@ -136,6 +163,7 @@ def test_residue_heatmap_max_uses_hottest_covering_window():
         mhc_cosine_similarity=0.1,
         mhc_presentation_propensity=0.2,
         composite_risk=0.2,
+        pathway_rank_score=0.2,
         confidence=0.4,
         confidence_tap=0.4,
         confidence_mhc=0.4,
@@ -153,6 +181,7 @@ def test_residue_heatmap_max_uses_hottest_covering_window():
         mhc_cosine_similarity=0.9,
         mhc_presentation_propensity=0.9,
         composite_risk=0.9,
+        pathway_rank_score=0.9,
         confidence=0.8,
         confidence_tap=0.8,
         confidence_mhc=0.8,
@@ -185,6 +214,7 @@ def test_residue_heatmap_figure_has_two_tracks():
                 mhc_cosine_similarity=0.0,
                 mhc_presentation_propensity=0.5,
                 composite_risk=0.4,
+                pathway_rank_score=0.4,
                 confidence=0.5,
                 confidence_tap=0.5,
                 confidence_mhc=0.5,

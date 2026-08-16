@@ -984,7 +984,7 @@ body{
 <section class="slide s1" data-i="0">
   <div class="s1-cols">
     <div class="s1-left">
-      <div class="eyebrow rv" style="animation-delay:.05s">Track C · de novo protein design · T-cell risk</div>
+      <div class="eyebrow rv" style="animation-delay:.05s">Track C · de novo campaign downselection · HLA-A*02:01</div>
 
       <h1 class="s1-name rv" style="animation-delay:.1s">CHAO</h1>
       <div class="s1-expand rv" style="animation-delay:.18s">Continuous Hidden Antigen Optimizer</div>
@@ -994,30 +994,30 @@ body{
         <p class="sr-only">A protein's latent vector travelling through three antigen-processing checkpoints.</p>
       </div>
 
-      <p class="s1-tag rv" style="animation-delay:.55s">Your binder doesn't fail because it binds badly.<br><b>It fails because a T cell read it.</b></p>
+      <p class="s1-tag rv" style="animation-delay:.55s">After RFdiffusion, MPNN and AlphaFold you still have thousands of candidates.<br><b>We remove the bulk of MHC-I presentation liabilities before mice.</b></p>
     </div>
 
     <div class="s1-right">
       <dl class="spec rv" style="animation-delay:.24s">
         <dt>What it is</dt>
-        <dd>Three heads, one vector<small>Proteasomal cleavage, TAP transport, and MHC-I presentation as three projections of a single ESM-2 embedding.</small></dd>
+        <dd>One immunogenicity framework<small>Cytosolic MHC-I processing and HLA-A*02:01 presentation on nucleated cells — including immune cells. Danger, TCR, and MHC-II/ADA are not scored.</small></dd>
       </dl>
       <dl class="spec rv" style="animation-delay:.32s">
         <dt>What it's built on</dt>
-        <dd>5M+ 9-mers<small>28,741 human, viral, bacterial and de novo parents, cluster-split, teacher-labelled, provenance on every row.</small></dd>
+        <dd>160,012 PDA 9-mers<small>Almost no measured MHC labels exist on designed proteins. We distill NetMHCpan onto ESM embeddings of PDA — pseudo-de novo teacher labels, not the PDB.</small></dd>
       </dl>
       <dl class="spec rv" style="animation-delay:.4s">
         <dt>What it does</dt>
-        <dd>Steers, not just screens<small>The same geometry that scores a peptide tells you which residue to change to move it out of the danger zone.</small></dd>
+        <dd>Downselects in-cell payloads<small>Primary when a binder, biosensor, or other de novo protein is expressed from a plasmid or vector inside the cell. Injected protein drugs still need MHC-II.</small></dd>
       </dl>
     </div>
   </div>
 
   <div class="s1-strip rv" style="animation-delay:.58s">
     <span>encoder <b>ESM-2 650M</b> · 1280-d</span>
-    <span><b>28,741</b> parent proteins</span>
-    <span><b>0</b> of 29,353 clusters leaking across splits</span>
-    <span><b>500</b> RFD3 binder backbones screened</span>
+    <span><b>1,602</b> PDA designed parents</span>
+    <span><b>608</b> component-grouped folds · no shared 9-mer leak</span>
+    <span><b>500</b> RFD3 backbones generated, not screened</span>
   </div>
 </section>
 
@@ -1080,7 +1080,7 @@ body{
     <div class="cell big"><dt>Runs inside the design loop</dt><dd>yes</dd></div>
   </dl>
 
-  <div class="foot">Illustrative single protein at 100 aa → 92 windows of length 9. "Not modelled" describes the common binding-only screen (an MHC-I affinity predictor used alone), which is how most de novo design pipelines currently gate immunogenicity; dedicated cleavage and TAP tools exist but are separate installs on separate inputs.</div>
+  <div class="foot">Illustrative single protein at 100 aa → 92 windows of length 9. MHC-I is on nucleated cells, not only non-immune cells. This lane is the primary match when the protein is made inside the cell from a plasmid or vector — including intracellular binders and biosensors. Injected extracellular drugs can still cross-present on MHC-I; MHC-II remains the larger gap for that class.</div>
 </section>
 
 <!-- ═════════════ 03 · THE THREE OPERATIONS ═════════════ -->
@@ -1180,7 +1180,7 @@ body{
       <text class="p-lbl-l" x="1166" y="70">Composite risk</text>
       <text class="p-final" id="pipeRisk" x="1166" y="126">0.00</text>
       <text class="p-tx" x="1166" y="152" font-size="11" style="fill:#7C8496">geometric mean of the three</text>
-      <text class="p-tx" x="1166" y="169" font-size="11" style="fill:#7C8496">calibrated probability gates</text>
+      <text class="p-tx" x="1166" y="169" font-size="11" style="fill:#7C8496">gates · protein = mean top-5 Sᵢ</text>
       <line x1="1166" y1="192" x2="1398" y2="192" stroke="#1B2130"/>
       <text class="p-lbl-l" x="1166" y="216">Confidence</text>
       <text class="p-conf" id="pipeConf" x="1398" y="218" text-anchor="end">0.00</text>
@@ -1201,7 +1201,7 @@ body{
     <span>risk = <b>geometric mean</b>, TAP reported beside it</span>
   </div>
 
-  <div class="foot">Scores shown are an illustrative window. TAP is deliberately excluded from the composite: at 613 measured peptides it is a regularized ridge with bootstrap uncertainty, not a calibrated probability, so it is reported alongside the risk rather than multiplied into it. Confidence is a decomposed 0–1 diagnostic, not a coverage probability.</div>
+  <div class="foot">Scores shown are an illustrative window. Window composite is the geometric mean of the three calibrated gates; campaign pathway score is S<sub>i</sub> = EL<sup>0.70</sup> · (√(N·C))<sup>0.30</sup>; protein summary is the mean of the top-5 S<sub>i</sub>. TAP is reported beside the risk, never multiplied into it. Confidence is a decomposed 0–1 diagnostic, not a coverage probability.</div>
 </section>
 
 <!-- ═════════════ 04 · WHAT TAUGHT IT ═════════════ -->
@@ -1300,7 +1300,7 @@ body{
     <div class="score-card rv" style="animation-delay:.14s">
       <div class="score-k">1 · The risk score</div>
       <div class="score-t">Why a product, not an average.</div>
-      <p class="score-c">Presentation needs <b>every</b> gate to open. An average forgives a closed one; a geometric mean does not — one near-zero gate drags the whole score to zero, which is what biology does.</p>
+      <p class="score-c">Presentation needs <b>every</b> gate to open. An average forgives a closed one; a geometric mean does not — one near-zero gate drags the whole score to zero, which is what biology does. Campaign ranking uses pathway score <b>S<sub>i</sub></b>; the protein summary is the <b>mean of the top-5 S<sub>i</sub></b> values — a prioritization heuristic, not an immune-response probability.</p>
       <div class="gm" id="gmRows">
         <div class="gm-row"><span class="gm-n">cleave N</span><i class="gm-track"><em id="gmb0"></em></i><b id="gmv0">0.91</b></div>
         <div class="gm-row"><span class="gm-n">cleave C</span><i class="gm-track"><em id="gmb1"></em></i><b id="gmv1">0.88</b></div>
@@ -1427,7 +1427,7 @@ body{
       <div class="eyebrow rv">Why we built it this weekend</div>
       <h2 class="h2 rv" style="animation-delay:.06s">500 fresh binder backbones against<br><em>five targets nobody can drug.</em></h2>
     </div>
-    <p class="lede rv" style="animation-delay:.12s; max-width:36ch">Generated here with RFdiffusion3 on Modal. Every one of them is a de novo protein that has to survive a human immune system — and none of them exists in any immunogenicity dataset.</p>
+    <p class="lede rv" style="animation-delay:.12s; max-width:36ch">Generated here with RFdiffusion3 on Modal. Binders are not only extracellular drugs — the same stack designs intracellular tools and biosensors that a cell would express from a vector. MHC-I is the presentation framework for that in-cell use.</p>
   </div>
 
   <div class="unlock-grid">
@@ -1461,8 +1461,8 @@ body{
 
     <div class="unlock-stack rv" style="animation-delay:.24s">
       <div class="unlock-card signal">
-        <strong>16 / 16</strong>
-        <span>PD-L1 control designs contact all three foundry hotspots within 4.5 Å — the generator is aimed correctly before we score anything</span>
+        <strong>15 / 16</strong>
+        <span>PD-L1 RFdiffusion3 backbones contacted all three foundry hotspots within 4.5 Å; all 16 did so within 6 Å. Heavy-atom geometry on generated complexes — not AlphaFold or ESMFold.</span>
       </div>
       <div class="unlock-card">
         <strong>5.6 h</strong>
@@ -1475,7 +1475,7 @@ body{
     </div>
   </div>
 
-  <div class="foot">Backbones only: sequence design (ProteinMPNN) and AF2/ESMFold validation are out of scope for the weekend. Bar length is GPU wall-clock per target, not a quality score — 5.6 hours on GPU for the full 500. Hotspots and contigs follow the RosettaCommons foundry binder protocol; per-target caveats — including that 6VJJ is wild-type KRAS4b rather than G12D — are recorded in results/rfd3_binders/report.md.</div>
+  <div class="foot">Backbones only: sequence design (ProteinMPNN) and AF2/ESMFold validation were not run. The PD-L1 gate is min heavy-atom distance on RFdiffusion3 complexes (Y56 / M115 / Y123): 15 of 16 at 4.5 Å, 16 of 16 at 6 Å. Bar length is GPU wall-clock per target, not a quality score — 5.6 hours on GPU for the full 500. Hotspots and contigs follow the RosettaCommons foundry binder protocol; per-target caveats — including that 6VJJ is wild-type KRAS4b rather than G12D — are recorded in results/rfd3_binders/report.md.</div>
 </section>
 
 <!-- ═════════════ 08 · THE FULL LOOP ═════════════ -->

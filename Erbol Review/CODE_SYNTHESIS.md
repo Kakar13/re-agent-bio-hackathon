@@ -96,15 +96,28 @@ For the legacy Chao1-only path, the third factor falls back to Chao1's
 MHCflurry-derived presentation propensity. Therefore the exact composite
 definition is checkpoint-dependent and must be recorded with the result.
 
-The geometric mean is a prioritization heuristic. The three factors are not
-independent biological probabilities, and the result is not a joint
+The geometric mean is an inspectable processing heuristic. The three factors are
+not independent biological probabilities, and the result is not a joint
 probability.
+
+### `pathway_rank_score`
+
+Campaign ranking does not average EL, BA, and affinity. Affinity is a monotone
+transform of BA, and EL already includes presentation information. Ranking uses
+
+```text
+pathway_rank_score =
+    EL^0.70 * (sqrt(N-cleavage * C-cleavage))^0.30
+```
+
+EL is the presentation endpoint. Proteasomal generation is a soft gate. The
+0.70/0.30 split is a prior, not a fitted coefficient.
 
 ### Protein-level `overall.score`
 
-The adapter sorts all 9-mer composite-processing scores and reports the mean of
-the five largest values. This top-five mean reduces dependence on one maximum
-window, but it remains an uncalibrated campaign-ranking heuristic.
+The adapter sorts all 9-mer pathway-rank scores and reports the mean of the five
+largest values. This top-five mean reduces dependence on one maximum window, but
+it remains an uncalibrated campaign-ranking heuristic.
 
 ## Model lineage
 

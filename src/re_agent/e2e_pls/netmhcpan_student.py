@@ -1,4 +1,12 @@
-"""Frozen-ESM student head for separate NetMHCpan EL and BA targets."""
+"""Frozen-ESM student head for separate NetMHCpan EL and BA targets.
+
+Local HLA-A*02:01 teacher surrogate for campaign downselection. Measured MHC
+labels on de novo proteins are almost unavailable, so this head distills
+NetMHCpan onto ESM embeddings of Protein Design Archive 9-mers. Primary
+intended use is cytosolic MHC-I presentation when a designed protein is
+expressed inside a nucleated cell from a genetic payload. It does not
+predict TCR recognition, danger, MHC-II/ADA, or clinical immunogenicity.
+"""
 
 from __future__ import annotations
 

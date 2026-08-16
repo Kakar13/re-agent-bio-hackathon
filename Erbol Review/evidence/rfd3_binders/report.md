@@ -79,9 +79,12 @@ using the Baker-lab / RosettaCommons foundry protein-binder settings.
 
 ## Control gate (PD-L1)
 
-First 16 PD-L1 designs were checked for heavy-atom contact to the foundry hotspots
-Y56 / M115 / Y123 (auth numbering; output target chain is renumbered 1..N).
-All 16 contacted all three hotspots within 4.5 Å (mean min distances ≈ 3.5 / 3.4 / 2.4 Å).
+First 16 PD-L1 RFdiffusion3 complexes were checked for min heavy-atom distance
+from the generated binder to the foundry hotspots Y56 / M115 / Y123
+(auth numbering; output target chain is renumbered 1..N).
+15 of 16 contacted all three hotspots within 4.5 Å; all 16 did so within 6 Å.
+The miss is `pdl1_bb_0015.pdb` at 5.87 Å from Y56 (M115 3.69 Å, Y123 2.98 Å).
+This is geometry on generated backbone complexes, not AlphaFold or ESMFold.
 See `results/rfd3_binders/pdl1/control_qc.json`.
 
 ## Deploy note

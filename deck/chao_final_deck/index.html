@@ -135,12 +135,102 @@ body{
 }
 .s-close .s1-name{
   margin:0;
-  font-size:calc(140 * var(--u));
+  font-size:calc(72 * var(--u));
 }
 .s-close .s1-expand{
-  margin-top:calc(22 * var(--u));
-  font-size:max(12px, calc(18 * var(--u)));
+  margin-top:calc(10 * var(--u));
+  font-size:max(11px, calc(14 * var(--u)));
   letter-spacing:.18em;
+}
+.s-close .paper-cue{
+  margin:calc(18 * var(--u)) 0 0;
+  font-family:var(--display);
+  font-size:calc(22 * var(--u));
+  font-weight:500;
+  letter-spacing:-.02em;
+  color:var(--ink);
+}
+.s-close .paper-cue span{
+  display:block;
+  margin-top:calc(4 * var(--u));
+  font-family:var(--mono);
+  font-size:max(10px, calc(12 * var(--u)));
+  font-weight:400;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--graphite);
+}
+.s-close .paper-card{
+  display:block;
+  width:min(38vw, calc(300 * var(--u)));
+  margin:calc(18 * var(--u)) auto 0;
+  text-decoration:none;
+  color:inherit;
+  cursor:pointer;
+}
+.s-close .paper-frame{
+  position:relative;
+  aspect-ratio:8.5 / 11;
+  border:1px solid var(--hair);
+  background:var(--paper-hi);
+  box-shadow:
+    0 calc(2 * var(--u)) calc(4 * var(--u)) rgba(14,16,21,.04),
+    0 calc(18 * var(--u)) calc(40 * var(--u)) rgba(14,16,21,.10);
+  overflow:hidden;
+  transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.s-close .paper-card:hover .paper-frame,
+.s-close .paper-card:focus-visible .paper-frame{
+  transform:translateY(calc(-4 * var(--u)));
+  border-color:var(--ink);
+  box-shadow:
+    0 calc(4 * var(--u)) calc(8 * var(--u)) rgba(14,16,21,.06),
+    0 calc(28 * var(--u)) calc(56 * var(--u)) rgba(14,16,21,.14);
+}
+.s-close .paper-frame img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:top center;
+  background:#fff;
+}
+.s-close .paper-veil{
+  position:absolute; inset:0;
+  display:flex; align-items:flex-end; justify-content:center;
+  padding:calc(18 * var(--u));
+  background:linear-gradient(to top, rgba(7,8,13,.72) 0%, rgba(7,8,13,.08) 42%, transparent 70%);
+  pointer-events:none;
+}
+.s-close .paper-cta{
+  display:inline-flex; align-items:center; gap:calc(10 * var(--u));
+  padding:calc(10 * var(--u)) calc(16 * var(--u));
+  background:var(--sig);
+  color:var(--paper-hi);
+  font-family:var(--mono);
+  font-size:max(10px, calc(12 * var(--u)));
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  box-shadow:0 calc(8 * var(--u)) calc(20 * var(--u)) rgba(7,8,13,.28);
+  transition:background .2s ease, transform .2s ease;
+}
+.s-close .paper-card:hover .paper-cta,
+.s-close .paper-card:focus-visible .paper-cta{
+  background:var(--ink);
+  transform:translateY(calc(-2 * var(--u)));
+}
+.s-close .paper-cta::after{
+  content:"↗";
+  font-size:1.05em;
+  line-height:1;
+}
+.s-close .paper-meta{
+  margin-top:calc(12 * var(--u));
+  font-family:var(--mono);
+  font-size:max(10px, calc(11.5 * var(--u)));
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--graphite-2);
 }
 
 #markWrap{
@@ -783,6 +873,122 @@ body{
 .loop-legend em{ font-style:normal; color:var(--sig); }
 .loop-legend .g{ color:var(--ok); }
 
+/* ═══════════ live demo / video ════════════════════════════════ */
+.s-demo{
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr) auto;
+  gap:calc(10 * var(--u));
+}
+.s-demo .slide-head{ margin:0; align-items:end; }
+.s-demo .h2{ font-size:calc(32 * var(--u)); }
+.s-demo .lede{ max-width:28ch; }
+
+/*
+  MacBook stencil (1024∶673). Video sits in the measured screen aperture
+  (~9.86% / 10.10% / 80.27% / 79.94%), under a transparent-screen PNG frame.
+*/
+.demo-theater{
+  container-type:size;
+  width:100%;
+  height:100%;
+  min-height:0;
+  display:grid;
+  place-items:center;
+  background:transparent;
+  border:none;
+  overflow:hidden;
+}
+.demo-laptop{
+  position:relative;
+  aspect-ratio:1024 / 673;
+  width:min(100cqw, calc(100cqh * 1024 / 673));
+  height:auto;
+  filter:drop-shadow(0 calc(14 * var(--u)) calc(36 * var(--u)) rgba(0,0,0,.28));
+}
+.demo-screen{
+  position:absolute;
+  left:9.863%;
+  top:10.104%;
+  width:80.273%;
+  height:79.941%;
+  background:#0a0a0a;
+  border-radius:1.6% 1.6% 0 0 / 2.4% 2.4% 0 0;
+  overflow:hidden;
+  z-index:1;
+}
+.demo-screen video{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center center;
+  background:#000;
+  display:block;
+}
+.demo-screen:not(.is-ready) video{ opacity:0; }
+.demo-screen.is-ready video{ opacity:1; }
+
+.demo-frame{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  pointer-events:none;
+  z-index:3;
+  user-select:none;
+}
+
+.demo-scrim{
+  position:absolute; inset:0;
+  z-index:2;
+  display:grid;
+  place-items:center;
+  background:rgba(0,0,0,.35);
+  transition:opacity .3s ease, visibility .3s ease;
+}
+.demo-screen.is-playing .demo-scrim{
+  opacity:0; visibility:hidden; pointer-events:none;
+}
+.demo-play{
+  width:64px; height:64px;
+  border:0; border-radius:50%;
+  background:#fff;
+  color:#0E1015;
+  cursor:pointer;
+  display:grid; place-items:center;
+  box-shadow:0 10px 28px rgba(0,0,0,.35);
+}
+.demo-play:hover{ transform:scale(1.04); }
+.demo-play svg{ width:38%; height:38%; margin-left:6%; fill:currentColor; }
+
+.demo-meta-bar{ display:none; }
+
+.demo-caption{
+  display:flex; justify-content:space-between; gap:calc(24 * var(--u));
+  align-items:baseline;
+  font-family:var(--sans);
+  font-size:max(11px, calc(12.5 * var(--u)));
+  color:var(--graphite);
+  line-height:1.35;
+}
+.demo-caption b{ color:var(--ink); font-weight:600; }
+.demo-caption .mono{
+  font-family:var(--mono);
+  font-size:max(10px, calc(11 * var(--u)));
+  letter-spacing:.12em; text-transform:uppercase;
+  color:var(--graphite-2);
+  white-space:nowrap;
+}
+
+@supports not (width:1cqw){
+  .demo-laptop{
+    width:min(920px, 100%);
+    max-height:100%;
+  }
+}
+
 /* per-stage glyphs — fill the stretch between copy and output */
 .ls-viz{
   flex:1 1 auto; min-height:calc(96 * var(--u));
@@ -984,7 +1190,7 @@ body{
 <section class="slide s1" data-i="0">
   <div class="s1-cols">
     <div class="s1-left">
-      <div class="eyebrow rv" style="animation-delay:.05s">Track C · de novo protein design · T-cell risk</div>
+      <div class="eyebrow rv" style="animation-delay:.05s">Track C · enabling in vivo de novo design · HLA-A*02:01 MHC-I</div>
 
       <h1 class="s1-name rv" style="animation-delay:.1s">CHAO</h1>
       <div class="s1-expand rv" style="animation-delay:.18s">Continuous Hidden Antigen Optimizer</div>
@@ -994,30 +1200,30 @@ body{
         <p class="sr-only">A protein's latent vector travelling through three antigen-processing checkpoints.</p>
       </div>
 
-      <p class="s1-tag rv" style="animation-delay:.55s">Your binder doesn't fail because it binds badly.<br><b>It fails because a T cell read it.</b></p>
+      <p class="s1-tag rv" style="animation-delay:.55s">Novel proteins that must work in vivo have to account for immunogenicity, not only fold and bind.<br><b>CHAO makes one MHC-I framework (pseudo-de novo distillation) an enabling design step toward in vivo manufacture and development.</b></p>
     </div>
 
     <div class="s1-right">
       <dl class="spec rv" style="animation-delay:.24s">
         <dt>What it is</dt>
-        <dd>Three heads, one vector<small>Proteasomal cleavage, TAP transport, and MHC-I presentation as three projections of a single ESM-2 embedding.</small></dd>
+        <dd>One immunogenicity framework<small>Cytosolic MHC-I processing and HLA-A*02:01 presentation on nucleated cells — including immune cells. Danger, TCR, and MHC-II/ADA are not scored.</small></dd>
       </dl>
       <dl class="spec rv" style="animation-delay:.32s">
         <dt>What it's built on</dt>
-        <dd>5M+ 9-mers<small>28,741 human, viral, bacterial and de novo parents, cluster-split, teacher-labelled, provenance on every row.</small></dd>
+        <dd>160,012 PDA 9-mers<small>Almost no measured MHC labels exist on designed proteins. We distill NetMHCpan onto ESM embeddings of PDA — pseudo-de novo teacher labels, not the PDB.</small></dd>
       </dl>
       <dl class="spec rv" style="animation-delay:.4s">
         <dt>What it does</dt>
-        <dd>Steers, not just screens<small>The same geometry that scores a peptide tells you which residue to change to move it out of the danger zone.</small></dd>
+        <dd>Downselects in-cell payloads<small>Primary when a binder, biosensor, or other de novo protein is expressed from a plasmid or vector inside the cell. Injected protein drugs still need MHC-II.</small></dd>
       </dl>
     </div>
   </div>
 
   <div class="s1-strip rv" style="animation-delay:.58s">
     <span>encoder <b>ESM-2 650M</b> · 1280-d</span>
-    <span><b>28,741</b> parent proteins</span>
-    <span><b>0</b> of 29,353 clusters leaking across splits</span>
-    <span><b>500</b> RFD3 binder backbones screened</span>
+    <span><b>1,602</b> PDA designed parents</span>
+    <span><b>608</b> component-grouped folds · no shared 9-mer leak</span>
+    <span><b>500</b> RFD3 backbones generated, not screened</span>
   </div>
 </section>
 
@@ -1080,7 +1286,7 @@ body{
     <div class="cell big"><dt>Runs inside the design loop</dt><dd>yes</dd></div>
   </dl>
 
-  <div class="foot">Illustrative single protein at 100 aa → 92 windows of length 9. "Not modelled" describes the common binding-only screen (an MHC-I affinity predictor used alone), which is how most de novo design pipelines currently gate immunogenicity; dedicated cleavage and TAP tools exist but are separate installs on separate inputs.</div>
+  <div class="foot">Illustrative single protein at 100 aa → 92 windows of length 9. MHC-I is on nucleated cells, not only non-immune cells. This lane is the primary match when the protein is made inside the cell from a plasmid or vector — including intracellular binders and biosensors. Injected extracellular drugs can still cross-present on MHC-I; MHC-II remains the larger gap for that class.</div>
 </section>
 
 <!-- ═════════════ 03 · THE THREE OPERATIONS ═════════════ -->
@@ -1180,7 +1386,7 @@ body{
       <text class="p-lbl-l" x="1166" y="70">Composite risk</text>
       <text class="p-final" id="pipeRisk" x="1166" y="126">0.00</text>
       <text class="p-tx" x="1166" y="152" font-size="11" style="fill:#7C8496">geometric mean of the three</text>
-      <text class="p-tx" x="1166" y="169" font-size="11" style="fill:#7C8496">calibrated probability gates</text>
+      <text class="p-tx" x="1166" y="169" font-size="11" style="fill:#7C8496">gates · protein = mean top-5 Sᵢ</text>
       <line x1="1166" y1="192" x2="1398" y2="192" stroke="#1B2130"/>
       <text class="p-lbl-l" x="1166" y="216">Confidence</text>
       <text class="p-conf" id="pipeConf" x="1398" y="218" text-anchor="end">0.00</text>
@@ -1201,7 +1407,7 @@ body{
     <span>risk = <b>geometric mean</b>, TAP reported beside it</span>
   </div>
 
-  <div class="foot">Scores shown are an illustrative window. TAP is deliberately excluded from the composite: at 613 measured peptides it is a regularized ridge with bootstrap uncertainty, not a calibrated probability, so it is reported alongside the risk rather than multiplied into it. Confidence is a decomposed 0–1 diagnostic, not a coverage probability.</div>
+  <div class="foot">Scores shown are an illustrative window. Window composite is the geometric mean of the three calibrated gates; campaign pathway score is S<sub>i</sub> = EL<sup>0.70</sup> · (√(N·C))<sup>0.30</sup>; protein summary is the mean of the top-5 S<sub>i</sub>. TAP is reported beside the risk, never multiplied into it. Confidence is a decomposed 0–1 diagnostic, not a coverage probability.</div>
 </section>
 
 <!-- ═════════════ 04 · WHAT TAUGHT IT ═════════════ -->
@@ -1300,7 +1506,7 @@ body{
     <div class="score-card rv" style="animation-delay:.14s">
       <div class="score-k">1 · The risk score</div>
       <div class="score-t">Why a product, not an average.</div>
-      <p class="score-c">Presentation needs <b>every</b> gate to open. An average forgives a closed one; a geometric mean does not — one near-zero gate drags the whole score to zero, which is what biology does.</p>
+      <p class="score-c">Presentation needs <b>every</b> gate to open. An average forgives a closed one; a geometric mean does not — one near-zero gate drags the whole score to zero, which is what biology does. Campaign ranking uses pathway score <b>S<sub>i</sub></b>; the protein summary is the <b>mean of the top-5 S<sub>i</sub></b> values — a prioritization heuristic, not an immune-response probability.</p>
       <div class="gm" id="gmRows">
         <div class="gm-row"><span class="gm-n">cleave N</span><i class="gm-track"><em id="gmb0"></em></i><b id="gmv0">0.91</b></div>
         <div class="gm-row"><span class="gm-n">cleave C</span><i class="gm-track"><em id="gmb1"></em></i><b id="gmv1">0.88</b></div>
@@ -1359,8 +1565,8 @@ body{
   <div class="foot">Both tracks come from <span style="letter-spacing:0">score.compute_residue_heatmap</span> and <span style="letter-spacing:0">score.attach_mhc_residue_importance</span>; values shown are illustrative for one binder region. risk_max is the maximum composite risk over the ≤9 windows covering a residue, carrying the confidence of that window. mhc_importance maps residue-level cosine from [−1,1] to [0,1] so it shares the risk colour scale — it is an alignment score, not an attribution with a conservation guarantee.</div>
 </section>
 
-<!-- ═════════════ 06 · STEER TO SAFETY ═════════════ -->
-<section class="slide s5" data-i="5">
+<!-- ═════════════ 06 · STEER TO SAFETY (hidden for now) ═════════════ -->
+<section class="slide s5" data-i="5" hidden aria-hidden="true">
   <div class="slide-head">
     <div>
       <div class="eyebrow rv">The point of a shared space</div>
@@ -1427,7 +1633,7 @@ body{
       <div class="eyebrow rv">Why we built it this weekend</div>
       <h2 class="h2 rv" style="animation-delay:.06s">500 fresh binder backbones against<br><em>five targets nobody can drug.</em></h2>
     </div>
-    <p class="lede rv" style="animation-delay:.12s; max-width:36ch">Generated here with RFdiffusion3 on Modal. Every one of them is a de novo protein that has to survive a human immune system — and none of them exists in any immunogenicity dataset.</p>
+    <p class="lede rv" style="animation-delay:.12s; max-width:36ch">Generated here with RFdiffusion3 on Modal. Binders are not only extracellular drugs — the same stack designs intracellular tools and biosensors that a cell would express from a vector. MHC-I is the presentation framework for that in-cell use.</p>
   </div>
 
   <div class="unlock-grid">
@@ -1461,8 +1667,8 @@ body{
 
     <div class="unlock-stack rv" style="animation-delay:.24s">
       <div class="unlock-card signal">
-        <strong>16 / 16</strong>
-        <span>PD-L1 control designs contact all three foundry hotspots within 4.5 Å — the generator is aimed correctly before we score anything</span>
+        <strong>15 / 16</strong>
+        <span>PD-L1 RFdiffusion3 backbones contacted all three foundry hotspots within 4.5 Å; all 16 did so within 6 Å. Heavy-atom geometry on generated complexes — not AlphaFold or ESMFold.</span>
       </div>
       <div class="unlock-card">
         <strong>5.6 h</strong>
@@ -1475,7 +1681,7 @@ body{
     </div>
   </div>
 
-  <div class="foot">Backbones only: sequence design (ProteinMPNN) and AF2/ESMFold validation are out of scope for the weekend. Bar length is GPU wall-clock per target, not a quality score — 5.6 hours on GPU for the full 500. Hotspots and contigs follow the RosettaCommons foundry binder protocol; per-target caveats — including that 6VJJ is wild-type KRAS4b rather than G12D — are recorded in results/rfd3_binders/report.md.</div>
+  <div class="foot">Backbones only: sequence design (ProteinMPNN) and AF2/ESMFold validation were not run. The PD-L1 gate is min heavy-atom distance on RFdiffusion3 complexes (Y56 / M115 / Y123): 15 of 16 at 4.5 Å, 16 of 16 at 6 Å. Bar length is GPU wall-clock per target, not a quality score — 5.6 hours on GPU for the full 500. Hotspots and contigs follow the RosettaCommons foundry binder protocol; per-target caveats — including that 6VJJ is wild-type KRAS4b rather than G12D — are recorded in results/rfd3_binders/report.md.</div>
 </section>
 
 <!-- ═════════════ 08 · THE FULL LOOP ═════════════ -->
@@ -1676,8 +1882,50 @@ body{
   <div class="foot">Stages 03 and 06 are the Benchling integration we have specified but not yet implemented — the ELN is where a design library stops being a folder of PDBs and becomes something a bench scientist can act on, which is why the loop is drawn with them rather than around them. Everything marked "built" exists in this repository: RFD3 backbones in results/rfd3_binders/, scoring in score.py, steering with full candidate traces in steer.py.</div>
 </section>
 
-<!-- ═════════════ 09 · STUDENT · TEACHER ═════════════ -->
-<section class="slide s7" data-i="8">
+<!-- ═════════════ 09 · LIVE DEMO ═════════════ -->
+<section class="slide s-demo" data-i="8">
+  <div class="slide-head">
+    <div>
+      <div class="eyebrow rv">Live capture</div>
+      <h2 class="h2 rv" style="animation-delay:.06s">The model inside the agent.</h2>
+    </div>
+    <p class="lede rv" style="animation-delay:.12s">Workbench run in a deployed setting.</p>
+  </div>
+
+  <div class="demo-theater rv" style="animation-delay:.16s" id="demoStage">
+    <div class="demo-laptop">
+      <div class="demo-screen is-ready" id="demoViewport">
+        <video id="demoVideo"
+          width="1490"
+          height="780"
+          playsinline
+          preload="auto"
+          poster="demo/poster.jpg"
+          aria-label="CHAO agent harness demo">
+          <source src="demo/chao-demo.mp4" type="video/mp4" />
+        </video>
+        <div class="demo-scrim" id="demoScrim">
+          <button type="button" class="demo-play" id="demoPlay" aria-label="Play demo">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+        </div>
+        <div class="demo-meta-bar">
+          <div class="t">CHAO workbench<small>Agent harness · MHC-I design lane</small></div>
+          <div class="d" id="demoStatus">00:14 · play</div>
+        </div>
+      </div>
+      <img class="demo-frame" src="demo/macbook-frame.png" alt="" width="1024" height="673" draggable="false" />
+    </div>
+  </div>
+
+  <div class="demo-caption rv" style="animation-delay:.22s">
+    <div><b>Press play.</b> Literature → campaign → HLA-A*02:01 scoring → inspectable trace.</div>
+    <div class="mono">Workbench demo</div>
+  </div>
+</section>
+
+<!-- ═════════════ 10 · STUDENT · TEACHER ═════════════ -->
+<section class="slide s7" data-i="9">
   <div class="slide-head">
     <div>
       <div class="eyebrow rv">How the surrogate learns</div>
@@ -1785,9 +2033,22 @@ body{
 </section>
 
 <!-- ═════════════ 10 · NAME ═════════════ -->
-<section class="slide s-close" data-i="9">
+<section class="slide s-close" data-i="10">
   <h1 class="s1-name rv">CHAO</h1>
-  <div class="s1-expand rv" style="animation-delay:.1s">Continuous Hidden Antigen Optimizer</div>
+  <div class="s1-expand rv" style="animation-delay:.08s">Continuous Hidden Antigen Optimizer</div>
+  <div class="paper-cue rv" style="animation-delay:.14s">
+    The manuscript
+    <span>Click the preview to open the full PDF</span>
+  </div>
+  <a class="paper-card rv" style="animation-delay:.2s" href="chao-paper.pdf" target="_blank" rel="noopener" aria-label="Open the CHAO manuscript PDF in a new tab">
+    <div class="paper-frame">
+      <img src="paper-preview.png" alt="First page of the CHAO manuscript" width="695" height="900" loading="eager" decoding="async" />
+      <div class="paper-veil">
+        <span class="paper-cta">Open paper</span>
+      </div>
+    </div>
+    <div class="paper-meta">PDF · opens in a new tab</div>
+  </a>
 </section>
 
 <nav id="rail"></nav>
@@ -2864,8 +3125,71 @@ function frame(ts){
 /* ══════════════════════════════════════════════════════════════
    deck navigation
    ══════════════════════════════════════════════════════════════ */
-const slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
-const TITLES = ["CHAO", "The blind spot", "Three projections", "What taught it", "Reading the score", "Steer to safety", "What it unlocks", "System architecture", "Student · teacher", "CHAO"];
+const slides = Array.prototype.slice.call(document.querySelectorAll(".slide:not([hidden])"));
+
+/* ── demo video ───────────────────────────────────────────────── */
+const DEMO_VIDEO = {
+  src: "demo/chao-demo.mp4",
+  poster: "demo/poster.jpg",
+  label: "workbench · agent harness"
+};
+
+const demoViewport = document.getElementById("demoViewport");
+const demoVideo = document.getElementById("demoVideo");
+const demoPlay = document.getElementById("demoPlay");
+const demoStatus = document.getElementById("demoStatus");
+let demoReady = !!(DEMO_VIDEO.src);
+
+function wireDemoVideo(){
+  if(!demoVideo || !demoViewport) return;
+  if(DEMO_VIDEO.poster) demoVideo.setAttribute("poster", DEMO_VIDEO.poster);
+  if(DEMO_VIDEO.src){
+    const existing = demoVideo.querySelector("source");
+    if(!existing){
+      const source = document.createElement("source");
+      source.src = DEMO_VIDEO.src;
+      source.type = "video/mp4";
+      demoVideo.appendChild(source);
+    }
+    demoVideo.load();
+    demoReady = true;
+    demoViewport.classList.add("is-ready");
+    if(demoStatus) demoStatus.textContent = "00:14 · play";
+  } else {
+    demoReady = false;
+    demoViewport.classList.remove("is-ready");
+    if(demoStatus) demoStatus.textContent = "awaiting upload";
+  }
+}
+wireDemoVideo();
+
+function setDemoPlaying(on){
+  if(!demoViewport) return;
+  demoViewport.classList.toggle("is-playing", !!on);
+  if(demoStatus) demoStatus.textContent = on ? "playing" : "00:14 · play";
+}
+function pauseDemo(){
+  if(demoVideo && !demoVideo.paused){
+    try { demoVideo.pause(); } catch(err) {}
+  }
+  setDemoPlaying(false);
+}
+function onDemoEnter(){ /* ready state only; user starts playback */ }
+
+if(demoPlay){
+  demoPlay.addEventListener("click", function(e){
+    e.stopPropagation();
+    if(!demoReady || !demoVideo) return;
+    demoVideo.play().then(function(){ setDemoPlaying(true); }).catch(function(){});
+  });
+}
+if(demoVideo){
+  demoVideo.addEventListener("play", function(){ setDemoPlaying(true); });
+  demoVideo.addEventListener("pause", function(){ setDemoPlaying(false); });
+  demoVideo.addEventListener("ended", function(){ setDemoPlaying(false); });
+}
+
+const TITLES = ["CHAO", "The blind spot", "Three projections", "What taught it", "Reading the score", "What it unlocks", "System architecture", "Live demo", "Student · teacher", "CHAO"];
 const rail = document.getElementById("rail");
 rail.style.gridTemplateColumns = "repeat(" + TITLES.length + ",1fr)";
 TITLES.forEach(function(name, i){
@@ -2901,9 +3225,10 @@ function go(i){
   if(i === 2) entryTimer = setTimeout(runS3, 460);
   if(i === 3) entryTimer = setTimeout(runS4, 420);
   if(i === 4) entryTimer = setTimeout(runS6, 420);
-  if(i === 5) entryTimer = setTimeout(runS5, 520);
-  if(i === 7) entryTimer = setTimeout(runS8, 420);
+  if(i === 6) entryTimer = setTimeout(runS8, 420);
+  if(i === 7) entryTimer = setTimeout(onDemoEnter, 200);
   if(i === 8) entryTimer = setTimeout(runS7, 420);
+  if(i !== 7) pauseDemo();
   hint.style.opacity = i === 0 ? "1" : "0";
   prevB.disabled = i === 0;
   nextB.disabled = i === slides.length - 1;
@@ -2922,8 +3247,7 @@ window.addEventListener("keydown", function(e){
     else if(cur === 2) runS3();
     else if(cur === 3) runS4();
     else if(cur === 4) runS6();
-    else if(cur === 5) runS5();
-    else if(cur === 7) runS8();
+    else if(cur === 6) runS8();
     else if(cur === 8) runS7();
   }
   else if(e.key === "f" || e.key === "F"){

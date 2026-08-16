@@ -157,6 +157,7 @@ class MHCISurrogatePrediction(BaseModel):
     mhc_i_risk_band: Literal["high", "moderate", "low"] | None = None
     overall_mhci_risk: float | None = Field(default=None, ge=0.0, le=1.0)
     composite_processing_risk: float = Field(ge=0.0, le=1.0)
+    pathway_rank_score: float | None = Field(default=None, ge=0.0, le=1.0)
     confidence: float = Field(ge=0.0, le=1.0)
 
 

@@ -1344,8 +1344,8 @@ body{
 
     <div class="unlock-stack rv" style="animation-delay:.24s">
       <div class="unlock-card signal">
-        <strong>16 / 16</strong>
-        <span>PD-L1 control designs contact all three foundry hotspots within 4.5 Å — the generator is aimed correctly before we score anything</span>
+        <strong>15 / 16</strong>
+        <span>PD-L1 RFdiffusion3 backbones contacted all three foundry hotspots within 4.5 Å; all 16 did so within 6 Å. Heavy-atom geometry on generated complexes — not AlphaFold or ESMFold.</span>
       </div>
       <div class="unlock-card">
         <strong>1.7 h</strong>
@@ -1358,7 +1358,7 @@ body{
     </div>
   </div>
 
-  <div class="foot">Backbones only: sequence design (ProteinMPNN) and AF2/ESMFold validation are out of scope for the weekend. Bar length is GPU wall-clock per target (847–2381 s), not a quality score. Hotspots and contigs follow the RosettaCommons foundry binder protocol; per-target caveats — including that 6VJJ is wild-type KRAS4b rather than G12D — are recorded in results/rfd3_binders/report.md.</div>
+  <div class="foot">Backbones only: sequence design (ProteinMPNN) and AF2/ESMFold validation were not run. The PD-L1 gate is min heavy-atom distance on RFdiffusion3 complexes (Y56 / M115 / Y123): 15 of 16 at 4.5 Å, 16 of 16 at 6 Å. Bar length is GPU wall-clock per target (847–2381 s), not a quality score. Hotspots and contigs follow the RosettaCommons foundry binder protocol; per-target caveats — including that 6VJJ is wild-type KRAS4b rather than G12D — are recorded in results/rfd3_binders/report.md.</div>
 </section>
 
 <!-- ═════════════ 08 · THE FULL LOOP ═════════════ -->
