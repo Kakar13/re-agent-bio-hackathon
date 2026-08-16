@@ -112,7 +112,7 @@ git push -u origin HEAD
 | [harness/README.md](harness/README.md) | Pi harness launch for the de novo task |
 | [harness/TASK.md](harness/TASK.md) | De novo design brief (fill this in) |
 | [skills/reagent/SKILL.md](skills/reagent/SKILL.md) | Track pick + how to win (read first) |
-| [skills/](skills/) | Tool skills: Paperclip, Census, Proto, Boltz |
+| [skills/](skills/) | Tool skills: Paperclip, Census, Proto, Boltz, ESM |
 | [docs/SETUP.md](docs/SETUP.md) | Full teammate setup (troubleshooting, Cursor MCP, etc.) |
 | [SPONSORS.md](SPONSORS.md) | Co-hosts & sponsors — use them in the demo |
 | [AGENTS.md](AGENTS.md) | Rules for Pi / agents |

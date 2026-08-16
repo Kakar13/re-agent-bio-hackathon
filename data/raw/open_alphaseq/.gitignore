@@ -1,0 +1,5 @@
+# Hugging Face parquet shards (~44 MB). Fetch with:
+#   uv run python scripts/download_open_alphaseq.py
+*
+!.gitignore
+!README.md

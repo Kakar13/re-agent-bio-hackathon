@@ -1,0 +1,5 @@
+# Hugging Face parquet shards (~76 MB). Fetch with:
+#   uv run python scripts/download_megascale_tsuboyama2023.py
+*
+!.gitignore
+!README.md

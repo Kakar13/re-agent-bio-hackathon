@@ -27,6 +27,20 @@ results/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 !results/.gitkeep
+# MegaScale parquet stays local; README + ignore file are tracked
+!data/raw/megascale_tsuboyama2023/
+!data/raw/megascale_tsuboyama2023/.gitignore
+!data/raw/megascale_tsuboyama2023/README.md
+# AlphaSeq parquet stays local; README + ignore file are tracked
+!data/raw/open_alphaseq/
+!data/raw/open_alphaseq/.gitignore
+!data/raw/open_alphaseq/README.md
+# Affinity pipeline docs (CSVs stay under data/processed/)
+!data/README.md
+# Binder target docs (PDBs stay local / gitignored)
+!data/targets/
+!data/targets/README.md
+!data/targets/*_hotspots_report.json
 *.fasta
 *.pdb
 *.cif

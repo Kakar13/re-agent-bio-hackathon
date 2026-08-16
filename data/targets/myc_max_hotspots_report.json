@@ -1,0 +1,240 @@
+{
+  "name": "myc_max",
+  "pdb_id": "1NKP",
+  "assembly": null,
+  "why_undruggable": "Flexible shallow bHLH-LZ interface; only Omomyc reached clinic",
+  "caveats": [
+    "Cropped to MYC chain A + MAX chain B; DNA and duplicate copies removed"
+  ],
+  "target_chain": "A",
+  "partner_chain": "B",
+  "residue_range": [
+    897,
+    984
+  ],
+  "target_pdb": "data/targets/myc_max_target.pdb",
+  "complex_pdb": "data/targets/myc_max_complex.pdb",
+  "select_hotspots": {
+    "A927": "OE1,NE2",
+    "A957": "OE1,OE2",
+    "A967": "CD1,CD2"
+  },
+  "contigs": {
+    "len_55_85": "55-85,/0,A897-984",
+    "len_85_120": "85-120,/0,A897-984"
+  },
+  "binder_length_bins": [
+    [
+      55,
+      85
+    ],
+    [
+      85,
+      120
+    ]
+  ],
+  "notes": [],
+  "top_interface_residues": [
+    {
+      "chain": "A",
+      "resnum": 927,
+      "resname": "GLN",
+      "contacts": 30,
+      "min_dist": 2.351,
+      "key": "A927"
+    },
+    {
+      "chain": "A",
+      "resnum": 957,
+      "resname": "GLU",
+      "contacts": 27,
+      "min_dist": 2.899,
+      "key": "A957"
+    },
+    {
+      "chain": "A",
+      "resnum": 967,
+      "resname": "LEU",
+      "contacts": 27,
+      "min_dist": 3.261,
+      "key": "A967"
+    },
+    {
+      "chain": "A",
+      "resnum": 971,
+      "resname": "ARG",
+      "contacts": 26,
+      "min_dist": 2.979,
+      "key": "A971"
+    },
+    {
+      "chain": "A",
+      "resnum": 943,
+      "resname": "LEU",
+      "contacts": 21,
+      "min_dist": 3.702,
+      "key": "A943"
+    },
+    {
+      "chain": "A",
+      "resnum": 960,
+      "resname": "LEU",
+      "contacts": 20,
+      "min_dist": 3.4,
+      "key": "A960"
+    },
+    {
+      "chain": "A",
+      "resnum": 924,
+      "resname": "LEU",
+      "contacts": 17,
+      "min_dist": 3.158,
+      "key": "A924"
+    },
+    {
+      "chain": "A",
+      "resnum": 970,
+      "resname": "ARG",
+      "contacts": 15,
+      "min_dist": 2.907,
+      "key": "A970"
+    },
+    {
+      "chain": "A",
+      "resnum": 978,
+      "resname": "LEU",
+      "contacts": 15,
+      "min_dist": 3.4,
+      "key": "A978"
+    },
+    {
+      "chain": "A",
+      "resnum": 921,
+      "resname": "PHE",
+      "contacts": 15,
+      "min_dist": 3.568,
+      "key": "A921"
+    },
+    {
+      "chain": "A",
+      "resnum": 953,
+      "resname": "VAL",
+      "contacts": 14,
+      "min_dist": 3.183,
+      "key": "A953"
+    },
+    {
+      "chain": "A",
+      "resnum": 947,
+      "resname": "THR",
+      "contacts": 14,
+      "min_dist": 3.274,
+      "key": "A947"
+    },
+    {
+      "chain": "A",
+      "resnum": 950,
+      "resname": "ILE",
+      "contacts": 14,
+      "min_dist": 3.616,
+      "key": "A950"
+    },
+    {
+      "chain": "A",
+      "resnum": 954,
+      "resname": "GLN",
+      "contacts": 13,
+      "min_dist": 2.954,
+      "key": "A954"
+    },
+    {
+      "chain": "A",
+      "resnum": 920,
+      "resname": "SER",
+      "contacts": 13,
+      "min_dist": 2.997,
+      "key": "A920"
+    },
+    {
+      "chain": "A",
+      "resnum": 964,
+      "resname": "GLU",
+      "contacts": 13,
+      "min_dist": 3.468,
+      "key": "A964"
+    },
+    {
+      "chain": "A",
+      "resnum": 963,
+      "resname": "GLU",
+      "contacts": 12,
+      "min_dist": 3.128,
+      "key": "A963"
+    },
+    {
+      "chain": "A",
+      "resnum": 949,
+      "resname": "TYR",
+      "contacts": 10,
+      "min_dist": 2.919,
+      "key": "A949"
+    },
+    {
+      "chain": "A",
+      "resnum": 974,
+      "resname": "LEU",
+      "contacts": 10,
+      "min_dist": 3.735,
+      "key": "A974"
+    },
+    {
+      "chain": "A",
+      "resnum": 981,
+      "resname": "LEU",
+      "contacts": 9,
+      "min_dist": 3.703,
+      "key": "A981"
+    },
+    {
+      "chain": "A",
+      "resnum": 917,
+      "resname": "LEU",
+      "contacts": 9,
+      "min_dist": 3.86,
+      "key": "A917"
+    },
+    {
+      "chain": "A",
+      "resnum": 984,
+      "resname": "CYS",
+      "contacts": 7,
+      "min_dist": 3.043,
+      "key": "A984"
+    },
+    {
+      "chain": "A",
+      "resnum": 968,
+      "resname": "ARG",
+      "contacts": 6,
+      "min_dist": 3.756,
+      "key": "A968"
+    },
+    {
+      "chain": "A",
+      "resnum": 940,
+      "resname": "VAL",
+      "contacts": 6,
+      "min_dist": 3.825,
+      "key": "A940"
+    },
+    {
+      "chain": "A",
+      "resnum": 982,
+      "resname": "GLY",
+      "contacts": 4,
+      "min_dist": 3.429,
+      "key": "A982"
+    }
+  ],
+  "literature_hotspots": null
+}

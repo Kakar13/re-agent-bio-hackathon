@@ -1,0 +1,200 @@
+{
+  "name": "stat3",
+  "pdb_id": "1BG1",
+  "assembly": null,
+  "why_undruggable": "SH2/pTyr-mediated dimerization rather than a classical pocket",
+  "caveats": [
+    "Uses biological assembly 1 (two models merged to A/B) to recover the SH2 dimer",
+    "Forced literature SH2 pocket hotspots R609/S611/S613 \u2014 computed contacts favor the reciprocal pY705 face"
+  ],
+  "target_chain": "A",
+  "partner_chain": "B",
+  "residue_range": [
+    500,
+    688
+  ],
+  "target_pdb": "data/targets/stat3_target.pdb",
+  "complex_pdb": "data/targets/stat3_complex.pdb",
+  "select_hotspots": {
+    "A609": "NH1,NH2",
+    "A611": "OG",
+    "A613": "OG"
+  },
+  "contigs": {
+    "len_55_85": "55-85,/0,A500-688",
+    "len_85_120": "85-120,/0,A500-688"
+  },
+  "binder_length_bins": [
+    [
+      55,
+      85
+    ],
+    [
+      85,
+      120
+    ]
+  ],
+  "notes": [
+    "using forced/doc hotspots",
+    "contig cropped to continuous segment A500-688 (observed 203 residues in 500-716; gaps omitted)"
+  ],
+  "top_interface_residues": [
+    {
+      "chain": "A",
+      "resnum": 710,
+      "resname": "PHE",
+      "contacts": 48,
+      "min_dist": 3.468,
+      "key": "A710"
+    },
+    {
+      "chain": "A",
+      "resnum": 712,
+      "resname": "CYS",
+      "contacts": 40,
+      "min_dist": 2.909,
+      "key": "A712"
+    },
+    {
+      "chain": "A",
+      "resnum": 706,
+      "resname": "LEU",
+      "contacts": 32,
+      "min_dist": 3.115,
+      "key": "A706"
+    },
+    {
+      "chain": "A",
+      "resnum": 711,
+      "resname": "ILE",
+      "contacts": 21,
+      "min_dist": 2.417,
+      "key": "A711"
+    },
+    {
+      "chain": "A",
+      "resnum": 708,
+      "resname": "THR",
+      "contacts": 19,
+      "min_dist": 2.909,
+      "key": "A708"
+    },
+    {
+      "chain": "A",
+      "resnum": 647,
+      "resname": "ASN",
+      "contacts": 13,
+      "min_dist": 2.62,
+      "key": "A647"
+    },
+    {
+      "chain": "A",
+      "resnum": 709,
+      "resname": "LYS",
+      "contacts": 13,
+      "min_dist": 3.252,
+      "key": "A709"
+    },
+    {
+      "chain": "A",
+      "resnum": 640,
+      "resname": "TYR",
+      "contacts": 13,
+      "min_dist": 3.533,
+      "key": "A640"
+    },
+    {
+      "chain": "A",
+      "resnum": 637,
+      "resname": "VAL",
+      "contacts": 10,
+      "min_dist": 3.115,
+      "key": "A637"
+    },
+    {
+      "chain": "A",
+      "resnum": 638,
+      "resname": "GLU",
+      "contacts": 7,
+      "min_dist": 3.787,
+      "key": "A638"
+    },
+    {
+      "chain": "A",
+      "resnum": 715,
+      "resname": "PRO",
+      "contacts": 7,
+      "min_dist": 3.902,
+      "key": "A715"
+    },
+    {
+      "chain": "A",
+      "resnum": 714,
+      "resname": "THR",
+      "contacts": 6,
+      "min_dist": 3.548,
+      "key": "A714"
+    },
+    {
+      "chain": "A",
+      "resnum": 635,
+      "resname": "GLN",
+      "contacts": 6,
+      "min_dist": 3.556,
+      "key": "A635"
+    },
+    {
+      "chain": "A",
+      "resnum": 623,
+      "resname": "TRP",
+      "contacts": 5,
+      "min_dist": 3.145,
+      "key": "A623"
+    },
+    {
+      "chain": "A",
+      "resnum": 636,
+      "resname": "SER",
+      "contacts": 5,
+      "min_dist": 3.565,
+      "key": "A636"
+    },
+    {
+      "chain": "A",
+      "resnum": 707,
+      "resname": "LYS",
+      "contacts": 4,
+      "min_dist": 3.902,
+      "key": "A707"
+    },
+    {
+      "chain": "A",
+      "resnum": 644,
+      "resname": "GLN",
+      "contacts": 3,
+      "min_dist": 4.138,
+      "key": "A644"
+    },
+    {
+      "chain": "A",
+      "resnum": 648,
+      "resname": "MET",
+      "contacts": 1,
+      "min_dist": 4.302,
+      "key": "A648"
+    },
+    {
+      "chain": "A",
+      "resnum": 626,
+      "resname": "LYS",
+      "contacts": 1,
+      "min_dist": 4.468,
+      "key": "A626"
+    }
+  ],
+  "literature_hotspots": [
+    609,
+    611,
+    613
+  ]
+}

@@ -15,9 +15,9 @@ still need: better datasets, sharper tools, and reliable ways to evaluate their
 work. The bar is not a faster workflow, it is a result **worth trusting**: every
 claim cited or measured, the reasoning easy to inspect, the numbers reproducible.
 
-This workspace ships four tools for exactly that: Paperclip, CELLxGENE Census,
-Proto, and Boltz. Read this doc first to choose a track and scope, then open the
-matching tool skill and follow its rules.
+This workspace ships Paperclip, CELLxGENE Census, Proto, Boltz, and ESM. Read
+this doc first to choose a track and scope, then open the matching tool skill
+and follow its rules.
 
 ## 1. Pick one track
 
@@ -91,4 +91,4 @@ Judges reward results worth trusting. On every project:
 
 Once the track is set, read the matching `SKILL.md` before running anything and
 follow it exactly: `skills/paperclip/`, `skills/cellxgene-census/`,
-`skills/proto/`, `skills/boltz/`.
+`skills/proto/`, `skills/boltz/`, `skills/esm/`.

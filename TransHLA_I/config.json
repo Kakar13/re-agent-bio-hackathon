@@ -1,0 +1,16 @@
+{
+  "cnn_kernel_size": 3,
+  "cnn_num_channel": 256,
+  "cnn_padding_index": 0,
+  "cnn_padding_size": 1,
+  "cnn_stride": 1,
+  "d_ff": 64,
+  "d_model": 1280,
+  "max_len": 14,
+  "model_type": "TransHLA",
+  "n_head": 8,
+  "n_layers": 6,
+  "pooling_size": 2,
+  "region_embedding_size": 3,
+  "transformers_version": "5.15.0"
+}

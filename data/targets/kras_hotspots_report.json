@@ -1,0 +1,174 @@
+{
+  "name": "kras",
+  "pdb_id": "6VJJ",
+  "assembly": null,
+  "why_undruggable": "Flat shallow effector surface; picomolar GTP affinity",
+  "caveats": [
+    "6VJJ is wild-type KRAS4b\u2013RAF1 RBD, not G12D; residue 12 is not part of the binder epitope"
+  ],
+  "target_chain": "A",
+  "partner_chain": "B",
+  "residue_range": [
+    1,
+    167
+  ],
+  "target_pdb": "data/targets/kras_target.pdb",
+  "complex_pdb": "data/targets/kras_complex.pdb",
+  "select_hotspots": {
+    "A37": "OE1,OE2",
+    "A38": "OD1,OD2",
+    "A40": "CD2,OH"
+  },
+  "contigs": {
+    "len_55_85": "55-85,/0,A1-167",
+    "len_85_120": "85-120,/0,A1-167"
+  },
+  "binder_length_bins": [
+    [
+      55,
+      85
+    ],
+    [
+      85,
+      120
+    ]
+  ],
+  "notes": [
+    "literature residues present at interface: [37, 38, 40]"
+  ],
+  "top_interface_residues": [
+    {
+      "chain": "A",
+      "resnum": 37,
+      "resname": "GLU",
+      "contacts": 44,
+      "min_dist": 2.639,
+      "key": "A37"
+    },
+    {
+      "chain": "A",
+      "resnum": 25,
+      "resname": "GLN",
+      "contacts": 41,
+      "min_dist": 2.652,
+      "key": "A25"
+    },
+    {
+      "chain": "A",
+      "resnum": 39,
+      "resname": "SER",
+      "contacts": 38,
+      "min_dist": 2.89,
+      "key": "A39"
+    },
+    {
+      "chain": "A",
+      "resnum": 40,
+      "resname": "TYR",
+      "contacts": 36,
+      "min_dist": 3.313,
+      "key": "A40"
+    },
+    {
+      "chain": "A",
+      "resnum": 41,
+      "resname": "ARG",
+      "contacts": 30,
+      "min_dist": 2.949,
+      "key": "A41"
+    },
+    {
+      "chain": "A",
+      "resnum": 38,
+      "resname": "ASP",
+      "contacts": 23,
+      "min_dist": 2.622,
+      "key": "A38"
+    },
+    {
+      "chain": "A",
+      "resnum": 33,
+      "resname": "ASP",
+      "contacts": 12,
+      "min_dist": 2.521,
+      "key": "A33"
+    },
+    {
+      "chain": "A",
+      "resnum": 36,
+      "resname": "ILE",
+      "contacts": 9,
+      "min_dist": 3.886,
+      "key": "A36"
+    },
+    {
+      "chain": "A",
+      "resnum": 21,
+      "resname": "ILE",
+      "contacts": 7,
+      "min_dist": 3.981,
+      "key": "A21"
+    },
+    {
+      "chain": "A",
+      "resnum": 31,
+      "resname": "GLU",
+      "contacts": 6,
+      "min_dist": 2.756,
+      "key": "A31"
+    },
+    {
+      "chain": "A",
+      "resnum": 29,
+      "resname": "VAL",
+      "contacts": 6,
+      "min_dist": 3.948,
+      "key": "A29"
+    },
+    {
+      "chain": "A",
+      "resnum": 71,
+      "resname": "TYR",
+      "contacts": 6,
+      "min_dist": 3.949,
+      "key": "A71"
+    },
+    {
+      "chain": "A",
+      "resnum": 24,
+      "resname": "ILE",
+      "contacts": 4,
+      "min_dist": 3.318,
+      "key": "A24"
+    },
+    {
+      "chain": "A",
+      "resnum": 67,
+      "resname": "MET",
+      "contacts": 2,
+      "min_dist": 3.878,
+      "key": "A67"
+    },
+    {
+      "chain": "A",
+      "resnum": 34,
+      "resname": "PRO",
+      "contacts": 1,
+      "min_dist": 3.832,
+      "key": "A34"
+    },
+    {
+      "chain": "A",
+      "resnum": 64,
+      "resname": "TYR",
+      "contacts": 1,
+      "min_dist": 4.028,
+      "key": "A64"
+    }
+  ],
+  "literature_hotspots": [
+    37,
+    38,
+    40
+  ]
+}

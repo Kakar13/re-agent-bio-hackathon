@@ -11,7 +11,7 @@ This harness is for the **last part** of the de novo binder pipeline (Track C):
 Upstream design (diffusion / MPNN) happens elsewhere. Do **not** spend the weekend reinventing backbone generation here unless `TASK.md` explicitly expands scope.
 
 1. Read [`TASK.md`](TASK.md) first and follow that pipeline.
-2. Load [`../skills/reagent/SKILL.md`](../skills/reagent/SKILL.md), then Paperclip / Proto / Boltz as needed.
+2. Load [`../skills/reagent/SKILL.md`](../skills/reagent/SKILL.md), then Paperclip / Proto / Boltz / ESM as needed.
 3. Start or resume with `/denovo` in Pi, or use the text REPL: `./repl.sh` (keeps chat context + same immuno tools). Custom tools are registered by `.pi/extensions/immuno-risk-tools.ts` (see `pi-tools.ts`). Prefer `run_immuno_pipeline` for an end-to-end pass; use the staged tools when debugging one step.
 
 ## Paths

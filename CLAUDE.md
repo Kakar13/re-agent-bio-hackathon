@@ -28,6 +28,7 @@ Sundial re:AGENT skills live in [`skills/`](skills/). Read **`skills/reagent/SKI
 | [`skills/cellxgene-census/`](skills/cellxgene-census/SKILL.md) | Single-cell / Census queries |
 | [`skills/proto/`](skills/proto/SKILL.md) | Structure, design, docking, bioinformatics tools |
 | [`skills/boltz/`](skills/boltz/SKILL.md) | Fold / affinity with Boltz-2 |
+| [`skills/esm/`](skills/esm/SKILL.md) | ESM3 / ESMC embeddings, generation, ESMFold2 (K-Dense) |
 
 Project skills are also linked at `.claude/skills` → `skills/` for Claude Code auto-discovery. Follow each skill’s rules exactly.
 
@@ -36,6 +37,7 @@ Project skills are also linked at `.claude/skills` → `skills/` for Claude Code
 - **Paperclip** — literature, FDA, trials, UniProt/PDB/ChEMBL. Prefer MCP (Pi: [pi-mcp-adapter](https://pi.dev/packages/pi-mcp-adapter) + `.mcp.json`; Cursor: `.cursor/mcp.json`) or the CLI (`paperclip search|map|grep|sql|cat`). Load `/paperclip` or `skills/paperclip` before Paperclip work. Do not download entire papers by hand.
 - **Proto** — two paths: (1) hosted MCP `proto-bio` at `https://mcp.evodesign.org/mcp` (`PROTO_API_KEY` + `proto_client`); (2) local `proto-tools` / `proto-language` via `uv sync --extra proto`, run on Modal with `device="modal"` after `uv run modal setup` and deploy. Do not invent Modal tokens.
 - **CELLxGENE Census / Boltz** — no API key; follow the skills above for install and gotchas.
+- **ESM** — ESM3 generation, ESMC embeddings, ESMFold2. Local open weights or hosted Forge/Biohub via `ESM_API_KEY`. Read [`skills/esm/SKILL.md`](skills/esm/SKILL.md) first.
 - **Claude API** — `ANTHROPIC_API_KEY` in `.env` (also works for Pi auth).
 
 If a check fails, tell the user which booth / Discord channel to get the credential from (`SPONSORS.md`).

@@ -101,7 +101,7 @@ Confirm [`TASK.md`](TASK.md) matches the team brief (late immuno-risk stage). Po
 | [`.pi/prompts/denovo.md`](.pi/prompts/denovo.md) | `/denovo` prompt template |
 | [`.mcp.json`](.mcp.json) | Paperclip + Proto MCP |
 | [`AGENTS.md`](AGENTS.md) | Harness instructions (parent `AGENTS.md` also loads) |
-| `../skills/` | Sundial skills (reagent, paperclip, census, proto, boltz) |
+| `../skills/` | Sundial skills (reagent, paperclip, census, proto, boltz, esm) |
 
 `node_modules/`, `.pi/npm/`, and `.pi/sessions/` stay local (gitignored).
 

@@ -68,6 +68,7 @@ Open `.env` and add **your** keys. Leave a line blank if you do not have that to
 | `ANTHROPIC_API_KEY` | Anthropic booth / Discord / lightning talks | Claude API calls in code |
 | `PROTO_API_KEY` | Proto workspace (Arc Institute) | Hosted Proto MCP + `proto-client` SDK |
 | `HF_TOKEN` | huggingface.co → Settings → Access Tokens | Gated models only (ESM3, AlphaFold3, AlphaGenome) |
+| `ESM_API_KEY` | [Biohub developer console](https://biohub.ai/developer-console/api-keys) or [Forge](https://forge.evolutionaryscale.ai) | Hosted ESM3 / ESMC / ESMFold2 (`skills/esm`) |
 | `MODAL_TOKEN_ID` / `MODAL_TOKEN_SECRET` | Optional fallback | Prefer `uv run modal setup` (writes `~/.modal.toml`) |
 
 Rules:

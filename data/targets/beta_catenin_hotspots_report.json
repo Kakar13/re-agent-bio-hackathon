@@ -1,0 +1,246 @@
+{
+  "name": "beta_catenin",
+  "pdb_id": "1JDH",
+  "assembly": null,
+  "why_undruggable": "Extended shallow armadillo groove used by TCF/LEF/APC/cadherin",
+  "caveats": [
+    "Cropped ARM repeats 134-664; hotspots from beta-catenin\u2013hTcf-4 contacts"
+  ],
+  "target_chain": "A",
+  "partner_chain": "B",
+  "residue_range": [
+    151,
+    548
+  ],
+  "target_pdb": "data/targets/beta_catenin_target.pdb",
+  "complex_pdb": "data/targets/beta_catenin_complex.pdb",
+  "select_hotspots": {
+    "A312": "NZ",
+    "A435": "NZ",
+    "A306": "CD2,OH"
+  },
+  "contigs": {
+    "len_55_85": "55-85,/0,A151-548",
+    "len_85_120": "85-120,/0,A151-548"
+  },
+  "binder_length_bins": [
+    [
+      55,
+      85
+    ],
+    [
+      85,
+      120
+    ]
+  ],
+  "notes": [
+    "literature residues present at interface: [312, 435]",
+    "contig cropped to continuous segment A151-548 (observed 508 residues in 135-663; gaps omitted)"
+  ],
+  "top_interface_residues": [
+    {
+      "chain": "A",
+      "resnum": 306,
+      "resname": "TYR",
+      "contacts": 78,
+      "min_dist": 2.601,
+      "key": "A306"
+    },
+    {
+      "chain": "A",
+      "resnum": 474,
+      "resname": "ARG",
+      "contacts": 37,
+      "min_dist": 2.819,
+      "key": "A474"
+    },
+    {
+      "chain": "A",
+      "resnum": 470,
+      "resname": "HIS",
+      "contacts": 30,
+      "min_dist": 3.257,
+      "key": "A470"
+    },
+    {
+      "chain": "A",
+      "resnum": 386,
+      "resname": "ARG",
+      "contacts": 26,
+      "min_dist": 3.572,
+      "key": "A386"
+    },
+    {
+      "chain": "A",
+      "resnum": 426,
+      "resname": "ASN",
+      "contacts": 24,
+      "min_dist": 2.881,
+      "key": "A426"
+    },
+    {
+      "chain": "A",
+      "resnum": 429,
+      "resname": "CYS",
+      "contacts": 19,
+      "min_dist": 3.673,
+      "key": "A429"
+    },
+    {
+      "chain": "A",
+      "resnum": 253,
+      "resname": "PHE",
+      "contacts": 18,
+      "min_dist": 3.626,
+      "key": "A253"
+    },
+    {
+      "chain": "A",
+      "resnum": 335,
+      "resname": "LYS",
+      "contacts": 17,
+      "min_dist": 2.887,
+      "key": "A335"
+    },
+    {
+      "chain": "A",
+      "resnum": 342,
+      "resname": "ARG",
+      "contacts": 16,
+      "min_dist": 3.035,
+      "key": "A342"
+    },
+    {
+      "chain": "A",
+      "resnum": 260,
+      "resname": "HIS",
+      "contacts": 15,
+      "min_dist": 2.911,
+      "key": "A260"
+    },
+    {
+      "chain": "A",
+      "resnum": 292,
+      "resname": "LYS",
+      "contacts": 15,
+      "min_dist": 3.469,
+      "key": "A292"
+    },
+    {
+      "chain": "A",
+      "resnum": 296,
+      "resname": "ILE",
+      "contacts": 14,
+      "min_dist": 3.354,
+      "key": "A296"
+    },
+    {
+      "chain": "A",
+      "resnum": 430,
+      "resname": "ASN",
+      "contacts": 13,
+      "min_dist": 2.904,
+      "key": "A430"
+    },
+    {
+      "chain": "A",
+      "resnum": 469,
+      "resname": "ARG",
+      "contacts": 13,
+      "min_dist": 3.504,
+      "key": "A469"
+    },
+    {
+      "chain": "A",
+      "resnum": 516,
+      "resname": "ASN",
+      "contacts": 12,
+      "min_dist": 2.608,
+      "key": "A516"
+    },
+    {
+      "chain": "A",
+      "resnum": 515,
+      "resname": "ARG",
+      "contacts": 11,
+      "min_dist": 3.918,
+      "key": "A515"
+    },
+    {
+      "chain": "A",
+      "resnum": 376,
+      "resname": "ARG",
+      "contacts": 10,
+      "min_dist": 2.673,
+      "key": "A376"
+    },
+    {
+      "chain": "A",
+      "resnum": 302,
+      "resname": "GLN",
+      "contacts": 10,
+      "min_dist": 2.797,
+      "key": "A302"
+    },
+    {
+      "chain": "A",
+      "resnum": 390,
+      "resname": "ASP",
+      "contacts": 9,
+      "min_dist": 3.651,
+      "key": "A390"
+    },
+    {
+      "chain": "A",
+      "resnum": 307,
+      "resname": "GLY",
+      "contacts": 8,
+      "min_dist": 2.792,
+      "key": "A307"
+    },
+    {
+      "chain": "A",
+      "resnum": 338,
+      "resname": "TRP",
+      "contacts": 8,
+      "min_dist": 3.602,
+      "key": "A338"
+    },
+    {
+      "chain": "A",
+      "resnum": 349,
+      "resname": "VAL",
+      "contacts": 7,
+      "min_dist": 3.265,
+      "key": "A349"
+    },
+    {
+      "chain": "A",
+      "resnum": 299,
+      "resname": "ASP",
+      "contacts": 7,
+      "min_dist": 3.63,
+      "key": "A299"
+    },
+    {
+      "chain": "A",
+      "resnum": 422,
+      "resname": "GLY",
+      "contacts": 7,
+      "min_dist": 3.693,
+      "key": "A422"
+    },
+    {
+      "chain": "A",
+      "resnum": 264,
+      "resname": "LEU",
+      "contacts": 7,
+      "min_dist": 3.711,
+      "key": "A264"
+    }
+  ],
+  "literature_hotspots": [
+    312,
+    435
+  ]
+}
