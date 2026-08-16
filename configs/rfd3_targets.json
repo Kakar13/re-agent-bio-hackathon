@@ -1,0 +1,257 @@
+{
+  "tool_key": "rfdiffusion3-design",
+  "citation": "proto-tools citation rfdiffusion3-design",
+  "n_backbones_per_target": 100,
+  "baker_protocol": {
+    "infer_ori_strategy": "hotspots",
+    "is_non_loopy": true,
+    "step_scale": 3.0,
+    "gamma_0": 0.2,
+    "num_timesteps": 200,
+    "source": "https://github.com/RosettaCommons/foundry/blob/production/models/rfd3/docs/examples/protein_binder_design.md"
+  },
+  "targets": [
+    {
+      "name": "pdl1",
+      "pdb_id": "5O45",
+      "label": "PD-L1 (positive control)",
+      "why_undruggable": "Validated PPI control from RFD3 protein_binder_design example",
+      "caveats": [
+        "Uses foundry doc hotspots A56/A115/A123 verbatim"
+      ],
+      "target_chain": "A",
+      "partner_chain": null,
+      "residue_range": [
+        17,
+        131
+      ],
+      "target_pdb": "data/targets/pdl1_target.pdb",
+      "complex_pdb": "data/targets/pdl1_complex.pdb",
+      "select_hotspots": {
+        "A56": "CG,OH",
+        "A115": "CG,SD",
+        "A123": "CD2,OH"
+      },
+      "infer_ori_strategy": "hotspots",
+      "is_non_loopy": true,
+      "binder_length_bins": [
+        [
+          55,
+          85
+        ],
+        [
+          85,
+          120
+        ]
+      ],
+      "contigs": {
+        "len_55_85": "55-85,/0,A17-131",
+        "len_85_120": "85-120,/0,A17-131"
+      },
+      "hotspots_report": "data/targets/pdl1_hotspots_report.json",
+      "rfd3_sampler": {
+        "step_scale": 3.0,
+        "gamma_0": 0.2,
+        "num_timesteps": 200,
+        "diffusion_batch_size": 8
+      },
+      "notes": [
+        "no partner chain \u2014 using forced/doc hotspots only",
+        "using forced/doc hotspots"
+      ]
+    },
+    {
+      "name": "kras",
+      "pdb_id": "6VJJ",
+      "label": "KRAS4b (effector face)",
+      "why_undruggable": "Flat shallow effector surface; picomolar GTP affinity",
+      "caveats": [
+        "6VJJ is wild-type KRAS4b\u2013RAF1 RBD, not G12D; residue 12 is not part of the binder epitope"
+      ],
+      "target_chain": "A",
+      "partner_chain": "B",
+      "residue_range": [
+        1,
+        167
+      ],
+      "target_pdb": "data/targets/kras_target.pdb",
+      "complex_pdb": "data/targets/kras_complex.pdb",
+      "select_hotspots": {
+        "A37": "OE1,OE2",
+        "A38": "OD1,OD2",
+        "A40": "CD2,OH"
+      },
+      "infer_ori_strategy": "hotspots",
+      "is_non_loopy": true,
+      "binder_length_bins": [
+        [
+          55,
+          85
+        ],
+        [
+          85,
+          120
+        ]
+      ],
+      "contigs": {
+        "len_55_85": "55-85,/0,A1-167",
+        "len_85_120": "85-120,/0,A1-167"
+      },
+      "hotspots_report": "data/targets/kras_hotspots_report.json",
+      "rfd3_sampler": {
+        "step_scale": 3.0,
+        "gamma_0": 0.2,
+        "num_timesteps": 200,
+        "diffusion_batch_size": 8
+      },
+      "notes": [
+        "literature residues present at interface: [37, 38, 40]"
+      ]
+    },
+    {
+      "name": "myc_max",
+      "pdb_id": "1NKP",
+      "label": "MYC leucine zipper (vs MAX)",
+      "why_undruggable": "Flexible shallow bHLH-LZ interface; only Omomyc reached clinic",
+      "caveats": [
+        "Cropped to MYC chain A + MAX chain B; DNA and duplicate copies removed"
+      ],
+      "target_chain": "A",
+      "partner_chain": "B",
+      "residue_range": [
+        897,
+        984
+      ],
+      "target_pdb": "data/targets/myc_max_target.pdb",
+      "complex_pdb": "data/targets/myc_max_complex.pdb",
+      "select_hotspots": {
+        "A927": "OE1,NE2",
+        "A957": "OE1,OE2",
+        "A967": "CD1,CD2"
+      },
+      "infer_ori_strategy": "hotspots",
+      "is_non_loopy": true,
+      "binder_length_bins": [
+        [
+          55,
+          85
+        ],
+        [
+          85,
+          120
+        ]
+      ],
+      "contigs": {
+        "len_55_85": "55-85,/0,A897-984",
+        "len_85_120": "85-120,/0,A897-984"
+      },
+      "hotspots_report": "data/targets/myc_max_hotspots_report.json",
+      "rfd3_sampler": {
+        "step_scale": 3.0,
+        "gamma_0": 0.2,
+        "num_timesteps": 200,
+        "diffusion_batch_size": 8
+      },
+      "notes": []
+    },
+    {
+      "name": "stat3",
+      "pdb_id": "1BG1",
+      "label": "STAT3 SH2 dimer interface",
+      "why_undruggable": "SH2/pTyr-mediated dimerization rather than a classical pocket",
+      "caveats": [
+        "Uses biological assembly 1 (two models merged to A/B) to recover the SH2 dimer",
+        "Forced literature SH2 pocket hotspots R609/S611/S613 \u2014 computed contacts favor the reciprocal pY705 face"
+      ],
+      "target_chain": "A",
+      "partner_chain": "B",
+      "residue_range": [
+        500,
+        688
+      ],
+      "target_pdb": "data/targets/stat3_target.pdb",
+      "complex_pdb": "data/targets/stat3_complex.pdb",
+      "select_hotspots": {
+        "A609": "NH1,NH2",
+        "A611": "OG",
+        "A613": "OG"
+      },
+      "infer_ori_strategy": "hotspots",
+      "is_non_loopy": true,
+      "binder_length_bins": [
+        [
+          55,
+          85
+        ],
+        [
+          85,
+          120
+        ]
+      ],
+      "contigs": {
+        "len_55_85": "55-85,/0,A500-688",
+        "len_85_120": "85-120,/0,A500-688"
+      },
+      "hotspots_report": "data/targets/stat3_hotspots_report.json",
+      "rfd3_sampler": {
+        "step_scale": 3.0,
+        "gamma_0": 0.2,
+        "num_timesteps": 200,
+        "diffusion_batch_size": 8
+      },
+      "notes": [
+        "using forced/doc hotspots",
+        "contig cropped to continuous segment A500-688 (observed 203 residues in 500-716; gaps omitted)"
+      ]
+    },
+    {
+      "name": "beta_catenin",
+      "pdb_id": "1JDH",
+      "label": "beta-catenin ARM groove (TCF site)",
+      "why_undruggable": "Extended shallow armadillo groove used by TCF/LEF/APC/cadherin",
+      "caveats": [
+        "Cropped ARM repeats 134-664; hotspots from beta-catenin\u2013hTcf-4 contacts"
+      ],
+      "target_chain": "A",
+      "partner_chain": "B",
+      "residue_range": [
+        151,
+        548
+      ],
+      "target_pdb": "data/targets/beta_catenin_target.pdb",
+      "complex_pdb": "data/targets/beta_catenin_complex.pdb",
+      "select_hotspots": {
+        "A312": "NZ",
+        "A435": "NZ",
+        "A306": "CD2,OH"
+      },
+      "infer_ori_strategy": "hotspots",
+      "is_non_loopy": true,
+      "binder_length_bins": [
+        [
+          55,
+          85
+        ],
+        [
+          85,
+          120
+        ]
+      ],
+      "contigs": {
+        "len_55_85": "55-85,/0,A151-548",
+        "len_85_120": "85-120,/0,A151-548"
+      },
+      "hotspots_report": "data/targets/beta_catenin_hotspots_report.json",
+      "rfd3_sampler": {
+        "step_scale": 3.0,
+        "gamma_0": 0.2,
+        "num_timesteps": 200,
+        "diffusion_batch_size": 8
+      },
+      "notes": [
+        "literature residues present at interface: [312, 435]",
+        "contig cropped to continuous segment A151-548 (observed 508 residues in 135-663; gaps omitted)"
+      ]
+    }
+  ]
+}

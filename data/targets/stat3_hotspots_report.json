@@ -1,0 +1,28 @@
+{
+  "name": "stat3",
+  "pdb_id": "1BG1",
+  "target_chain": "A",
+  "partner_chain": "B",
+  "residue_range": [
+    500,
+    688
+  ],
+  "select_hotspots": {
+    "A609": "NH1,NH2",
+    "A611": "OG",
+    "A613": "OG"
+  },
+  "contigs": {
+    "len_55_85": "55-85,/0,A500-688",
+    "len_85_120": "85-120,/0,A500-688"
+  },
+  "caveats": [
+    "Uses biological assembly 1 (two models merged to A/B) to recover the SH2 dimer",
+    "Forced literature SH2 pocket hotspots R609/S611/S613 \u2014 computed contacts favor the reciprocal pY705 face"
+  ],
+  "notes": [
+    "using forced/doc hotspots",
+    "contig cropped to continuous segment A500-688 (observed 203 residues in 500-716; gaps omitted)"
+  ],
+  "why_undruggable": "SH2/pTyr-mediated dimerization rather than a classical pocket"
+}

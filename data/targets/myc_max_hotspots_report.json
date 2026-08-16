@@ -1,0 +1,24 @@
+{
+  "name": "myc_max",
+  "pdb_id": "1NKP",
+  "target_chain": "A",
+  "partner_chain": "B",
+  "residue_range": [
+    897,
+    984
+  ],
+  "select_hotspots": {
+    "A927": "OE1,NE2",
+    "A957": "OE1,OE2",
+    "A967": "CD1,CD2"
+  },
+  "contigs": {
+    "len_55_85": "55-85,/0,A897-984",
+    "len_85_120": "85-120,/0,A897-984"
+  },
+  "caveats": [
+    "Cropped to MYC chain A + MAX chain B; DNA and duplicate copies removed"
+  ],
+  "notes": [],
+  "why_undruggable": "Flexible shallow bHLH-LZ interface; only Omomyc reached clinic"
+}

@@ -27,6 +27,15 @@ results/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 !results/.gitkeep
+# Binder target docs / hotspot audits (PDBs stay gitignored)
+!data/targets/
+!data/targets/README.md
+!data/targets/*_hotspots_report.json
+# RFD3 binder report (PDBs stay gitignored under results/)
+!results/rfd3_binders/
+!results/rfd3_binders/report.md
+!results/rfd3_binders/summary.json
+!results/rfd3_binders/*/control_qc.json
 *.fasta
 *.pdb
 *.cif
