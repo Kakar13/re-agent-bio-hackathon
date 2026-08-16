@@ -94,6 +94,126 @@ def test_aggregate_protein_risk_empty():
     assert risk.max_risk == 0.0
 
 
+def test_residue_heatmap_rolls_window_risk_onto_covering_positions():
+    seq = "ABCDEFGHI"  # one 9-mer window covering all positions
+    scores = [
+        PeptideScore(
+            peptide=seq,
+            start=0,
+            end=9,
+            cleave_n_prob=0.8,
+            cleave_c_prob=0.8,
+            tap_log_ic50_relative=0.0,
+            tap_uncertainty=0.1,
+            mhc_cosine_similarity=0.5,
+            mhc_presentation_propensity=0.8,
+            composite_risk=0.7,
+            confidence=0.6,
+            confidence_tap=0.6,
+            confidence_mhc=0.6,
+            confidence_context=1.0,
+            confidence_agreement=1.0,
+        )
+    ]
+    heat = score_mod.compute_residue_heatmap(seq, scores)
+    assert len(heat) == 9
+    assert [h.residue for h in heat] == list(seq)
+    assert all(h.risk_max == 0.7 for h in heat)
+    assert all(h.n_windows == 1 for h in heat)
+    assert all(h.confidence_at_max == 0.6 for h in heat)
+
+
+def test_residue_heatmap_max_uses_hottest_covering_window():
+    seq = "ABCDEFGHIJ"  # two overlapping 9-mers
+    cool = PeptideScore(
+        peptide=seq[0:9],
+        start=0,
+        end=9,
+        cleave_n_prob=0.2,
+        cleave_c_prob=0.2,
+        tap_log_ic50_relative=0.0,
+        tap_uncertainty=0.1,
+        mhc_cosine_similarity=0.1,
+        mhc_presentation_propensity=0.2,
+        composite_risk=0.2,
+        confidence=0.4,
+        confidence_tap=0.4,
+        confidence_mhc=0.4,
+        confidence_context=1.0,
+        confidence_agreement=1.0,
+    )
+    hot = PeptideScore(
+        peptide=seq[1:10],
+        start=1,
+        end=10,
+        cleave_n_prob=0.9,
+        cleave_c_prob=0.9,
+        tap_log_ic50_relative=0.0,
+        tap_uncertainty=0.1,
+        mhc_cosine_similarity=0.9,
+        mhc_presentation_propensity=0.9,
+        composite_risk=0.9,
+        confidence=0.8,
+        confidence_tap=0.8,
+        confidence_mhc=0.8,
+        confidence_context=1.0,
+        confidence_agreement=1.0,
+    )
+    heat = score_mod.compute_residue_heatmap(seq, [cool, hot])
+    assert heat[0].risk_max == 0.2  # only the cool window covers position 0
+    assert heat[0].n_windows == 1
+    assert heat[1].risk_max == 0.9  # overlap: hottest wins
+    assert heat[1].n_windows == 2
+    assert heat[1].confidence_at_max == 0.8
+    assert heat[-1].risk_max == 0.9  # only the hot window covers the last residue
+
+
+def test_residue_heatmap_figure_has_two_tracks():
+    from re_agent.e2e_pls.dashboard import build_residue_heatmap_figure
+
+    heat = score_mod.compute_residue_heatmap(
+        "ABCDEFGHI",
+        [
+            PeptideScore(
+                peptide="ABCDEFGHI",
+                start=0,
+                end=9,
+                cleave_n_prob=0.5,
+                cleave_c_prob=0.5,
+                tap_log_ic50_relative=0.0,
+                tap_uncertainty=0.1,
+                mhc_cosine_similarity=0.0,
+                mhc_presentation_propensity=0.5,
+                composite_risk=0.4,
+                confidence=0.5,
+                confidence_tap=0.5,
+                confidence_mhc=0.5,
+                confidence_context=1.0,
+                confidence_agreement=1.0,
+            )
+        ],
+    )
+    for h in heat:
+        h.mhc_importance = 0.3
+    fig = build_residue_heatmap_figure(heat)
+    assert len(fig.data) == 1
+    assert list(fig.data[0].z[0]) == [0.4] * 9
+    assert list(fig.data[0].y) == ["window risk", "MHC residue"]
+
+
+def test_explain_sequence_returns_heatmap(trained_heads, mock_client):
+    seq = "GSHMSEEELKEAVKLLKKAEELVKKGD"
+    scores, protein, heatmap = score_mod.explain_sequence(
+        seq, "HLA-A*02:01", mock_client, trained_heads
+    )
+    assert len(heatmap) == len(seq)
+    assert len(scores) == len(tile_sequence(seq))
+    assert protein.n_windows == len(scores)
+    assert all(h.mhc_importance is not None for h in heatmap)
+    assert all(0.0 <= h.mhc_importance <= 1.0 for h in heatmap)
+    assert all(0.0 <= h.risk_max <= 1.0 for h in heatmap)
+
+
 def test_score_window_matches_score_sequence(trained_heads, mock_client):
     seq = "GSHMSEEELKEAVKLLKKAEELVKKGD"
     window = tile_sequence(seq)[3]

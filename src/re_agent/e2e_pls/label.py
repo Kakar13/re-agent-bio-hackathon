@@ -34,6 +34,10 @@ import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_PEPSICKLE_PYTHON = REPO_ROOT / ".tools" / "pepsickle" / "bin" / "python"
+PEPSICKLE_BATCH_SIZE = 1500
+PEPSICKLE_TIMEOUT_S = 1800
+MHC_BATCH_SIZE = 50_000
+TAP_IMPUTE_BATCH_SIZE = 200_000
 
 
 def pepsickle_version(pepsickle_python: Path = DEFAULT_PEPSICKLE_PYTHON) -> str:
@@ -57,18 +61,11 @@ def mhcflurry_version() -> str:
     return mhcflurry.__version__
 
 
-def run_pepsickle_on_proteins(
-    sequences: dict[str, str], pepsickle_python: Path = DEFAULT_PEPSICKLE_PYTHON
+def _run_pepsickle_batch(
+    sequences: dict[str, str],
+    pepsickle_bin: Path,
+    timeout: int,
 ) -> pd.DataFrame:
-    """Returns a long table: columns [protein_id, position (1-indexed), cleav_prob]."""
-    if not pepsickle_python.exists():
-        raise FileNotFoundError(
-            f"pepsickle isolated env not found at {pepsickle_python}. Set it up with:\n"
-            f"  uv venv .tools/pepsickle --python 3.11 && "
-            f"uv pip install --python .tools/pepsickle/bin/python pepsickle"
-        )
-    pepsickle_bin = pepsickle_python.parent / "pepsickle"
-
     with tempfile.TemporaryDirectory() as tmp:
         fasta_path = Path(tmp) / "proteins.fasta"
         out_path = Path(tmp) / "cleavage.tsv"
@@ -79,11 +76,35 @@ def run_pepsickle_on_proteins(
             [str(pepsickle_bin), "-f", str(fasta_path), "-o", str(out_path)],
             capture_output=True,
             text=True,
-            timeout=1800,
+            timeout=timeout,
         )
         if result.returncode != 0:
             raise RuntimeError(f"pepsickle failed (exit {result.returncode}): {result.stderr}")
-        table = pd.read_csv(out_path, sep="\t")
+        return pd.read_csv(out_path, sep="\t")
+
+
+def run_pepsickle_on_proteins(
+    sequences: dict[str, str],
+    pepsickle_python: Path = DEFAULT_PEPSICKLE_PYTHON,
+    batch_size: int = PEPSICKLE_BATCH_SIZE,
+    timeout: int = PEPSICKLE_TIMEOUT_S,
+) -> pd.DataFrame:
+    """Returns a long table: columns [protein_id, position (1-indexed), cleav_prob]."""
+    if not sequences:
+        return pd.DataFrame(columns=["parent_sequence_id", "position", "cleav_prob"])
+    if not pepsickle_python.exists():
+        raise FileNotFoundError(
+            f"pepsickle isolated env not found at {pepsickle_python}. Set it up with:\n"
+            f"  uv venv .tools/pepsickle --python 3.11 && "
+            f"uv pip install --python .tools/pepsickle/bin/python pepsickle"
+        )
+    pepsickle_bin = pepsickle_python.parent / "pepsickle"
+    items = list(sequences.items())
+    tables = []
+    for i in range(0, len(items), batch_size):
+        batch = dict(items[i : i + batch_size])
+        tables.append(_run_pepsickle_batch(batch, pepsickle_bin, timeout))
+    table = pd.concat(tables, ignore_index=True)
     return table.rename(columns={"protein_id": "parent_sequence_id"})
 
 
@@ -124,9 +145,21 @@ def attach_mhc_labels(df: pd.DataFrame, only_missing: bool = True) -> pd.DataFra
 
     predictor = Class1AffinityPredictor.load()
     for allele, group in df[target_mask].groupby("hla_allele"):
-        preds = predictor.predict_to_dataframe(peptides=group["peptide"].tolist(), allele=allele)
-        df.loc[group.index, "mhc_affinity_nm"] = preds["prediction"].to_numpy()
-        df.loc[group.index, "mhc_percentile"] = preds["prediction_percentile"].to_numpy()
+        peptides = group["peptide"].tolist()
+        affinities: list[np.ndarray] = []
+        percentiles: list[np.ndarray] = []
+        for start in range(0, len(peptides), MHC_BATCH_SIZE):
+            chunk = peptides[start : start + MHC_BATCH_SIZE]
+            preds = predictor.predict_to_dataframe(peptides=chunk, allele=allele)
+            affinities.append(preds["prediction"].to_numpy())
+            percentiles.append(preds["prediction_percentile"].to_numpy())
+            print(
+                f"  mhcflurry {allele}: {min(start + MHC_BATCH_SIZE, len(peptides))}"
+                f"/{len(peptides)}",
+                flush=True,
+            )
+        df.loc[group.index, "mhc_affinity_nm"] = np.concatenate(affinities)
+        df.loc[group.index, "mhc_percentile"] = np.concatenate(percentiles)
     return df
 
 
@@ -182,8 +215,13 @@ def impute_tap_labels(df: pd.DataFrame, ridge_alpha: float = 10.0) -> pd.DataFra
     from sklearn.linear_model import Ridge
 
     df = df.copy()
-    measured_mask = df["tap_log_ic50_relative"].notna().values
-    missing_mask = ~measured_mask
+    origin = df["label_model_version"].fillna("").astype(str)
+    # Train only on measured TAP, never on our own prior imputations (needed
+    # when expanding an already-imputed parquet).
+    measured_mask = (
+        df["tap_log_ic50_relative"].notna() & ~origin.str.contains(TAP_RIDGE_TAG, regex=False)
+    ).values
+    missing_mask = df["tap_log_ic50_relative"].isna().values
 
     if measured_mask.sum() == 0 or missing_mask.sum() == 0:
         return df
@@ -192,8 +230,13 @@ def impute_tap_labels(df: pd.DataFrame, ridge_alpha: float = 10.0) -> pd.DataFra
     y_train = df.loc[measured_mask, "tap_log_ic50_relative"].to_numpy(dtype=np.float64)
     ridge = Ridge(alpha=ridge_alpha).fit(x_train, y_train)
 
-    x_missing = _featurize_peptides(df.loc[missing_mask, "peptide"])
-    df.loc[missing_mask, "tap_log_ic50_relative"] = ridge.predict(x_missing).astype(np.float32)
+    missing_idx = df.index[missing_mask]
+    imputed = np.empty(len(missing_idx), dtype=np.float32)
+    for start in range(0, len(missing_idx), TAP_IMPUTE_BATCH_SIZE):
+        sl = missing_idx[start : start + TAP_IMPUTE_BATCH_SIZE]
+        x_missing = _featurize_peptides(df.loc[sl, "peptide"])
+        imputed[start : start + len(sl)] = ridge.predict(x_missing).astype(np.float32)
+    df.loc[missing_idx, "tap_log_ic50_relative"] = imputed
     df.loc[missing_mask, "label_model_version"] = (
         df.loc[missing_mask, "label_model_version"].fillna("").astype(str) + ";" + TAP_RIDGE_TAG
     ).str.lstrip(";")

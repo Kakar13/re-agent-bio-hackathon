@@ -200,17 +200,17 @@ def _check_target_missingness(df: pd.DataFrame, result: ValidationResult) -> Non
 
 
 def dataset_version_hash(df: pd.DataFrame) -> str:
-    """Content hash for the dataset build: schema version + sorted row_ids + a per-row fingerprint.
+    """Content hash for the dataset build: schema version + a stable row fingerprint.
 
     Deterministic given the same rows regardless of input ordering, so it
-    can be recomputed and compared across a rebuild.
+    can be recomputed and compared across a rebuild. Uses pandas' vectorized
+    hasher so a multi-million-row frame does not walk Python row objects.
     """
     hasher = hashlib.sha256()
     hasher.update(f"schema={SCHEMA_VERSION}".encode())
-    fingerprint_cols = [c for c in REQUIRED_COLUMNS if c != "row_id"]
-    subset = df[["row_id", *fingerprint_cols]].sort_values("row_id")
-    for row in subset.itertuples(index=False):
-        hasher.update("|".join(str(v) for v in row).encode())
+    subset = df.loc[:, list(REQUIRED_COLUMNS)].sort_values("row_id", kind="mergesort")
+    hashed = pd.util.hash_pandas_object(subset, index=False)
+    hasher.update(hashed.to_numpy(dtype="uint64", copy=False).tobytes())
     return hasher.hexdigest()[:16]
 
 

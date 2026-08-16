@@ -18,7 +18,9 @@ Sources and licenses:
 from __future__ import annotations
 
 import hashlib
+import json
 import re
+import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -37,6 +39,13 @@ DS613_URL = "https://raw.githubusercontent.com/ChenWeiCCZU/CLTAP/main/Dataset/re
 DEFAULT_PEPTIDE_LEN = 9
 DEFAULT_FLANK_LEN = 4
 DEFAULT_HLA = "HLA-A*02:01"
+DEFAULT_UNIPROT_MIN_LENGTH = 80
+DEFAULT_UNIPROT_MAX_LENGTH = 1500
+DEFAULT_RCSB_MIN_LENGTH = 50
+DEFAULT_RCSB_MAX_LENGTH = 400
+# Cap a single UniProt/RCSB download so TrEMBL queries cannot explode.
+MAX_FETCH_SEQUENCES = 40_000
+_HTTP_ATTEMPTS = 5
 
 STUDY_DE_NOVO = "rcsb_de_novo_v1"
 STUDY_DS613 = "ds613"
@@ -100,6 +109,39 @@ def _chunks(seq: list, size: int):
         yield seq[i : i + size]
 
 
+def _http_request(client: httpx.Client, method: str, url: str, **kwargs):
+    """GET/POST with exponential backoff. UniProt/RCSB flake under bulk fetch."""
+    last_exc: Exception | None = None
+    for attempt in range(_HTTP_ATTEMPTS):
+        try:
+            resp = client.request(method, url, **kwargs)
+            resp.raise_for_status()
+            return resp
+        except (httpx.HTTPError, httpx.TimeoutException) as exc:
+            last_exc = exc
+            time.sleep(1.5 * (2**attempt))
+    assert last_exc is not None
+    raise last_exc
+
+
+def _load_sequence_cache(path: Path) -> dict[str, str] | None:
+    if not path.exists():
+        return None
+    return json.loads(path.read_text())
+
+
+def _save_sequence_cache(path: Path, sequences: dict[str, str]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(sequences))
+
+
+def _subsample_sequences(sequences: dict[str, str], n_proteins: int, seed: int) -> dict[str, str]:
+    rng = np.random.default_rng(seed)
+    keys = list(sequences)
+    rng.shuffle(keys)
+    return {k: sequences[k] for k in keys[:n_proteins]}
+
+
 def _strip_expression_tags(seq: str) -> str:
     """Strip N/C-terminal His-tag purification handles (e.g. "MGSSHHHHHH...",
     "...LEHHHHHH") that are common in RCSB expression constructs but aren't
@@ -153,25 +195,34 @@ def _organism_clause(organism_ids: tuple[int, ...]) -> str:
 def fetch_uniprot_proteins(
     n_proteins: int,
     organism_clause: str,
-    min_length: int = 150,
-    max_length: int = 500,
+    min_length: int = DEFAULT_UNIPROT_MIN_LENGTH,
+    max_length: int = DEFAULT_UNIPROT_MAX_LENGTH,
     reviewed: bool = True,
     seed: int = 0,
+    cache_dir: str | Path | None = None,
+    cache_name: str | None = None,
 ) -> dict[str, str]:
     """Sequences from UniProt matching `organism_clause` (a raw query fragment,
     e.g. "organism_id:9606" or an OR-group of several organism_ids).
     """
+    cache_path = None
+    if cache_dir is not None and cache_name:
+        cache_path = Path(cache_dir) / f"{cache_name}.json"
+        cached = _load_sequence_cache(cache_path)
+        if cached is not None and len(cached) >= n_proteins:
+            return _subsample_sequences(cached, n_proteins, seed)
+
     reviewed_clause = " AND reviewed:true" if reviewed else ""
     query = f"{organism_clause}{reviewed_clause} AND length:[{min_length} TO {max_length}]"
     sequences: dict[str, str] = {}
     cursor: str | None = None
-    with httpx.Client(timeout=30) as client:
-        while len(sequences) < n_proteins * 2:  # overfetch a bit for shuffled sampling
+    want = min(max(n_proteins * 2, n_proteins), MAX_FETCH_SEQUENCES)
+    with httpx.Client(timeout=60) as client:
+        while len(sequences) < want:
             params = {"query": query, "format": "fasta", "size": 500}
             if cursor:
                 params["cursor"] = cursor
-            resp = client.get(UNIPROT_SEARCH_URL, params=params)
-            resp.raise_for_status()
+            resp = _http_request(client, "GET", UNIPROT_SEARCH_URL, params=params)
             records = _parse_fasta(resp.text)
             if not records:
                 break
@@ -181,35 +232,50 @@ def fetch_uniprot_proteins(
             cursor = _next_cursor(resp.headers.get("Link"))
             if not cursor:
                 break
-    rng = np.random.default_rng(seed)
-    keys = list(sequences)
-    rng.shuffle(keys)
-    return {k: sequences[k] for k in keys[:n_proteins]}
+    if cache_path is not None:
+        _save_sequence_cache(cache_path, sequences)
+    return _subsample_sequences(sequences, n_proteins, seed)
 
 
 def fetch_uniprot_human(n_proteins: int, seed: int = 0, **kwargs) -> dict[str, str]:
+    kwargs.setdefault("cache_name", "uniprot_human")
     return fetch_uniprot_proteins(
         n_proteins, "organism_id:9606", reviewed=True, seed=seed, **kwargs
     )
 
 
 def fetch_uniprot_viral(n_proteins: int, seed: int = 0, **kwargs) -> dict[str, str]:
+    kwargs.setdefault("cache_name", "uniprot_viral")
     return fetch_uniprot_proteins(
         n_proteins, _organism_clause(VIRAL_ORGANISM_IDS), reviewed=False, seed=seed, **kwargs
     )
 
 
 def fetch_uniprot_bacterial(n_proteins: int, seed: int = 0, **kwargs) -> dict[str, str]:
+    kwargs.setdefault("cache_name", "uniprot_bacterial")
     return fetch_uniprot_proteins(
         n_proteins, _organism_clause(BACTERIAL_ORGANISM_IDS), reviewed=False, seed=seed, **kwargs
     )
 
 
 def fetch_rcsb_de_novo(
-    n_proteins: int, min_length: int = 50, max_length: int = 300, seed: int = 0
+    n_proteins: int,
+    min_length: int = DEFAULT_RCSB_MIN_LENGTH,
+    max_length: int = DEFAULT_RCSB_MAX_LENGTH,
+    seed: int = 0,
+    cache_dir: str | Path | None = None,
+    cache_name: str = "rcsb_de_novo",
 ) -> dict[str, str]:
     """Polymer entities annotated as de novo designs in RCSB PDB."""
-    query = {
+    cache_path = Path(cache_dir) / f"{cache_name}.json" if cache_dir is not None else None
+    if cache_path is not None:
+        cached = _load_sequence_cache(cache_path)
+        if cached is not None and len(cached) >= n_proteins:
+            return _subsample_sequences(cached, n_proteins, seed)
+
+    page_size = 1000
+    ids: list[str] = []
+    query_body = {
         "query": {
             "type": "group",
             "logical_operator": "and",
@@ -231,13 +297,22 @@ def fetch_rcsb_de_novo(
             ],
         },
         "return_type": "polymer_entity",
-        "request_options": {"paginate": {"start": 0, "rows": min(5000, n_proteins * 6)}},
+        "request_options": {"paginate": {"start": 0, "rows": page_size}},
     }
     sequences: dict[str, str] = {}
-    with httpx.Client(timeout=30) as client:
-        resp = client.post(RCSB_SEARCH_URL, json=query)
-        resp.raise_for_status()
-        ids = [h["identifier"] for h in resp.json().get("result_set", [])]
+    min_ok = max(min_length, DEFAULT_PEPTIDE_LEN + 2 * DEFAULT_FLANK_LEN)
+    with httpx.Client(timeout=60) as client:
+        start = 0
+        while len(ids) < min(n_proteins * 8, MAX_FETCH_SEQUENCES):
+            query_body["request_options"]["paginate"] = {"start": start, "rows": page_size}
+            resp = _http_request(client, "POST", RCSB_SEARCH_URL, json=query_body)
+            page_ids = [h["identifier"] for h in resp.json().get("result_set", [])]
+            if not page_ids:
+                break
+            ids.extend(page_ids)
+            if len(page_ids) < page_size:
+                break
+            start += page_size
 
         rng = np.random.default_rng(seed)
         rng.shuffle(ids)
@@ -252,20 +327,17 @@ def fetch_rcsb_de_novo(
                 ),
                 "variables": {"ids": batch},
             }
-            resp = client.post(RCSB_GRAPHQL_URL, json=gql)
-            resp.raise_for_status()
+            resp = _http_request(client, "POST", RCSB_GRAPHQL_URL, json=gql)
             for entity in resp.json().get("data", {}).get("polymer_entities") or []:
                 if entity is None:
                     continue
                 raw_seq = entity["entity_poly"]["pdbx_seq_one_letter_code_can"].replace("\n", "")
                 seq = _strip_expression_tags(raw_seq)
-                if (
-                    len(seq) >= DEFAULT_PEPTIDE_LEN + 2 * DEFAULT_FLANK_LEN
-                    and set(seq) <= schema.CANONICAL_RESIDUES
-                ):
+                if min_ok <= len(seq) <= max_length and set(seq) <= schema.CANONICAL_RESIDUES:
                     sequences[f"rcsb_{entity['rcsb_id']}"] = seq
-    keys = list(sequences)[:n_proteins]
-    return {k: sequences[k] for k in keys}
+    if cache_path is not None:
+        _save_sequence_cache(cache_path, sequences)
+    return _subsample_sequences(sequences, n_proteins, seed)
 
 
 def fetch_ds613(dest_dir: str | Path) -> tuple[pd.DataFrame, SourceProvenance]:
@@ -346,13 +418,27 @@ def tile_protein(
     return rows
 
 
-def build_candidate_pool(sources: dict[str, dict[str, str]]) -> pd.DataFrame:
-    """`sources`: source_domain (e.g. "natural_human") -> {parent_id: sequence}."""
-    rows: list[dict] = []
+def build_candidate_pool(
+    sources: dict[str, dict[str, str]], chunk_rows: int = 200_000
+) -> pd.DataFrame:
+    """`sources`: source_domain (e.g. "natural_human") -> {parent_id: sequence}.
+
+    Builds the frame in chunks so a multi-million-window tile does not hold
+    one giant list of dicts in memory.
+    """
+    chunks: list[pd.DataFrame] = []
+    buf: list[dict] = []
     for source_domain, seqs in sources.items():
         for pid, seq in seqs.items():
-            rows.extend(tile_protein(pid, seq, source_domain))
-    df = pd.DataFrame(rows)
+            buf.extend(tile_protein(pid, seq, source_domain))
+            if len(buf) >= chunk_rows:
+                chunks.append(pd.DataFrame(buf))
+                buf = []
+    if buf:
+        chunks.append(pd.DataFrame(buf))
+    if not chunks:
+        return pd.DataFrame()
+    df = pd.concat(chunks, ignore_index=True)
     return df.drop_duplicates(subset="peptide", keep="first").reset_index(drop=True)
 
 
@@ -415,6 +501,37 @@ def assign_clusters_and_splits(
     split_map = _assign_splits(df["protein_cluster_id"].unique(), seed, ratios)
     df["split"] = df["protein_cluster_id"].map(split_map)
     return df
+
+
+def inherit_or_assign_splits(
+    new_df: pd.DataFrame,
+    existing_df: pd.DataFrame,
+    seed: int = 0,
+    ratios: tuple[float, float, float] = (0.8, 0.1, 0.1),
+) -> pd.DataFrame:
+    """Keep a parent protein in the same split it already has.
+
+    New parents (not in `existing_df`) get a fresh seeded split. Overlapping
+    windows from one protein therefore cannot leak across train/val/test when
+    we append rows to an existing dataset.
+    """
+    new_df = new_df.copy()
+    new_df["protein_cluster_id"] = new_df["parent_sequence_id"]
+    new_df["peptide_cluster_id"] = (
+        new_df["parent_sequence_id"] + "_nbhd" + (new_df["start"] // 5).astype(str)
+    )
+    existing_map = (
+        existing_df.drop_duplicates("parent_sequence_id")
+        .set_index("parent_sequence_id")["split"]
+        .to_dict()
+    )
+    new_df["split"] = new_df["parent_sequence_id"].map(existing_map)
+    unassigned = new_df["split"].isna()
+    if unassigned.any():
+        new_parents = new_df.loc[unassigned, "parent_sequence_id"].unique()
+        split_map = _assign_splits(new_parents, seed, ratios)
+        new_df.loc[unassigned, "split"] = new_df.loc[unassigned, "parent_sequence_id"].map(split_map)
+    return new_df
 
 
 def build_ds613_rows(

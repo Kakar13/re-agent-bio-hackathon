@@ -218,6 +218,56 @@ def build_convergence_figure(path_rows: list[dict]) -> go.Figure:
     return fig
 
 
+def build_residue_heatmap_figure(attributions: list[score_mod.ResidueAttribution]) -> go.Figure:
+    """Two-track sequence heatmap: window risk (prediction) and MHC residue importance."""
+    if not attributions:
+        return go.Figure()
+    labels = [f"{a.position + 1}{a.residue}" for a in attributions]
+    letters = [a.residue for a in attributions]
+    risk = [a.risk_max for a in attributions]
+    mhc = [a.mhc_importance if a.mhc_importance is not None else 0.0 for a in attributions]
+    hover = [
+        (
+            f"pos {a.position + 1} {a.residue}<br>"
+            f"risk (hottest covering 9-mer)={a.risk_max:.3f}<br>"
+            f"risk mean={a.risk_mean:.3f}<br>"
+            f"confidence={a.confidence_at_max:.3f}<br>"
+            f"windows={a.n_windows}"
+            + (
+                f"<br>MHC residue importance={a.mhc_importance:.3f}"
+                if a.mhc_importance is not None
+                else ""
+            )
+        )
+        for a in attributions
+    ]
+    fig = go.Figure()
+    fig.add_trace(
+        go.Heatmap(
+            z=[risk, mhc],
+            x=labels,
+            y=["window risk", "MHC residue"],
+            colorscale="RdYlGn_r",
+            zmin=0,
+            zmax=1,
+            text=[letters, letters],
+            texttemplate="%{text}",
+            textfont={"size": 10, "color": "black"},
+            hovertext=[hover, hover],
+            hoverinfo="text",
+            colorbar=dict(title="importance"),
+        )
+    )
+    fig.update_layout(
+        title="Residue importance — parts the surrogate treats as hot",
+        xaxis_title="position (1-indexed)",
+        height=280,
+        margin=dict(l=80, r=20, t=50, b=60),
+    )
+    fig.update_xaxes(tickangle=-90, dtick=1)
+    return fig
+
+
 def sequence_diff(original: str, variant: str) -> list[dict]:
     return [
         {"position": i, "original": o, "variant": v}
@@ -311,8 +361,7 @@ def render() -> None:
         st.stop()
 
     bench = benchmark_surrogate(sequence, hla_allele, client, heads)
-    scores = score_mod.score_sequence(sequence, hla_allele, client, heads)
-    protein_risk = score_mod.aggregate_protein_risk(scores)
+    scores, protein_risk, heatmap = score_mod.explain_sequence(sequence, hla_allele, client, heads)
 
     scoring_ms = bench["surrogate_seconds"] * 1000
     st.subheader(f"Checkpoint scores — {bench['n_windows']} windows in {scoring_ms:.0f} ms")
@@ -342,6 +391,14 @@ def render() -> None:
         f"TAP {w.confidence_tap:.2f} · MHC {w.confidence_mhc:.2f}",
         f"context {w.confidence_context:.2f} · agree {w.confidence_agreement:.2f}",
     )
+
+    st.subheader("Residue importance")
+    st.caption(
+        "Top row: hottest covering 9-mer risk (the prediction). "
+        "Bottom row: MHC-head residue alignment with the binder centroid. "
+        "Not transformer attention — the heads have none."
+    )
+    st.plotly_chart(build_residue_heatmap_figure(heatmap), width="stretch")
 
     st.subheader("Latent map")
     reference_df = fixtures.load_dev_fixture()

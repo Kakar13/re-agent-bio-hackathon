@@ -213,3 +213,113 @@ def aggregate_protein_risk(
         mean_confidence=float(np.mean([s.confidence for s in scores])),
         max_risk_confidence=max_window.confidence,
     )
+
+
+# --------------------------------------------------------------------------
+# Residue heatmap: roll window scores onto each amino acid
+# --------------------------------------------------------------------------
+
+
+@dataclass
+class ResidueAttribution:
+    """Per-residue importance for the sequence visual.
+
+    `risk_max` / `risk_mean` come from every 9-mer window that covers this
+    position. That is the prediction the judges see, not transformer
+    attention -- the heads have no attention maps. `mhc_importance` is the
+    optional extra track: how aligned this residue's ESM vector is with the
+    allele's binder centroid (same signal Steer-to-Safety uses to pick a
+    mutation site).
+    """
+
+    position: int  # 0-indexed
+    residue: str
+    risk_max: float
+    risk_mean: float
+    confidence_at_max: float
+    n_windows: int
+    mhc_importance: float | None = None
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+def compute_residue_heatmap(sequence: str, scores: list[PeptideScore]) -> list[ResidueAttribution]:
+    """Paint each residue with the risk of the 9-mers that cover it."""
+    n = len(sequence)
+    risks: list[list[float]] = [[] for _ in range(n)]
+    confs: list[list[float]] = [[] for _ in range(n)]
+    for s in scores:
+        for i in range(s.start, s.end):
+            if 0 <= i < n:
+                risks[i].append(s.composite_risk)
+                confs[i].append(s.confidence)
+
+    out: list[ResidueAttribution] = []
+    for i, aa in enumerate(sequence):
+        if not risks[i]:
+            out.append(
+                ResidueAttribution(
+                    position=i,
+                    residue=aa,
+                    risk_max=0.0,
+                    risk_mean=0.0,
+                    confidence_at_max=0.0,
+                    n_windows=0,
+                )
+            )
+            continue
+        r = np.asarray(risks[i], dtype=np.float64)
+        c = np.asarray(confs[i], dtype=np.float64)
+        imax = int(r.argmax())
+        out.append(
+            ResidueAttribution(
+                position=i,
+                residue=aa,
+                risk_max=float(r.max()),
+                risk_mean=float(r.mean()),
+                confidence_at_max=float(c[imax]),
+                n_windows=int(r.size),
+            )
+        )
+    return out
+
+
+def attach_mhc_residue_importance(
+    sequence: str,
+    attributions: list[ResidueAttribution],
+    esm_client: ProteinEncoder,
+    heads: ThreeHeadModel,
+    hla_allele: str,
+) -> list[ResidueAttribution]:
+    """Fill `mhc_importance` from per-residue cosine to the binder centroid.
+
+    Mapped from cosine [-1, 1] to [0, 1] so it shares a color scale with risk.
+    """
+    if hla_allele not in heads.mhc.centroids or not sequence:
+        return attributions
+    residue_vecs = esm_client.embed_residues(sequence)
+    if residue_vecs.shape[0] != len(sequence):
+        return attributions
+    z = heads.mhc.project(residue_vecs)
+    cosine = z @ heads.mhc.centroids[hla_allele]
+    mapped = np.clip((cosine + 1.0) / 2.0, 0.0, 1.0)
+    for i, attr in enumerate(attributions):
+        attr.mhc_importance = float(mapped[i])
+    return attributions
+
+
+def explain_sequence(
+    sequence: str,
+    hla_allele: str,
+    esm_client: ProteinEncoder,
+    heads: ThreeHeadModel,
+    peptide_len: int = DEFAULT_PEPTIDE_LEN,
+    flank_len: int = DEFAULT_FLANK_LEN,
+) -> tuple[list[PeptideScore], ProteinRisk, list[ResidueAttribution]]:
+    """Score windows, roll up protein risk, and build the residue heatmap."""
+    scores = score_sequence(sequence, hla_allele, esm_client, heads, peptide_len, flank_len)
+    protein = aggregate_protein_risk(scores)
+    heatmap = compute_residue_heatmap(sequence, scores)
+    attach_mhc_residue_importance(sequence, heatmap, esm_client, heads, hla_allele)
+    return scores, protein, heatmap

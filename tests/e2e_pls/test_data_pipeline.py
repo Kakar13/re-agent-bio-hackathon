@@ -43,6 +43,17 @@ def test_build_candidate_pool_dedupes_by_peptide():
     assert pool["peptide"].is_unique
 
 
+def test_build_candidate_pool_chunked_matches_unchunked():
+    seqs = {
+        "p1": "MKTAYIAKQRQISFVKSHFS",
+        "p2": "MSTAVLENPGLGRKLSDFGQ",
+        "p3": "GAVLIFYWKRHNDQECMSTP",
+    }
+    full = data.build_candidate_pool({"natural_human": seqs}, chunk_rows=100_000)
+    chunked = data.build_candidate_pool({"natural_human": seqs}, chunk_rows=5)
+    assert list(full["peptide"]) == list(chunked["peptide"])
+
+
 def test_quantile_stratified_sample_respects_target_and_spans_range():
     rng = np.random.default_rng(0)
     df = pd.DataFrame({"score": rng.uniform(0, 100, size=1000)})
@@ -59,6 +70,26 @@ def test_quantile_stratified_sample_noop_when_pool_smaller_than_target():
     df = pd.DataFrame({"score": [1.0, 2.0, 3.0]})
     sampled = data.quantile_stratified_sample(df, target_n=100, score_col="score")
     assert len(sampled) == 3
+
+
+def test_inherit_or_assign_splits_keeps_existing_protein_split():
+    existing = pd.DataFrame(
+        {
+            "parent_sequence_id": ["p1", "p1", "p2"],
+            "split": ["train", "train", "val"],
+            "start": [1, 6, 1],
+        }
+    )
+    new = pd.DataFrame(
+        {
+            "parent_sequence_id": ["p1", "p3", "p3"],
+            "start": [11, 1, 6],
+        }
+    )
+    out = data.inherit_or_assign_splits(new, existing, seed=0)
+    assert (out.loc[out["parent_sequence_id"] == "p1", "split"] == "train").all()
+    assert out.loc[out["parent_sequence_id"] == "p3", "split"].nunique() == 1
+    assert set(out["split"]) <= set(schema.SPLIT_NAMES)
 
 
 def test_assign_clusters_and_splits_keeps_protein_whole():
