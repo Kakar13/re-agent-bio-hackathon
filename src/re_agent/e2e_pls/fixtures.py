@@ -120,7 +120,7 @@ def _tile_parent(
                 "protein_cluster_id": parent_id,
                 "peptide_cluster_id": f"{parent_id}_nbhd{start // 3}",
                 "split": _SPLIT_BY_PARENT[parent_id],
-                "esm3_model_id": schema.ESM3_MODEL_ID,
+                "encoder_model_id": schema.ENCODER_MODEL_ID,
                 "pooling_recipe": "mean_9mer",
                 "embedding_cache_key": schema.embedding_cache_key(peptide, n_flank, c_flank),
                 "has_structure_track": False,
@@ -134,7 +134,7 @@ def generate_fixture(seed: int = 7) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
     rows: list[dict] = []
     for parent_id, sequence in _NATURAL_PARENTS.items():
-        rows.extend(_tile_parent(parent_id, sequence, "natural", rng))
+        rows.extend(_tile_parent(parent_id, sequence, "natural_human", rng))
     for parent_id, sequence in _DE_NOVO_PARENTS.items():
         rows.extend(_tile_parent(parent_id, sequence, "de_novo", rng))
 

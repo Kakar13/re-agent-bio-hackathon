@@ -12,7 +12,7 @@ def test_train_writes_loadable_checkpoint_and_metrics(tmp_path):
     metrics = train(
         data_path=None,  # dev fixture
         output_dir=output_dir,
-        esm3_mode="mock",
+        encoder_mode="mock",
         cache_path=cache_path,
         hidden_dim=16,
         cleavage_epochs=20,
@@ -50,7 +50,7 @@ def test_train_tolerates_partial_label_coverage(tmp_path):
     metrics = train(
         data_path=str(data_path),
         output_dir=tmp_path / "checkpoint",
-        esm3_mode="mock",
+        encoder_mode="mock",
         cache_path=tmp_path / "cache" / "embeddings.dat",
         hidden_dim=16,
         cleavage_epochs=20,

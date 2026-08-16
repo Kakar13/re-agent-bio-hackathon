@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from re_agent.e2e_pls.esm3_modal import EmbeddingCache, ESM3Client
+from re_agent.e2e_pls.encoder import EmbeddingCache, ProteinEncoder
 from re_agent.e2e_pls.schema import EMBEDDING_DIM
 
 
@@ -96,8 +96,8 @@ def test_get_or_compute_only_calls_compute_once(tmp_path):
 
 def test_client_with_cache_matches_uncached(tmp_path):
     cache = EmbeddingCache(tmp_path / "cache.dat")
-    cached_client = ESM3Client(mode="mock", cache=cache)
-    uncached_client = ESM3Client(mode="mock")
+    cached_client = ProteinEncoder(mode="mock", cache=cache)
+    uncached_client = ProteinEncoder(mode="mock")
     v_cached = cached_client.embed_pooled("AYIAKQRQI", "MKT", "SFVK", "mean_9mer")
     v_uncached = uncached_client.embed_pooled("AYIAKQRQI", "MKT", "SFVK", "mean_9mer")
     assert np.allclose(v_cached, v_uncached)

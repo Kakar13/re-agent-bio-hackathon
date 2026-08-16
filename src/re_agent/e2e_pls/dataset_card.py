@@ -45,12 +45,23 @@ def _sha256_file(path: Path) -> str:
 
 
 def _compute_statistics(df: pd.DataFrame) -> dict:
+    from re_agent.e2e_pls.label import TAP_RIDGE_TAG
+
+    n_tap_measured = int((df["study_id"] == "ds613").sum())
+    tap_imputed_mask = df["label_model_version"].fillna("").str.contains(TAP_RIDGE_TAG)
+    n_tap_imputed = int(tap_imputed_mask.sum())
+
     return {
         "by_split": df["split"].value_counts().to_dict(),
         "by_source_domain": df["source_domain"].value_counts().to_dict(),
         "by_label_origin": df["label_origin"].value_counts().to_dict(),
         "n_unique_parent_sequences": int(df["parent_sequence_id"].nunique()),
         "n_unique_hla_alleles": int(df["hla_allele"].nunique()),
+        "tap_provenance": {
+            "measured_ds613": n_tap_measured,
+            "imputed_by_ridge": n_tap_imputed,
+            "missing": int(df["tap_log_ic50_relative"].isna().sum()),
+        },
         "label_coverage": {
             col: {"n_present": int(df[col].notna().sum()), "n_missing": int(df[col].isna().sum())}
             for col in LABEL_COLUMNS
@@ -108,6 +119,21 @@ def _render_card(manifest: dict, stats: dict) -> str:
     lines += ["", "## Label coverage", ""]
     for col, cov in stats["label_coverage"].items():
         lines.append(f"- {col}: {cov['n_present']} present, {cov['n_missing']} missing")
+
+    tap_prov = stats.get("tap_provenance", {})
+    if tap_prov:
+        lines += [
+            "",
+            "## TAP provenance",
+            "",
+            f"- Measured (DS613): {tap_prov['measured_ds613']}",
+            f"- Imputed by ridge (one-hot 9-mer, trained on DS613): {tap_prov['imputed_by_ridge']}",
+            f"- Missing: {tap_prov['missing']}",
+            "",
+            "Imputed TAP values spread the 613-peptide measured signal across the "
+            "dataset for coverage; they are NOT new measurements. Downstream TapHead "
+            "training filters to measured-only rows to avoid learning its own imputer.",
+        ]
 
     lines += ["", "## Label distributions", ""]
     for col, dist in stats["label_distributions"].items():

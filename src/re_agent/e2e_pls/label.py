@@ -1,5 +1,5 @@
-"""Track 1 teacher labeling: Pepsickle (proteasomal cleavage) and MHCflurry
-(MHC-I binding affinity) applied to the Track 1 candidate pool.
+"""Track 1 teacher labeling: Pepsickle (proteasomal cleavage), MHCflurry
+(MHC-I binding affinity), and TAP imputation applied to the candidate pool.
 
 Pepsickle pins `torch==1.13.1` / `scikit-learn==1.2.0`, which conflicts with
 this project's main environment (`torch>=2.2`). It runs in an isolated venv
@@ -11,6 +11,15 @@ Pepsickle predicts a cleavage probability at every residue position of a
 parent sequence and then sliced per window -- far cheaper than one call per
 peptide. MHCflurry runs in-process (its newer releases use PyTorch, no
 env conflict).
+
+TAP imputation: measured TAP data is scarce (613 DS613 peptides). To give
+every row a TAP value for scoring/steering coverage, `impute_tap_labels()`
+trains a ridge regression on one-hot 9-mer features of those 613 measured
+points and applies it to the rest. Every imputed row is flagged in
+`label_model_version` with `tap_ridge=ds613_v1`; downstream trainers of the
+TAP head must still fit only on the measured rows (study_id == "ds613")
+rather than on our own imputations, or they will learn to reproduce the
+imputer instead of the underlying signal.
 """
 
 from __future__ import annotations
@@ -134,6 +143,74 @@ def stamp_label_model_version(
         df["label_model_version"] == "", version_string, df["label_model_version"]
     )
     return df
+
+
+TAP_RIDGE_TAG = "tap_ridge=ds613_v1"
+_AMINO_ACID_ALPHABET = "ACDEFGHIKLMNPQRSTVWY"
+_AA_INDEX = {aa: i for i, aa in enumerate(_AMINO_ACID_ALPHABET)}
+
+
+def _one_hot_9mer(peptide: str) -> np.ndarray:
+    """9 positions x 20 amino acids -> length-180 vector. Classic featurization
+    used across the TAP-prediction literature (SVMTAP, PREDTAP, TAPPred).
+
+    Non-canonical residues are silently skipped (their position stays zero).
+    """
+    v = np.zeros(9 * 20, dtype=np.float32)
+    for pos, aa in enumerate(peptide[:9]):
+        idx = _AA_INDEX.get(aa)
+        if idx is not None:
+            v[pos * 20 + idx] = 1.0
+    return v
+
+
+def _featurize_peptides(peptides: pd.Series) -> np.ndarray:
+    return np.stack([_one_hot_9mer(p) for p in peptides])
+
+
+def impute_tap_labels(df: pd.DataFrame, ridge_alpha: float = 10.0) -> pd.DataFrame:
+    """Fill missing `tap_log_ic50_relative` with predictions from a ridge model
+    trained on the rows that already carry a measured TAP value.
+
+    NOT a source of new data -- this only spreads the measured 613-peptide
+    signal across the rest of the dataset via a linear model over one-hot
+    9-mer features. Imputed rows are flagged in `label_model_version` with
+    `TAP_RIDGE_TAG`. Downstream TapHead training in `train.py` must filter
+    to measured rows only (`study_id == "ds613"`) to avoid learning from
+    its own imputations.
+    """
+    from sklearn.linear_model import Ridge
+
+    df = df.copy()
+    measured_mask = df["tap_log_ic50_relative"].notna().values
+    missing_mask = ~measured_mask
+
+    if measured_mask.sum() == 0 or missing_mask.sum() == 0:
+        return df
+
+    x_train = _featurize_peptides(df.loc[measured_mask, "peptide"])
+    y_train = df.loc[measured_mask, "tap_log_ic50_relative"].to_numpy(dtype=np.float64)
+    ridge = Ridge(alpha=ridge_alpha).fit(x_train, y_train)
+
+    x_missing = _featurize_peptides(df.loc[missing_mask, "peptide"])
+    df.loc[missing_mask, "tap_log_ic50_relative"] = ridge.predict(x_missing).astype(np.float32)
+    df.loc[missing_mask, "label_model_version"] = (
+        df.loc[missing_mask, "label_model_version"].fillna("").astype(str) + ";" + TAP_RIDGE_TAG
+    ).str.lstrip(";")
+    return df
+
+
+def has_measured_tap(df: pd.DataFrame) -> pd.Series:
+    """Boolean mask: rows whose TAP value was NOT written by `impute_tap_labels`.
+
+    In the real Track 1 build this is exactly the DS613 rows. In tests/fixtures
+    that carry synthetic TAP values without going through the imputer, it also
+    returns True -- the semantic is "TAP is not our own extrapolation of DS613,"
+    which is what the downstream TapHead needs to avoid learning to recover
+    the imputer instead of the underlying signal.
+    """
+    origin = df["label_model_version"].fillna("").astype(str)
+    return ~origin.str.contains(TAP_RIDGE_TAG, regex=False)
 
 
 def read_pepsickle_output(path: str | Path) -> pd.DataFrame:

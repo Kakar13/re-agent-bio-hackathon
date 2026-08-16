@@ -38,13 +38,20 @@ DEFAULT_PEPTIDE_LEN = 9
 DEFAULT_FLANK_LEN = 4
 DEFAULT_HLA = "HLA-A*02:01"
 
-STUDY_NATURAL = "uniprot_reference_v1"
 STUDY_DE_NOVO = "rcsb_de_novo_v1"
 STUDY_DS613 = "ds613"
 
 LICENSE_NATURAL = "CC-BY-4.0 (UniProt)"
 LICENSE_DE_NOVO = "CC0-1.0 (RCSB PDB, public domain)"
 LICENSE_DS613 = "unverified-mirror -- see dataset_manifest.json; not redistributed"
+
+# source_domain -> study_id, for every domain UniProt supplies (all share LICENSE_NATURAL)
+STUDY_BY_DOMAIN = {
+    "natural_human": "uniprot_human_reference_v1",
+    "natural_viral": "uniprot_viral_reference_v1",
+    "natural_bacterial": "uniprot_bacterial_reference_v1",
+    "de_novo": STUDY_DE_NOVO,
+}
 
 
 @dataclass
@@ -110,12 +117,52 @@ def _strip_expression_tags(seq: str) -> str:
 # Source acquisition
 # --------------------------------------------------------------------------
 
+# Well-characterized human-pathogenic species, by UniProt organism_id. Swiss-Prot's
+# manually-reviewed coverage is thin for most of these (a few dozen entries total),
+# so viral/bacterial fetches also pull TrEMBL (unreviewed but real, submitted)
+# sequences -- unlike the human fetch, which stays reviewed:true since human has
+# ample reviewed coverage (20k+ entries).
+VIRAL_ORGANISM_IDS = (
+    11320,  # Influenza A virus
+    11676,  # HIV-1
+    2697049,  # SARS-CoV-2
+    10359,  # Human cytomegalovirus
+    10376,  # Epstein-Barr virus
+    10407,  # Hepatitis B virus
+    11103,  # Hepatitis C virus
+    11234,  # Measles virus
+    333760,  # Human papillomavirus type 16
+    12637,  # Dengue virus
+)
+BACTERIAL_ORGANISM_IDS = (
+    1773,  # Mycobacterium tuberculosis
+    1280,  # Staphylococcus aureus
+    562,  # Escherichia coli
+    1639,  # Listeria monocytogenes
+    28901,  # Salmonella enterica
+    1314,  # Streptococcus pyogenes
+    287,  # Pseudomonas aeruginosa
+    487,  # Neisseria meningitidis
+)
 
-def fetch_uniprot_natural(
-    n_proteins: int, min_length: int = 150, max_length: int = 500, seed: int = 0
+
+def _organism_clause(organism_ids: tuple[int, ...]) -> str:
+    return "(" + " OR ".join(f"organism_id:{oid}" for oid in organism_ids) + ")"
+
+
+def fetch_uniprot_proteins(
+    n_proteins: int,
+    organism_clause: str,
+    min_length: int = 150,
+    max_length: int = 500,
+    reviewed: bool = True,
+    seed: int = 0,
 ) -> dict[str, str]:
-    """Reviewed (Swiss-Prot) human proteins from UniProt."""
-    query = f"organism_id:9606 AND reviewed:true AND length:[{min_length} TO {max_length}]"
+    """Sequences from UniProt matching `organism_clause` (a raw query fragment,
+    e.g. "organism_id:9606" or an OR-group of several organism_ids).
+    """
+    reviewed_clause = " AND reviewed:true" if reviewed else ""
+    query = f"{organism_clause}{reviewed_clause} AND length:[{min_length} TO {max_length}]"
     sequences: dict[str, str] = {}
     cursor: str | None = None
     with httpx.Client(timeout=30) as client:
@@ -138,6 +185,24 @@ def fetch_uniprot_natural(
     keys = list(sequences)
     rng.shuffle(keys)
     return {k: sequences[k] for k in keys[:n_proteins]}
+
+
+def fetch_uniprot_human(n_proteins: int, seed: int = 0, **kwargs) -> dict[str, str]:
+    return fetch_uniprot_proteins(
+        n_proteins, "organism_id:9606", reviewed=True, seed=seed, **kwargs
+    )
+
+
+def fetch_uniprot_viral(n_proteins: int, seed: int = 0, **kwargs) -> dict[str, str]:
+    return fetch_uniprot_proteins(
+        n_proteins, _organism_clause(VIRAL_ORGANISM_IDS), reviewed=False, seed=seed, **kwargs
+    )
+
+
+def fetch_uniprot_bacterial(n_proteins: int, seed: int = 0, **kwargs) -> dict[str, str]:
+    return fetch_uniprot_proteins(
+        n_proteins, _organism_clause(BACTERIAL_ORGANISM_IDS), reviewed=False, seed=seed, **kwargs
+    )
 
 
 def fetch_rcsb_de_novo(
@@ -281,14 +346,12 @@ def tile_protein(
     return rows
 
 
-def build_candidate_pool(
-    natural_seqs: dict[str, str], de_novo_seqs: dict[str, str]
-) -> pd.DataFrame:
+def build_candidate_pool(sources: dict[str, dict[str, str]]) -> pd.DataFrame:
+    """`sources`: source_domain (e.g. "natural_human") -> {parent_id: sequence}."""
     rows: list[dict] = []
-    for pid, seq in natural_seqs.items():
-        rows.extend(tile_protein(pid, seq, "natural"))
-    for pid, seq in de_novo_seqs.items():
-        rows.extend(tile_protein(pid, seq, "de_novo"))
+    for source_domain, seqs in sources.items():
+        for pid, seq in seqs.items():
+            rows.extend(tile_protein(pid, seq, source_domain))
     df = pd.DataFrame(rows)
     return df.drop_duplicates(subset="peptide", keep="first").reset_index(drop=True)
 
@@ -378,7 +441,7 @@ def build_ds613_rows(
                 "end": len(peptide),
                 "n_flank": "",
                 "c_flank": "",
-                "source_domain": "natural",
+                "source_domain": "natural_human",
                 "cleave_n_prob": np.nan,  # no real parent-protein flank context for Pepsickle
                 "cleave_c_prob": np.nan,
                 "tap_log_ic50_relative": float(r["log(IC50_relative)"]),
@@ -393,7 +456,7 @@ def build_ds613_rows(
                 "study_id": STUDY_DS613,
                 "protein_cluster_id": f"ds613_{i}",
                 "peptide_cluster_id": f"ds613_{i}",
-                "esm3_model_id": schema.ESM3_MODEL_ID,
+                "encoder_model_id": schema.ENCODER_MODEL_ID,
                 "pooling_recipe": "mean_9mer",
                 "embedding_cache_key": schema.embedding_cache_key(peptide, "", ""),
                 "has_structure_track": False,
@@ -418,17 +481,18 @@ def finalize_candidate_columns(df: pd.DataFrame, hla_allele: str = DEFAULT_HLA) 
     df["hla_allele"] = hla_allele
     df["label_origin"] = "teacher"
     df["label_model_version"] = ""
-    df["license"] = np.where(df["source_domain"] == "natural", LICENSE_NATURAL, LICENSE_DE_NOVO)
-    df["study_id"] = np.where(df["source_domain"] == "natural", STUDY_NATURAL, STUDY_DE_NOVO)
+    is_natural = df["source_domain"].str.startswith("natural_")
+    df["license"] = np.where(is_natural, LICENSE_NATURAL, LICENSE_DE_NOVO)
+    df["study_id"] = df["source_domain"].map(STUDY_BY_DOMAIN).fillna(STUDY_DE_NOVO)
     df["source_uri"] = np.where(
-        df["source_domain"] == "natural",
+        is_natural,
         "https://www.uniprot.org/uniprotkb/"
         + df["parent_sequence_id"].str.removeprefix("uniprot_"),
         "https://www.rcsb.org/structure/"
         + df["parent_sequence_id"].str.removeprefix("rcsb_").str.split("_").str[0],
     )
     df["generated_at"] = now
-    df["esm3_model_id"] = schema.ESM3_MODEL_ID
+    df["encoder_model_id"] = schema.ENCODER_MODEL_ID
     df["pooling_recipe"] = "mean_9mer"
     df["embedding_cache_key"] = [
         schema.embedding_cache_key(p, nf or "", cf or "")

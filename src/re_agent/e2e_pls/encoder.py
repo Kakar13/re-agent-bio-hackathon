@@ -1,21 +1,22 @@
-"""ESM3-open runtime: Modal GPU deployment, pooling recipes, and a
-deterministic local embedding cache.
+"""Protein sequence encoder: ESM-2 locally, plus a mock and optional Modal
+ESM3 backend, all behind a single `ProteinEncoder` interface.
 
-Two client modes, same interface:
-  - `mode="modal"`: calls the deployed Modal app (`e2e-pls-esm3`), which
-    runs `esm3-sm-open-v1` in half precision on an A10G. Requires the
-    user's own `HF_TOKEN` (gated weights) and Modal auth -- see
-    START_HERE.md / docs/SETUP.md. Not runnable in this session; nothing
-    here invents or reads a Modal/HF credential.
+Three modes, same interface:
+  - `mode="esm2"` (default, real): loads `esm2_t33_650M_UR50D` locally via
+    the `fair-esm` package. First use downloads ~2.5 GB of weights from
+    Meta's public URL (no HF token, no license acceptance). Runs on CUDA,
+    Apple MPS, or CPU -- picked automatically. This is what training,
+    inference, and the dashboard use for real embeddings.
   - `mode="mock"`: deterministic pseudo-embeddings/generations seeded from
-    the input sequence. No GPU, no network. This is what fixtures, tests,
-    and local dashboard dev run against; every other Track 2 module is
-    built and verified against this path.
+    the input sequence. No download, no GPU. This is what tests and the
+    dev fixture use to stay fast and offline.
+  - `mode="modal"`: calls the deployed Modal app for ESM3-open weights.
+    Requires the user's own `HF_TOKEN` (gated) and Modal auth. Never
+    executed in this session; kept as an optional upgrade path.
 
-The Modal-side call surface (`LogitsConfig(return_embeddings=True)`,
-masked `generate`) follows the public ESM3 SDK as of this plan's writing;
-confirm against the installed `esm` package's API before the first real
-`modal deploy`, since this path has not been execution-tested here.
+`EMBEDDING_DIM` in `schema.py` (1280) is tied to ESM-2 t33's hidden size.
+If you swap encoders, update it there and rebuild the dataset so
+`encoder_model_id` in each row matches what actually produced the vectors.
 """
 
 from __future__ import annotations
@@ -27,16 +28,12 @@ from typing import Literal
 
 import numpy as np
 
-from re_agent.e2e_pls.schema import CANONICAL_RESIDUES, EMBEDDING_DIM, ESM3_MODEL_ID
-
-# Human-facing model id (schema.py, dataset rows) -> real pretrained registry name
-# used by the `esm` SDK's `ESM3.from_pretrained(...)`.
-_PRETRAINED_NAME = {"esm3-sm-open-v1": "esm3_sm_open_v1"}
+from re_agent.e2e_pls.schema import CANONICAL_RESIDUES, EMBEDDING_DIM, ENCODER_MODEL_ID
 
 _RESIDUES = sorted(CANONICAL_RESIDUES)
 MASK_TOKEN = "_"
 
-ClientMode = Literal["modal", "mock"]
+ClientMode = Literal["esm2", "modal", "mock"]
 
 
 # --------------------------------------------------------------------------
@@ -47,10 +44,9 @@ ClientMode = Literal["modal", "mock"]
 class EmbeddingCache:
     """Memory-mapped float32 cache, keyed by an arbitrary string key.
 
-    Backs both Track 2's call-level cache (avoid re-hitting Modal for a
-    sequence already embedded) and the row-id-keyed embedding store the
-    plan calls for alongside the Track 1 parquet -- same access pattern,
-    `get_or_compute(key, fn)` either way.
+    Backs both the encoder's call-level cache (avoid re-embedding a sequence
+    already seen) and the row-id-keyed embedding store alongside the Track 1
+    parquet -- same access pattern, `get_or_compute(key, fn)` either way.
     """
 
     def __init__(self, path: str | Path, dim: int = EMBEDDING_DIM, initial_capacity: int = 1024):
@@ -148,15 +144,141 @@ def pool_9mer(residue_embeddings: np.ndarray, n_flank_len: int, peptide_len: int
 
 
 # --------------------------------------------------------------------------
+# ESM-2 backend
+# --------------------------------------------------------------------------
+
+# Human-facing model id (schema.ENCODER_MODEL_ID) -> `fair-esm` registry name.
+_ESM2_PRETRAINED = {
+    "esm2_t33_650M_UR50D": "esm2_t33_650M_UR50D",
+    "esm2_t30_150M_UR50D": "esm2_t30_150M_UR50D",
+    "esm2_t12_35M_UR50D": "esm2_t12_35M_UR50D",
+}
+_ESM2_REPR_LAYER = {
+    "esm2_t33_650M_UR50D": 33,
+    "esm2_t30_150M_UR50D": 30,
+    "esm2_t12_35M_UR50D": 12,
+}
+
+
+def _pick_torch_device():
+    import torch
+
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if torch.backends.mps.is_available():
+        return torch.device("mps")
+    return torch.device("cpu")
+
+
+class _Esm2Backend:
+    """Lazy singleton wrapping fair-esm's ESM-2 model + alphabet + batch converter."""
+
+    _cache: dict[str, _Esm2Backend] = {}
+
+    def __init__(self, model_id: str):
+        import esm as fair_esm
+        import torch
+
+        if model_id not in _ESM2_PRETRAINED:
+            raise ValueError(f"unknown ESM-2 model_id: {model_id}. Known: {list(_ESM2_PRETRAINED)}")
+        pretrained_name = _ESM2_PRETRAINED[model_id]
+        loader = getattr(fair_esm.pretrained, pretrained_name)
+        model, alphabet = loader()
+        model.eval()
+        self.device = _pick_torch_device()
+        model = model.to(self.device)
+        self.model = model
+        self.alphabet = alphabet
+        self.batch_converter = alphabet.get_batch_converter()
+        self.repr_layer = _ESM2_REPR_LAYER[model_id]
+        self._torch = torch
+
+    @classmethod
+    def get(cls, model_id: str) -> _Esm2Backend:
+        if model_id not in cls._cache:
+            cls._cache[model_id] = cls(model_id)
+        return cls._cache[model_id]
+
+    def embed_residues(self, sequence: str) -> np.ndarray:
+        """Per-residue embeddings from the final transformer layer, shape (L, D)."""
+        torch = self._torch
+        _, _, tokens = self.batch_converter([("s", sequence)])
+        tokens = tokens.to(self.device)
+        with torch.no_grad():
+            out = self.model(tokens, repr_layers=[self.repr_layer])
+        # fair-esm prepends a BOS token and appends an EOS token, so we strip both.
+        reps = out["representations"][self.repr_layer][0, 1 : 1 + len(sequence)]
+        return reps.float().cpu().numpy()
+
+    def fill_masks(
+        self, sequence: str, mask_positions: list[int], num_candidates: int
+    ) -> list[str]:
+        """Sample from the ESM-2 masked-language-model head at each masked position.
+
+        For each of `num_candidates` draws, replace `mask_positions` with the
+        `<mask>` token, run the model, and sample from the softmax distribution
+        at each position independently. Never mutates unmasked positions.
+        """
+        torch = self._torch
+        rng = np.random.default_rng()
+        masked = list(sequence)
+        for pos in mask_positions:
+            masked[pos] = "<mask>"
+        # fair-esm's batch converter expects the sequence as a single string with
+        # `<mask>` tokens spelled out; we tokenize ourselves for control.
+        raw = "".join(c if c != "<mask>" else "<mask>" for c in masked)
+        _, _, tokens = self.batch_converter([("s", raw)])
+        tokens = tokens.to(self.device)
+        with torch.no_grad():
+            out = self.model(tokens)
+        logits = out["logits"][0]  # (L, vocab)
+        # positions in the token tensor are shifted by 1 for the prepended BOS
+        token_positions = [p + 1 for p in mask_positions]
+
+        # only sample among the 20 canonical amino acid tokens, not special tokens
+        aa_indices = [self.alphabet.get_idx(aa) for aa in _RESIDUES]
+        original_indices = [self.alphabet.get_idx(sequence[p]) for p in mask_positions]
+
+        candidates = []
+        for _ in range(num_candidates):
+            chars = list(sequence)
+            for pos, tok_pos, orig_idx in zip(
+                mask_positions, token_positions, original_indices, strict=True
+            ):
+                pos_logits = logits[tok_pos, aa_indices].float().cpu().numpy()
+                pos_logits[aa_indices.index(orig_idx)] = -np.inf  # force a mutation
+                probs = np.exp(pos_logits - pos_logits.max())
+                probs = probs / probs.sum()
+                pick = rng.choice(len(aa_indices), p=probs)
+                chars[pos] = _RESIDUES[pick]
+            candidates.append("".join(chars))
+        return candidates
+
+    def sequence_log_likelihood(self, sequence: str) -> float:
+        """Sum of log-probs of the observed residues under the LM head."""
+        torch = self._torch
+        _, _, tokens = self.batch_converter([("s", sequence)])
+        tokens = tokens.to(self.device)
+        with torch.no_grad():
+            out = self.model(tokens)
+        logits = out["logits"][0, 1 : 1 + len(sequence)]  # strip BOS/EOS
+        log_probs = torch.log_softmax(logits.float(), dim=-1)
+        aa_indices = torch.tensor(
+            [self.alphabet.get_idx(aa) for aa in sequence], device=logits.device
+        )
+        return float(log_probs.gather(-1, aa_indices.unsqueeze(-1)).sum().cpu().item())
+
+
+# --------------------------------------------------------------------------
 # Client
 # --------------------------------------------------------------------------
 
 
-class ESM3Client:
+class ProteinEncoder:
     def __init__(
         self,
-        mode: ClientMode = "mock",
-        model_id: str = ESM3_MODEL_ID,
+        mode: ClientMode = "esm2",
+        model_id: str = ENCODER_MODEL_ID,
         cache: EmbeddingCache | None = None,
         modal_app_name: str = "e2e-pls-esm3",
     ):
@@ -164,8 +286,11 @@ class ESM3Client:
         self.model_id = model_id
         self.cache = cache
         self._modal_fns = None
+        self._esm2 = None
         if mode == "modal":
             self._modal_fns = _load_modal_functions(modal_app_name)
+        elif mode == "esm2":
+            self._esm2 = _Esm2Backend.get(model_id)
 
     def embed_residues(self, sequence: str) -> np.ndarray:
         """Per-residue embeddings, shape (len(sequence), EMBEDDING_DIM)."""
@@ -176,6 +301,8 @@ class ESM3Client:
         # go through `self.cache` (see `embed_pooled`).
         if self.mode == "mock":
             return self._embed_residues_mock(sequence)
+        if self.mode == "esm2":
+            return self._esm2.embed_residues(sequence).astype("float32")
         return self._embed_residues_modal(sequence)
 
     def embed_pooled(self, peptide: str, n_flank: str, c_flank: str, recipe: str) -> np.ndarray:
@@ -200,19 +327,23 @@ class ESM3Client:
     def generate_masked(
         self, sequence: str, mask_positions: list[int], num_candidates: int = 8
     ) -> list[str]:
-        """Fill `mask_positions` via ESM3 sequence-track masked generation.
+        """Fill `mask_positions` via the encoder's masked-language-model head.
 
         Returns up to `num_candidates` full-length candidate sequences.
         Never mutates positions outside `mask_positions`.
         """
         if self.mode == "mock":
             return self._generate_masked_mock(sequence, mask_positions, num_candidates)
+        if self.mode == "esm2":
+            return self._esm2.fill_masks(sequence, mask_positions, num_candidates)
         return self._generate_masked_modal(sequence, mask_positions, num_candidates)
 
     def sequence_log_likelihood(self, sequence: str) -> float:
-        """Scalar ESM3 sequence-track likelihood, used as a steering guardrail."""
+        """Scalar language-model likelihood, used as a steering guardrail."""
         if self.mode == "mock":
             return self._sequence_log_likelihood_mock(sequence)
+        if self.mode == "esm2":
+            return self._esm2.sequence_log_likelihood(sequence)
         return self._modal_fns["log_likelihood"].remote(sequence, self.model_id)
 
     # -- mock implementations --------------------------------------------
@@ -238,7 +369,9 @@ class ESM3Client:
     ) -> list[str]:
         candidates = []
         for c in range(num_candidates):
-            rng = self._seeded_rng("mask-gen", self.model_id, sequence, str(mask_positions), str(c))
+            rng = self._seeded_rng(
+                "mask-gen", self.model_id, sequence, str(mask_positions), str(c)
+            )
             chars = list(sequence)
             for pos in mask_positions:
                 choices = [r for r in _RESIDUES if r != sequence[pos]]
@@ -251,7 +384,7 @@ class ESM3Client:
         # centered around a plausible per-residue log-prob; deterministic per sequence
         return float(rng.normal(-2.5, 0.3) * len(sequence))
 
-    # -- real Modal implementations ---------------------------------------
+    # -- real Modal (ESM3) implementations, unused unless mode="modal" ---
 
     def _embed_residues_modal(self, sequence: str) -> np.ndarray:
         result = self._modal_fns["embed_residues"].remote([sequence], self.model_id)
@@ -264,13 +397,16 @@ class ESM3Client:
         for pos in mask_positions:
             masked[pos] = MASK_TOKEN
         masked_seq = "".join(masked)
-        return self._modal_fns["generate_masked"].remote(masked_seq, num_candidates, self.model_id)
+        return self._modal_fns["generate_masked"].remote(
+            masked_seq, num_candidates, self.model_id
+        )
 
 
 def _load_modal_functions(app_name: str) -> dict:
-    """Lazily resolve the deployed Modal functions. Requires `modal` to be
-    installed and `modal token set` / `modal setup` to have been run by the
-    user -- see docs/SETUP.md. Raises with a clear message otherwise.
+    """Lazily resolve the deployed Modal ESM3 functions. Requires `modal` to
+    be installed and `modal setup` to have been run by the user; the ESM3
+    weights are gated so an HF_TOKEN secret must exist too. Not runnable in
+    this repo out of the box -- see project README for the opt-in path.
     """
     try:
         import modal
@@ -286,8 +422,12 @@ def _load_modal_functions(app_name: str) -> dict:
 
 
 # --------------------------------------------------------------------------
-# Modal app definition (deploy with: uv run modal deploy src/re_agent/e2e_pls/esm3_modal.py)
+# Modal app definition for the optional ESM3 backend.
+# Deploy with:  uv run modal deploy src/re_agent/e2e_pls/encoder.py
 # --------------------------------------------------------------------------
+
+# Map schema-level model id -> real pretrained registry name used by the ESM SDK.
+_ESM3_PRETRAINED = {"esm3-sm-open-v1": "esm3_sm_open_v1"}
 
 
 def _build_modal_app():
@@ -301,27 +441,22 @@ def _build_modal_app():
     app = modal.App("e2e-pls-esm3")
     weights_volume = modal.Volume.from_name("e2e-pls-esm3-weights", create_if_missing=True)
     volumes = {"/root/.cache/huggingface": weights_volume}
-    # The user's own HF_TOKEN (gated ESM3 weights) must exist as a Modal
-    # secret named "huggingface-secret" -- created via `modal secret create`,
-    # never inlined here. See docs/SETUP.md.
     secrets = [modal.Secret.from_name("huggingface-secret")]
 
     def _load_client(model_id: str):
         from esm.models.esm3 import ESM3
 
-        pretrained_name = _PRETRAINED_NAME.get(model_id, model_id)
+        pretrained_name = _ESM3_PRETRAINED.get(model_id, model_id)
         client = ESM3.from_pretrained(pretrained_name).to("cuda").half()
         return client
 
     @app.function(image=image, gpu="A10G", volumes=volumes, secrets=secrets, timeout=900)
     def embed_residues(
-        sequences: list[str], model_id: str = ESM3_MODEL_ID
+        sequences: list[str], model_id: str = "esm3-sm-open-v1"
     ) -> list[list[list[float]]]:
         from esm.sdk.api import ESMProtein, LogitsConfig
 
         client = _load_client(model_id)
-        # length-bucketed batching: group same-length sequences to avoid
-        # padding waste, run each bucket together
         by_length: dict[int, list[tuple[int, str]]] = {}
         for i, seq in enumerate(sequences):
             by_length.setdefault(len(seq), []).append((i, seq))
@@ -331,14 +466,16 @@ def _build_modal_app():
             for i, seq in items:
                 protein = ESMProtein(sequence=seq)
                 protein_tensor = client.encode(protein)
-                logits_output = client.logits(protein_tensor, LogitsConfig(return_embeddings=True))
+                logits_output = client.logits(
+                    protein_tensor, LogitsConfig(return_embeddings=True)
+                )
                 embeddings = logits_output.embeddings.squeeze(0).float().cpu().numpy()
                 out[i] = embeddings.tolist()
         return out
 
     @app.function(image=image, gpu="A10G", volumes=volumes, secrets=secrets, timeout=900)
     def generate_masked(
-        masked_sequence: str, num_candidates: int, model_id: str = ESM3_MODEL_ID
+        masked_sequence: str, num_candidates: int, model_id: str = "esm3-sm-open-v1"
     ) -> list[str]:
         from esm.sdk.api import ESMProtein, GenerationConfig
 
@@ -353,7 +490,7 @@ def _build_modal_app():
         return candidates
 
     @app.function(image=image, gpu="A10G", volumes=volumes, secrets=secrets, timeout=300)
-    def log_likelihood(sequence: str, model_id: str = ESM3_MODEL_ID) -> float:
+    def log_likelihood(sequence: str, model_id: str = "esm3-sm-open-v1") -> float:
         from esm.sdk.api import ESMProtein, LogitsConfig
 
         client = _load_client(model_id)

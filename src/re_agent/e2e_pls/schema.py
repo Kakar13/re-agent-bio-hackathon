@@ -21,12 +21,12 @@ import pyarrow as pa
 
 SCHEMA_VERSION = "1"
 
-ESM3_MODEL_ID = "esm3-sm-open-v1"
-EMBEDDING_DIM = 1536
+ENCODER_MODEL_ID = "esm2_t33_650M_UR50D"
+EMBEDDING_DIM = 1280
 
 CANONICAL_RESIDUES = frozenset("ACDEFGHIKLMNPQRSTVWY")
 
-SOURCE_DOMAINS = ("natural", "de_novo", "demo")
+SOURCE_DOMAINS = ("natural_human", "natural_viral", "natural_bacterial", "de_novo", "demo")
 LABEL_ORIGINS = ("measured", "teacher")
 SPLIT_NAMES = ("train", "val", "test")
 
@@ -61,9 +61,9 @@ REQUIRED_FIELDS: dict[str, tuple[pa.DataType, bool]] = {
     "protein_cluster_id": (pa.string(), False),
     "peptide_cluster_id": (pa.string(), False),
     "split": (pa.string(), False),
-    # ESM3 artifacts (embeddings themselves live in a separate memmap keyed
-    # by row_id -- see esm3_modal.EmbeddingCache -- not duplicated here)
-    "esm3_model_id": (pa.string(), False),
+    # Encoder artifacts. Embeddings themselves live in a separate memmap keyed
+    # by embedding_cache_key -- see encoder.EmbeddingCache -- not duplicated here.
+    "encoder_model_id": (pa.string(), False),
     "pooling_recipe": (pa.string(), False),
     "embedding_cache_key": (pa.string(), False),
     "has_structure_track": (pa.bool_(), False),
@@ -215,7 +215,7 @@ def dataset_version_hash(df: pd.DataFrame) -> str:
 
 
 def embedding_cache_key(
-    peptide: str, n_flank: str, c_flank: str, model_id: str = ESM3_MODEL_ID
+    peptide: str, n_flank: str, c_flank: str, model_id: str = ENCODER_MODEL_ID
 ) -> str:
     """Deterministic key for the memmap embedding cache in esm3_modal.EmbeddingCache."""
     raw = f"{model_id}|{n_flank or ''}|{peptide}|{c_flank or ''}"

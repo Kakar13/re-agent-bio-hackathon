@@ -21,7 +21,7 @@ import plotly.graph_objects as go
 
 from re_agent.e2e_pls import fixtures, schema
 from re_agent.e2e_pls import score as score_mod
-from re_agent.e2e_pls.esm3_modal import EmbeddingCache, ESM3Client
+from re_agent.e2e_pls.encoder import EmbeddingCache, ProteinEncoder
 from re_agent.e2e_pls.model import ThreeHeadModel
 from re_agent.e2e_pls.steer import CLAIM_DISCLAIMER, SteeringConfig, SteeringTrace, steer_to_safety
 from re_agent.e2e_pls.train import DEFAULT_CACHE_PATH, DEFAULT_OUTPUT_DIR
@@ -37,7 +37,7 @@ def load_heads(checkpoint_dir: str | Path) -> ThreeHeadModel | None:
 
 
 def fit_reference_latent_map(
-    heads: ThreeHeadModel, reference_df: pd.DataFrame, client: ESM3Client
+    heads: ThreeHeadModel, reference_df: pd.DataFrame, client: ProteinEncoder
 ) -> tuple[object, np.ndarray, np.ndarray]:
     """Fixed 2D PCA fit once on the reference dataset's MHC-latent embeddings.
 
@@ -60,7 +60,7 @@ def fit_reference_latent_map(
 
 
 def steering_path_points(
-    trace: SteeringTrace, heads: ThreeHeadModel, client: ESM3Client, pca2
+    trace: SteeringTrace, heads: ThreeHeadModel, client: ProteinEncoder, pca2
 ) -> list[dict]:
     """Latent-map (x, y) for the target window before and after each accepted mutation."""
     points = []
@@ -229,7 +229,7 @@ def sequence_diff(original: str, variant: str) -> list[dict]:
 def benchmark_surrogate(
     sequence: str,
     hla_allele: str,
-    client: ESM3Client,
+    client: ProteinEncoder,
     heads: ThreeHeadModel,
     teacher_seconds_per_window: float | None = None,
 ) -> dict:
@@ -261,10 +261,11 @@ def render() -> None:
     with st.sidebar:
         st.header("Runtime")
         checkpoint_dir = st.text_input("Checkpoint dir", str(DEFAULT_OUTPUT_DIR))
-        esm3_mode = st.selectbox("ESM3 client mode", ["mock", "modal"], index=0)
+        encoder_mode = st.selectbox("Encoder mode", ["esm2", "mock", "modal"], index=0)
         st.caption(
-            "mock = deterministic offline dev client (no GPU/network). "
-            "modal = deployed esm3-sm-open-v1, requires the user's own HF_TOKEN + Modal auth."
+            "esm2 = real ESM-2 (t33, 650M) loaded locally, ~2.5 GB download on first use. "
+            "mock = deterministic offline stand-in for tests. "
+            "modal = deployed ESM3-open, requires the user's own HF_TOKEN + Modal auth."
         )
 
     heads = load_heads(checkpoint_dir)
@@ -276,12 +277,12 @@ def render() -> None:
         st.stop()
 
     cache = EmbeddingCache(DEFAULT_CACHE_PATH)
-    client = ESM3Client(mode=esm3_mode, cache=cache)
+    client = ProteinEncoder(mode=encoder_mode, cache=cache)
 
     st.subheader("Checkpoint")
     cols = st.columns(4)
     cols[0].metric("Model version", heads.model_version)
-    cols[1].metric("ESM3 model", heads.esm3_model_id)
+    cols[1].metric("Encoder", heads.encoder_model_id)
     cols[2].metric("Dataset hash", heads.dataset_version_hash or "n/a")
     cols[3].metric("HLA alleles", ", ".join(heads.mhc.centroids) or "none")
 

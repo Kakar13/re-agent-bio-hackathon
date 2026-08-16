@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from re_agent.e2e_pls import fixtures
-from re_agent.e2e_pls.esm3_modal import ESM3Client
+from re_agent.e2e_pls.encoder import ProteinEncoder
 from re_agent.e2e_pls.model import CleavageHead, MhcHead, TapHead, ThreeHeadModel
 
 
@@ -13,7 +13,7 @@ def dev_df():
 
 @pytest.fixture(scope="session")
 def mock_client():
-    return ESM3Client(mode="mock")
+    return ProteinEncoder(mode="mock")
 
 
 def _embed_all(df, client, recipe):

@@ -21,7 +21,7 @@ from pathlib import Path
 
 import numpy as np
 
-from re_agent.e2e_pls.esm3_modal import ESM3Client
+from re_agent.e2e_pls.encoder import ProteinEncoder
 from re_agent.e2e_pls.model import ThreeHeadModel
 from re_agent.e2e_pls.score import DEFAULT_FLANK_LEN, PeptideScore, Window, score_window
 
@@ -87,7 +87,7 @@ class SteeringTrace:
     final_score: dict
     steps: list[StepRecord]
     model_version: str
-    esm3_model_id: str
+    encoder_model_id: str
     dataset_version_hash: str
     constraints: dict
     total_duration_s: float
@@ -122,7 +122,7 @@ def _pick_next_position(
     target_start: int,
     target_end: int,
     candidate_positions: list[int],
-    esm_client: ESM3Client,
+    esm_client: ProteinEncoder,
     heads: ThreeHeadModel,
     hla_allele: str,
 ) -> int:
@@ -161,7 +161,7 @@ def _evaluate_candidate(
     target_start: int,
     target_end: int,
     hla_allele: str,
-    esm_client: ESM3Client,
+    esm_client: ProteinEncoder,
     heads: ThreeHeadModel,
     orig_score: PeptideScore,
     orig_z: np.ndarray,
@@ -221,7 +221,7 @@ def steer_to_safety(
     parent_sequence: str,
     target_start: int,
     target_end: int,
-    esm_client: ESM3Client,
+    esm_client: ProteinEncoder,
     heads: ThreeHeadModel,
     config: SteeringConfig | None = None,
 ) -> SteeringTrace:
@@ -322,7 +322,7 @@ def steer_to_safety(
         final_score=current_score.to_dict(),
         steps=steps,
         model_version=heads.model_version,
-        esm3_model_id=heads.esm3_model_id,
+        encoder_model_id=heads.encoder_model_id,
         dataset_version_hash=heads.dataset_version_hash,
         constraints=config.to_dict(),
         total_duration_s=time.monotonic() - t0,

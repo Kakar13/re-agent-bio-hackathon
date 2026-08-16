@@ -23,7 +23,7 @@ from scipy.stats import spearmanr
 from sklearn.metrics import average_precision_score
 
 from re_agent.e2e_pls import fixtures, schema
-from re_agent.e2e_pls.esm3_modal import EmbeddingCache, ESM3Client
+from re_agent.e2e_pls.encoder import EmbeddingCache, ProteinEncoder
 from re_agent.e2e_pls.model import CleavageHead, MhcHead, TapHead, ThreeHeadModel
 
 DEFAULT_OUTPUT_DIR = Path("results/e2e_pls/checkpoints/latest")
@@ -42,7 +42,7 @@ def _load_dataset(data_path: str | None) -> pd.DataFrame:
     return df
 
 
-def _embed_dataset(df: pd.DataFrame, client: ESM3Client) -> dict[str, np.ndarray]:
+def _embed_dataset(df: pd.DataFrame, client: ProteinEncoder) -> dict[str, np.ndarray]:
     n_vecs, c_vecs, mer_vecs = [], [], []
     for row in df.itertuples():
         n_flank, c_flank = row.n_flank or "", row.c_flank or ""
@@ -104,9 +104,13 @@ def _evaluate(
             "n_rows": int(cleavage_mask.sum()),
         }
 
-    tap_mask = _labeled_mask(df, test_mask, "tap_log_ic50_relative")
+    from re_agent.e2e_pls.label import has_measured_tap
+
+    # TAP evaluation stays measured-only for the same reason training does:
+    # scoring against imputed rows would just verify that we agree with our own imputer.
+    tap_mask = _labeled_mask(df, test_mask, "tap_log_ic50_relative") & has_measured_tap(df).values
     if tap_mask.sum() == 0:
-        metrics["tap"] = {"warning": "no test rows with TAP labels"}
+        metrics["tap"] = {"warning": "no test rows with measured TAP labels"}
     else:
         tap_pred, tap_std = tap.predict_with_uncertainty(embeddings["mer"][tap_mask])
         tap_true = df["tap_log_ic50_relative"].values[tap_mask]
@@ -148,7 +152,7 @@ def _evaluate(
 def train(
     data_path: str | None = None,
     output_dir: Path = DEFAULT_OUTPUT_DIR,
-    esm3_mode: str = "mock",
+    encoder_mode: str = "mock",
     cache_path: Path | None = DEFAULT_CACHE_PATH,
     hidden_dim: int = 128,
     cleavage_epochs: int = 300,
@@ -161,14 +165,21 @@ def train(
     df = _load_dataset(data_path)
 
     cache = EmbeddingCache(cache_path) if cache_path else None
-    client = ESM3Client(mode=esm3_mode, cache=cache)
+    client = ProteinEncoder(mode=encoder_mode, cache=cache)
     embeddings = _embed_dataset(df, client)
 
     train_mask = (df["split"] == "train").values
     test_mask = (df["split"] == "test").values
 
+    from re_agent.e2e_pls.label import has_measured_tap
+
     cleavage_train_mask = _labeled_mask(df, train_mask, "cleave_n_prob", "cleave_c_prob")
-    tap_train_mask = _labeled_mask(df, train_mask, "tap_log_ic50_relative")
+    # TAP: train only on measured rows (DS613). Rows with imputed TAP were filled
+    # by our own ridge in label.impute_tap_labels(); training on them would just
+    # recover the imputer and teach the head nothing.
+    tap_train_mask = (
+        _labeled_mask(df, train_mask, "tap_log_ic50_relative") & has_measured_tap(df).values
+    )
     mhc_train_mask = _labeled_mask(df, train_mask, "mhc_percentile")
 
     cleavage = CleavageHead.new(hidden_dim=hidden_dim)
@@ -214,7 +225,7 @@ def main(argv: list[str] | None = None) -> None:
         "--data", default=None, help="path to Track 1 parquet; omit to use the dev fixture"
     )
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR))
-    parser.add_argument("--esm3-mode", choices=["mock", "modal"], default="mock")
+    parser.add_argument("--encoder-mode", choices=["esm2", "mock", "modal"], default="esm2")
     parser.add_argument("--no-cache", action="store_true")
     parser.add_argument("--hidden-dim", type=int, default=128)
     parser.add_argument("--cleavage-epochs", type=int, default=300)
@@ -227,7 +238,7 @@ def main(argv: list[str] | None = None) -> None:
     metrics = train(
         data_path=args.data,
         output_dir=Path(args.output_dir),
-        esm3_mode=args.esm3_mode,
+        encoder_mode=args.encoder_mode,
         cache_path=None if args.no_cache else DEFAULT_CACHE_PATH,
         hidden_dim=args.hidden_dim,
         cleavage_epochs=args.cleavage_epochs,

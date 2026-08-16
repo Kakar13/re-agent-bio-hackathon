@@ -11,7 +11,7 @@ from dataclasses import asdict, dataclass
 
 import numpy as np
 
-from re_agent.e2e_pls.esm3_modal import ESM3Client
+from re_agent.e2e_pls.encoder import ProteinEncoder
 from re_agent.e2e_pls.model import ThreeHeadModel
 
 DEFAULT_PEPTIDE_LEN = 9
@@ -80,7 +80,7 @@ def compute_peptide_risk(
 
 
 def score_window(
-    window: Window, hla_allele: str, esm_client: ESM3Client, heads: ThreeHeadModel
+    window: Window, hla_allele: str, esm_client: ProteinEncoder, heads: ThreeHeadModel
 ) -> PeptideScore:
     n_vec = esm_client.embed_pooled(window.peptide, window.n_flank, window.c_flank, "cleave_n")
     c_vec = esm_client.embed_pooled(window.peptide, window.n_flank, window.c_flank, "cleave_c")
@@ -110,7 +110,7 @@ def score_window(
 def score_sequence(
     sequence: str,
     hla_allele: str,
-    esm_client: ESM3Client,
+    esm_client: ProteinEncoder,
     heads: ThreeHeadModel,
     peptide_len: int = DEFAULT_PEPTIDE_LEN,
     flank_len: int = DEFAULT_FLANK_LEN,

@@ -16,7 +16,7 @@ import numpy as np
 import torch
 from torch import nn
 
-from re_agent.e2e_pls.schema import EMBEDDING_DIM, ESM3_MODEL_ID
+from re_agent.e2e_pls.schema import EMBEDDING_DIM, ENCODER_MODEL_ID
 
 MODEL_VERSION = "e2e_pls-heads-v1"
 
@@ -335,7 +335,7 @@ class ThreeHeadModel:
     cleavage: CleavageHead
     tap: TapHead
     mhc: MhcHead
-    esm3_model_id: str = ESM3_MODEL_ID
+    encoder_model_id: str = ENCODER_MODEL_ID
     model_version: str = MODEL_VERSION
     dataset_version_hash: str = ""
 
@@ -348,7 +348,7 @@ class ThreeHeadModel:
         (path / "manifest.json").write_text(
             json.dumps(
                 {
-                    "esm3_model_id": self.esm3_model_id,
+                    "encoder_model_id": self.encoder_model_id,
                     "model_version": self.model_version,
                     "dataset_version_hash": self.dataset_version_hash,
                 },
@@ -364,7 +364,7 @@ class ThreeHeadModel:
             cleavage=CleavageHead.load(path / "cleavage"),
             tap=TapHead.load(path / "tap"),
             mhc=MhcHead.load(path / "mhc"),
-            esm3_model_id=manifest["esm3_model_id"],
+            encoder_model_id=manifest["encoder_model_id"],
             model_version=manifest["model_version"],
             dataset_version_hash=manifest["dataset_version_hash"],
         )
