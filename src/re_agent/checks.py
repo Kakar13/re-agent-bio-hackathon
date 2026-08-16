@@ -62,6 +62,43 @@ def _modal() -> Check:
         return Check("modal", False, "run: uv sync --extra proto && uv run modal setup")
 
 
+def _immuno_artifact(name: str, path, hint: str) -> Check:
+    if path.exists():
+        size = path.stat().st_size
+        return Check(name, True, f"{path.name} ({size / 1e6:.0f} MB)")
+    return Check(name, False, hint)
+
+
+def immuno_checks() -> list[Check]:
+    """Readiness of the immunogenicity pipeline: deps, datasets, embeddings, models."""
+    ml_hint = "run: uv sync --extra ml"
+    checks = [
+        _import_pkg("torch", "torch", ml_hint),
+        _import_pkg("fair-esm", "esm", ml_hint),
+        _import_pkg("scikit-learn", "sklearn", ml_hint),
+    ]
+    try:
+        from re_agent.immuno.config import PATHS
+        from re_agent.immuno.embed import cache_paths
+    except ImportError as exc:
+        checks.append(Check("immuno package", False, str(exc)))
+        return checks
+
+    data_hint = "run: uv run python -m re_agent.immuno.data"
+    checks += [
+        _immuno_artifact("labeled windows", PATHS.labeled, data_hint),
+        _immuno_artifact("unlabeled de novo", PATHS.unlabeled, data_hint),
+        _immuno_artifact("reference cohort", PATHS.reference, data_hint),
+    ]
+    embed_hint = "run: uv run python -m re_agent.immuno.embed"
+    for name in ("labeled", "unlabeled", "reference"):
+        checks.append(_immuno_artifact(f"{name} embeddings", cache_paths(name)[0], embed_hint))
+    train_hint = "run: uv run python -m re_agent.immuno.train"
+    for arm in ("baseline", "mean_teacher"):
+        checks.append(_immuno_artifact(f"model: {arm}", PATHS.models / f"{arm}.pt", train_hint))
+    return checks
+
+
 def run_checks() -> list[Check]:
     hint = "run: uv sync --extra proto"
     return [
